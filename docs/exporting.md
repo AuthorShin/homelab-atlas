@@ -20,4 +20,4 @@ Uploaded PNG, JPG, WebP, and SVG files are stored as PNG data in the project. SV
 
 SVG and PNG exports work offline and do not contact the original file location. They cannot be imported to restore an editable project. Keep a JSON backup too.
 
-Service links are dashboard-only. They remain in saved JSON and browser storage but never appear in SVG or PNG exports. See [Dashboard and browser default](/dashboard).
+Service links are dashboard-only. They remain in saved JSON and browser storage but never appear in SVG or PNG exports. See [Dashboard and default project](/dashboard).

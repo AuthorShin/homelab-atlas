@@ -14,7 +14,7 @@ No. Atlas only shows what you add manually or load from a project file. There is
 
 ### Why is my project empty after changing the URL or updating Atlas?
 
-Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a JSON backup. Atlas does not synchronize projects through a container volume. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
+Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a JSON backup. Atlas does not synchronize autosaved edits; the optional default project is the only project data stored in the container volume. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
 
 ### Why can’t I find or upload a custom logo?
 
@@ -28,7 +28,7 @@ The whole file must pass schema and reference validation before Atlas replaces t
 
 ### How do I open the dashboard?
 
-Choose **Dashboard** in the editor's top bar, or open `/dashboard` on the same host and port. The dashboard is read-only and uses the project saved in the current browser. See [Dashboard and browser default](/dashboard).
+Choose **Dashboard** in the editor's top bar, or open `/dashboard` on the same host and port. The dashboard is read-only and uses the project saved in the current browser, or the shared default when this browser has no autosave. See [Dashboard and default project](/dashboard).
 
 ### Why is a service tile not clickable?
 
@@ -42,17 +42,17 @@ No. Links are dashboard-only. SVG and PNG exports contain the diagram and never 
 
 No. The dashboard does not probe, proxy, or preload a link. It opens the URL only when you select the tile, in a new tab with no referrer. Availability depends on your network and the target service.
 
-### Why does the dashboard show the example or a browser default?
+### Why does the dashboard show the example or the default project?
 
-If this browser origin has no autosaved project, the dashboard falls back to the saved browser default, then to the included example. The top bar and notice identify which source is shown.
+If this browser origin has no autosaved project, the dashboard falls back to the default project saved on the Atlas server, then to an older browser default, then to the included example. The top bar and notice identify which source is shown.
 
 ### How do I choose a starting project?
 
-Open the project in the editor and choose **File → Save as browser default**. Atlas uses it only when no autosaved project exists. **File → Clear browser default** removes it without changing the project currently open. The default belongs to one browser profile and origin.
+Open the project in the editor and choose **File → Save as default project**. Any browser or device that opens this Atlas server without an autosave loads it. **File → Clear default project** removes it without changing the project currently open. Each browser keeps its own autosave, which takes precedence over the default.
 
 ### Does the dashboard work on my phone or another computer?
 
-Only if that browser has its own saved project or browser default. Browser storage is not synchronized through the container. Export JSON from the first browser and import it in the second. See [Sharing and backup](/sharing).
+Yes. A new device or fresh browser profile opens the default project saved on the Atlas server. A browser that already has an autosave keeps that copy. Use **File → Save project** and **Import project** when you want to move a project that already has local edits. See [Sharing and backup](/sharing).
 
 ### Can I safely share a project that has service links?
 

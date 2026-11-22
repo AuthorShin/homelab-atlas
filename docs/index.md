@@ -32,7 +32,7 @@ features:
   - title: Open your services
     details: Add optional http:// or https:// links to services, then use the dashboard for a private tile view with clickable links.
   - title: Save and share
-    details: Keep a browser default project, save JSON for an editable backup, or export an SVG or PNG when you want an image.
+    details: Save a shared default project, keep JSON for an editable backup, or export an SVG or PNG when you want an image.
 ---
 
 ## See the editor
@@ -59,7 +59,7 @@ I posted a diagram of my homelab on Reddit and someone asked how they could make
   <div><strong>5 · Save</strong>Back up JSON; export SVG or PNG.</div>
 </div>
 
-Atlas only knows what you add or load from a project file. Start with [installation and safe deployment](/getting-started), then use the [editor guide](/editor) when you want more detail on the controls. The [dashboard guide](/dashboard) covers service links and browser defaults.
+Atlas only knows what you add or load from a project file. Start with [installation and safe deployment](/getting-started), then use the [editor guide](/editor) when you want more detail on the controls. The [dashboard guide](/dashboard) covers service links and the default project.
 
 <div class="support">
 If Homelab Atlas is useful to you, you can <a href="https://www.buymeacoffee.com/aiden0rchad" target="_blank" rel="noopener noreferrer">buy me a coffee</a>.

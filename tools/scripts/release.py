@@ -17,6 +17,7 @@ FILES = (
     "go.mod",
     "app/main.go",
     "app/server.go",
+    "app/default_project.go",
     "deploy/Dockerfile",
     "compose.yaml",
     ".dockerignore",

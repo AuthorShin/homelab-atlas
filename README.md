@@ -25,11 +25,11 @@ Atlas lays out your diagram automatically, with optional manual positioning and 
 You'll need Docker with Compose v2:
 
 ```sh
-curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.12.1/compose.release.yaml
+curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.13.0/compose.release.yaml
 docker compose -f compose.release.yaml up -d
 ```
 
-Open `http://localhost:8080`. This uses the `0.12.1` image and only listens on the machine running Docker. Images are available for Linux AMD64 and ARM64.
+Open `http://localhost:8080`. This uses the `0.13.0` image and only listens on the machine running Docker. Images are available for Linux AMD64 and ARM64. The optional default project is kept in the `atlas-data` volume.
 
 For access from another computer, updates, or running without Docker, see the [setup guide](https://authorshin.github.io/homelab-atlas/getting-started). The [release page](https://github.com/AuthorShin/homelab-atlas/releases/latest) has the portable ZIP, Compose file, and checksums.
 
@@ -39,14 +39,14 @@ Open **File** and start with **Load example** to see how it works, or **Start em
 
 You can upload PNG, JPG, WebP, or SVG logos up to 2 MB, preview their contrast background, and reuse them across devices, services, and network nodes. SVG uploads are converted to PNG, and stored images are at most 512px. They stay in project JSON and work offline and in exports. Use **Diagram settings → Appearance → Upload favicon** to give the project its own browser-tab icon; it is saved with the project and stays out of image exports. The bundled catalog still includes 27 provider marks. Atlas starts with an automatic layout; **Arrange** in the canvas header lets you move or resize device cards. **Export** previews and downloads a PNG or SVG, with network details hidden by default and optional literal terms for custom names. Use **File → Save project** to download a JSON copy you can edit later.
 
-Give a service an optional `http://` or `https://` link in its **Apps** tab. Open **Dashboard** in the top bar for a read-only view of the same project where linked service tiles open in a new tab. Links are dashboard-only and never appear in SVG or PNG exports. Use **File → Save as browser default** to choose the project that opens when this browser has no autosaved project, and **Clear browser default** to remove it.
+Give a service an optional `http://` or `https://` link in its **Apps** tab. Open **Dashboard** in the top bar for a read-only view of the same project where linked service tiles open in a new tab. Links are dashboard-only and never appear in SVG or PNG exports. Use **File → Save as default project** to choose the project that new devices and fresh browsers open, and **Clear default project** to remove it.
 
-The [editor guide](https://authorshin.github.io/homelab-atlas/editor) covers the controls, the [dashboard guide](https://authorshin.github.io/homelab-atlas/dashboard) explains links and the browser default, and the [networking guide](https://authorshin.github.io/homelab-atlas/networking) explains connections and VLANs.
+The [editor guide](https://authorshin.github.io/homelab-atlas/editor) covers the controls, the [dashboard guide](https://authorshin.github.io/homelab-atlas/dashboard) explains links and the default project, and the [networking guide](https://authorshin.github.io/homelab-atlas/networking) explains connections and VLANs.
 
 ## A few things to know
 
 - **Save a JSON backup.** Autosave lives in your browser, not the container. Clearing browser data, using private browsing, or opening Atlas at a different hostname or port can make your project appear missing. A PNG or SVG can't be imported as an editable project.
-- **The browser default is separate from autosave.** Save a default to use a project as the starting point on this browser origin. Atlas only falls back to it when no autosaved project exists; editing the default in the editor still creates a normal autosave.
+- **The default project is stored by the Atlas container.** Save a default to make the current project the starting point for new devices and fresh browsers. Each browser still keeps its own autosave, which takes precedence; editing a default creates a normal autosave.
 - **Service links stay in the dashboard.** They are stored in project JSON and browser storage, open only when clicked, and are deliberately left out of SVG and PNG exports.
 - **Connections are logical relationships.** They don't represent individual switch ports, and network cards stay in the automatic header even when you arrange device cards.
 - **There's no login system.** Keep it on localhost or a trusted LAN. Don't expose it directly to the internet.

@@ -37,7 +37,7 @@ export const guideFigures = {
       { rect: { x: 0, y: 47.65, width: 196.94, height: 600 }, circle: [210, 300], target: [196.94, 300], caption: 'Select a device or use Add in the inventory.' },
       { rect: { x: 815.56, y: 147.71, width: 251.74, height: 30.18 }, circle: [1104, 162.8], target: [1067.3, 162.8], caption: 'Use Details, Apps, and Layout for the selected device.' },
       { rect: { x: 480.04, y: 53.6, width: 78.47, height: 25.41 }, circle: [563.5, -20], target: [519.3, 53.6], caption: 'Arrange moves and resizes device cards without changing automatic output rules.' },
-      { rect: { x: 127.44, y: 9.93, width: 45.08, height: 27 }, circle: [149.98, -20], target: [149.98, 9.93], caption: 'Open File to import, save, set a browser default, or start from the example.' },
+      { rect: { x: 127.44, y: 9.93, width: 45.08, height: 27 }, circle: [149.98, -20], target: [149.98, 9.93], caption: 'Open File to import, save, set the default project, or start from the example.' },
       { rect: { x: 895.23, y: 9.93, width: 93.33, height: 27 }, circle: [941.9, -20], target: [941.9, 9.93], caption: 'Open the dashboard for a read-only tile view with service links.' },
       { rect: { x: 991.74, y: 9.93, width: 75.55, height: 27 }, circle: [1029.5, -20], target: [1029.5, 9.93], caption: 'Export a reviewed SVG or PNG image. Service links are not included.' },
     ],

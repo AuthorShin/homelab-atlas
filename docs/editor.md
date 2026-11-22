@@ -6,7 +6,7 @@ You enter your devices and services, and Atlas starts with an automatic layout. 
 
 ## Start from a sample or empty project
 
-Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens editable JSON, and **Save project** downloads a JSON backup. **Save as browser default** stores the current project as the fallback for this browser origin, and **Clear browser default** removes it. See [Dashboard and browser default](/dashboard).
+Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens editable JSON, and **Save project** downloads a JSON backup. **Save as default project** stores the current project on the Atlas server for new devices and fresh browsers, and **Clear default project** removes it. See [Dashboard and default project](/dashboard).
 
 ## Add and organize devices
 
@@ -42,11 +42,11 @@ Each service can have an optional link in the device inspector's **Apps** tab. L
 
 Links are used only by the [dashboard](/dashboard). They are stored in project JSON and browser storage, and they are deliberately omitted from SVG and PNG exports. Atlas does not check whether a link is reachable or open it in the background.
 
-## Dashboard and browser default
+## Dashboard and default project
 
-Choose **Dashboard** in the top bar, or open `/dashboard`, for a read-only view of the project saved in this browser. Linked service tiles open in a new tab. The dashboard falls back to the browser default when no autosaved project exists, then to the included example. See [Dashboard and browser default](/dashboard) for details.
+Choose **Dashboard** in the top bar, or open `/dashboard`, for a read-only view of the project saved in this browser. Linked service tiles open in a new tab. The dashboard falls back to the default project saved on the Atlas server when no autosaved project exists, then to the included example. See [Dashboard and default project](/dashboard) for details.
 
-Use **File → Save as browser default** to make the current project the starting point for this browser origin. The default is stored separately from autosave. When you open Atlas and no autosaved project exists, the default loads without immediately creating an autosave; your first edit does. **Clear browser default** removes it without changing the project currently open in the tab.
+Use **File → Save as default project** to make the current project the starting point for new devices and fresh browsers. The default is stored on the Atlas server, separately from autosave. When you open Atlas and no autosaved project exists, the default loads without immediately creating an autosave; your first edit does. **Clear default project** removes it without changing the project currently open in the tab.
 
 ## Appearance
 

@@ -16,7 +16,7 @@ Manual diagrams need only Atlas and a browser. There is no scanner, collector, o
 Download the release Compose file, then start the container:
 
 ```sh
-curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.12.1/compose.release.yaml
+curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.13.0/compose.release.yaml
 docker compose -f compose.release.yaml up -d
 ```
 
@@ -26,14 +26,14 @@ Open `http://localhost:8080`. Verify the server if needed:
 curl http://localhost:8080/healthz
 ```
 
-A healthy response is `ok`. By default, the Compose file pulls `ghcr.io/authorshin/homelab-atlas:0.12.1`. It only listens on the machine running Docker and keeps the container read-only, drops its capabilities, and enables the no-new-privileges setting.
+A healthy response is `ok`. By default, the Compose file pulls `ghcr.io/authorshin/homelab-atlas:0.13.0`. It only listens on the machine running Docker, keeps the container read-only, drops its capabilities, and enables the no-new-privileges setting. The optional default project is kept in the `atlas-data` volume.
 
 ## Pin and update versions
 
 To pin a version, create `.env` next to `compose.release.yaml`:
 
 ```dotenv
-ATLAS_VERSION=0.12.1
+ATLAS_VERSION=0.13.0
 ```
 
 When you want to update, change `ATLAS_VERSION` in `.env` to a version that has been published. Then pull it and recreate the container without changing the hostname or port:
@@ -43,12 +43,12 @@ docker compose -f compose.release.yaml pull
 docker compose -f compose.release.yaml up -d
 ```
 
-Save an editable JSON project before you update or downgrade. Your project is stored by the browser, not in a container volume. Atlas 0.12.1 uses schema version 8 and imports schema versions 1 through 7. Existing inventory, uploaded logos, connections, manual layouts, and service links are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. Schema-7 projects gain an empty favicon. Atlas does not migrate projects backward; older releases cannot open schema version 8.
+Save an editable JSON project before you update or downgrade. Your working project is stored by the browser. The optional default project is stored in the `atlas-data` volume, which Compose keeps across normal updates. Atlas 0.13.0 uses schema version 8 and imports schema versions 1 through 7. Existing inventory, uploaded logos, connections, manual layouts, and service links are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. Schema-7 projects gain an empty favicon. Atlas does not migrate projects backward; older releases cannot open schema version 8.
 
 The image tags work like this:
 
-- `0.12.1` and `v0.12.1` identify this release.
-- `0.12` moves to the newest compatible 0.12 patch.
+- `0.13.0` and `v0.13.0` identify this release.
+- `0.13` moves to the newest compatible 0.13 patch.
 - `latest` moves to the newest stable release.
 - A published image digest never changes; the [release guide](/releases/) explains how to pin one.
 
@@ -92,12 +92,12 @@ go run ./app
 For the portable release, extract the ZIP and move into its top-level directory first:
 
 ```sh
-unzip homelab-atlas-0.12.1.zip
-cd homelab-atlas-0.12.1
+unzip homelab-atlas-0.13.0.zip
+cd homelab-atlas-0.13.0
 go run ./app
 ```
 
-Open `http://localhost:8080`. The server only exposes the embedded editor and dashboard assets and, by default, only listens on the same machine.
+Open `http://localhost:8080`. The server exposes the embedded editor and dashboard assets plus the default-project endpoint, and by default only listens on the same machine. Running from a source checkout or release ZIP creates a `data/` directory for the default project; set `ATLAS_DATA_DIR` to choose another writable directory.
 
 ## Open it from another computer {#trusted-lan-access}
 
@@ -109,7 +109,7 @@ ATLAS_BIND=0.0.0.0 docker compose -f compose.release.yaml up -d
 
 Open `http://<server-address>:8080` from the other computer. The browser sees that address as a different site from `localhost`, so it has separate browser storage. Save JSON before changing the hostname, port, or protocol. Do not expose Homelab Atlas directly to the public internet.
 
-The server is static and has no API token or host allowlist to configure. Each browser keeps its own autosave and browser default for that origin, so a project opened from another computer starts from that browser's storage or the included example. Use **File → Save project** on the first computer and **Import project** on the other when you want to move a diagram. Do not expose Homelab Atlas directly to the public internet.
+The server has no login, API token, or host allowlist. Each browser keeps its own autosave. The optional default project is stored on the server, so a new browser or device with no autosave opens it; a browser that already has an autosave keeps that copy. Use **File → Save project** on the first computer and **Import project** on the other when you want to move a project that already has local edits. Anyone who can reach the instance can read or replace the default project, so do not expose Homelab Atlas directly to the public internet.
 
 ## First diagram
 
@@ -120,6 +120,6 @@ The server is static and has no API token or host allowlist to configure. Each b
 5. Add an optional `http://` or `https://` link to a service in its **Apps** tab.
 6. Choose **File → Save project** before sharing or changing origins.
 
-Open **Dashboard** in the top bar to see the same project as a read-only tile view. If this browser has no autosaved project, the dashboard falls back to the browser default and then the example. Use **File → Save as browser default** when you want a project to open automatically in a fresh browser session on this origin.
+Open **Dashboard** in the top bar to see the same project as a read-only tile view. If this browser has no autosaved project, the dashboard falls back to the default project saved on the Atlas server and then to the example. Use **File → Save as default project** when you want a project to open automatically on new devices and in fresh browsers.
 
-The [annotated editor overview](/editor#editor-guide) covers the controls. The [dashboard guide](/dashboard) explains links and browser defaults. The [privacy and deployment page](/privacy) explains what stays in the browser and why Atlas should stay off the public internet. For setup or storage failures, check the [FAQ](/faq).
+The [annotated editor overview](/editor#editor-guide) covers the controls. The [dashboard guide](/dashboard) explains links and the default project. The [privacy and deployment page](/privacy) explains what stays in the browser and why Atlas should stay off the public internet. For setup or storage failures, check the [FAQ](/faq).

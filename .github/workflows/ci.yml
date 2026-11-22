@@ -21,12 +21,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f deploy/Dockerfile -t homelab-atlas:test .
-      - run: docker run -d --name atlas --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 homelab-atlas:test
+      - run: docker run -d --name atlas --read-only --tmpfs /tmp --tmpfs /data:size=16m,mode=1777 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 homelab-atlas:test
       - run: |
+          set -euo pipefail
           for i in {1..20}; do
             if curl --fail http://127.0.0.1:8080/healthz; then
               curl --fail --silent --show-error http://127.0.0.1:8080/dashboard >/dev/null
-              exit
+              curl --fail --silent --show-error -X PUT \
+                -H 'Content-Type: application/json' \
+                -H 'X-Atlas-Default: 1' \
+                --data-binary '{"schemaVersion":8,"title":"CI","devices":[],"networks":[]}' \
+                http://127.0.0.1:8080/api/default-project
+              curl --fail --silent --show-error http://127.0.0.1:8080/api/default-project | grep -F '"title":"CI"'
+              curl --fail --silent --show-error -X DELETE -H 'X-Atlas-Default: 1' http://127.0.0.1:8080/api/default-project
+              exit 0
             fi
             sleep 1
           done

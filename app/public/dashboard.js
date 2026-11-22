@@ -1,12 +1,13 @@
 import { applyDocumentFavicon } from './favicon.js';
 import { renderProject } from './model.js';
 import { DASHBOARD_DEFAULT_KEY, DASHBOARD_STORAGE_KEY, dashboardStats, decodeStoredProject, serviceLinks } from './dashboard-model.js';
+import { resolveStoredProject } from './project-storage.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = selector => document.querySelector(selector);
 const afterPaint = callback => typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 0);
 
-function readStoredProject() {
+async function readStoredProject() {
   let raw;
   let defaultRaw;
   try {
@@ -15,14 +16,24 @@ function readStoredProject() {
   } catch {
     return { ...decodeStoredProject(null), source: 'unavailable' };
   }
-  return decodeStoredProject(raw, defaultRaw);
+  return resolveStoredProject(raw, defaultRaw);
 }
 
 function noticeText(decoded) {
-  if (decoded.source === 'sample') return 'No saved project in this browser. Showing the example project.';
-  if (decoded.source === 'default') return 'No saved project in this browser. Showing your browser default project.';
+  if (decoded.source === 'server-default') return 'Showing the default project saved on this Atlas server.';
+  if (decoded.source === 'sample') {
+    return decoded.serverError
+      ? `The server default could not be loaded (${decoded.serverError.replace(/\.$/, '')}). Showing the example project.`
+      : 'No saved project in this browser and no server default. Showing the example project.';
+  }
+  if (decoded.source === 'default') {
+    return decoded.serverError
+      ? `The server default could not be loaded (${decoded.serverError.replace(/\.$/, '')}). Showing your browser default project.`
+      : 'No saved project in this browser. Showing your browser default project.';
+  }
   if (decoded.source === 'unavailable') return 'Browser storage is unavailable. Showing the example project.';
   const detail = String(decoded.error || 'unknown error').replace(/\.$/, '');
+  if (decoded.source === 'default-error') return `The browser default could not be read (${detail}). Showing the example project.`;
   return `The saved project could not be read (${detail}). Showing the example project.`;
 }
 
@@ -61,8 +72,12 @@ function addServiceLinks(container, project) {
   }
 }
 
-function render() {
-  const decoded = readStoredProject();
+let renderToken = 0;
+
+async function render() {
+  const token = ++renderToken;
+  const decoded = await readStoredProject();
+  if (token !== renderToken) return;
   const project = decoded.project;
   const stats = dashboardStats(project);
   const scroll = { x: window.scrollX, y: window.scrollY };
@@ -71,7 +86,9 @@ function render() {
   $('#dashboard-title').textContent = project.title;
   $('#dashboard-status').textContent = decoded.source === 'saved'
     ? (stats.services ? `${stats.links} of ${stats.services} services linked` : 'No services yet')
+    : decoded.source === 'server-default' ? 'Server default'
     : decoded.source === 'default' ? 'Browser default'
+    : decoded.source === 'default-error' ? 'Browser default unavailable'
     : decoded.source === 'sample' ? 'Example project'
     : decoded.source === 'unavailable' ? 'Storage unavailable' : 'Saved project unavailable';
 

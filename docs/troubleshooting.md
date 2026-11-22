@@ -14,8 +14,9 @@ Start with the [FAQ](/faq) for setup, dashboard, storage, layout, and saving exp
 | Favicon upload rejected | Use a PNG, JPG, WebP, SVG, or ICO no larger than 2 MB, 4096px per side, or 16 million pixels. Atlas resizes it to a square PNG up to 128px. Active or externally loaded SVG content is rejected. |
 | Service link rejected | Leave the field empty or use a complete `http://` or `https://` URL up to 2,048 characters with no spaces. Bare hostnames, relative paths, and other schemes are rejected. |
 | Dashboard tile does not open | The service has no valid link, or the saved project is invalid. Check the link in the editor's **Apps** tab. Only linked services become anchors. |
-| Dashboard shows the example | This browser origin has no autosaved project and no browser default. Open the editor, import or create a project, or save a browser default. |
-| Browser default does not load | Atlas uses the default only when no autosaved project exists. Clear the autosave or use a fresh browser profile. The default belongs to one hostname, port, protocol, and browser profile. |
+| Dashboard shows the example | This browser origin has no autosaved project, the server has no default project, and there is no older browser default. Open the editor, import or create a project, or save a default project. |
+| Default project does not load | Atlas uses the default only when no autosaved project exists. Clear this browser's autosave or use a fresh browser profile. The default is stored on the server, not in the browser. |
+| Default project cannot be saved | Make sure the container has a writable `atlas-data` volume or that `ATLAS_DATA_DIR` points to a writable directory, then check `docker compose logs atlas`. |
 | Port 8080 already in use | Stop the conflicting service or use a different local port as shown below. |
 | Released container does not start | Run `docker compose -f compose.release.yaml config`, then use the same `-f compose.release.yaml` argument with `pull`, `ps`, and `logs atlas`. Also confirm the GHCR package is public. |
 | Source-built container does not start | Run `docker compose config`, rebuild it, check `docker compose ps`, and read `docker compose logs atlas`. |
@@ -38,7 +39,7 @@ docker compose build
 docker compose run --rm -p 127.0.0.1:8081:8080 atlas
 ```
 
-Open `http://localhost:8081`. The browser treats port 8081 as a different site from port 8080, so import a JSON backup instead of expecting the old autosave or browser default to appear.
+Open `http://localhost:8081`. The browser treats port 8081 as a different site from port 8080, so the autosave from 8080 does not appear. Save JSON and import it, or save a default project and open a fresh browser profile.
 
 For the released image, Compose `run` does not publish the service's normal ports. Add the alternate mapping yourself:
 
@@ -66,15 +67,16 @@ Atlas checks the entire import before replacing your current project. If the fil
 
 Older projects are validated in their original schema before migration. Schema 7 gains an empty favicon. Discovery data from schema 5 and 6 is removed; a malformed legacy binding still causes the import to be rejected. If the storage or import problem continues, replace any private details with fictional data before opening a [bug report](https://github.com/AuthorShin/homelab-atlas/issues/new?template=bug_report.yml).
 
-## Dashboard and browser default
+## Dashboard and default project
 
-The dashboard reads browser storage directly. It is not a second project store.
+The dashboard reads the browser autosave first and asks the same Atlas server for the shared default only when there is no usable autosave.
 
 - **Saved project** means an autosaved project was found.
-- **Browser default** means no autosave existed and the saved default was used.
-- **Example project** means neither existed.
-- **Saved project unavailable** or **Storage unavailable** means the browser value could not be read or storage is blocked. The example is shown instead.
+- **Server default** means no autosave existed and the default saved on the Atlas server was used.
+- **Browser default** means an older browser-stored default was used because the server had none.
+- **Example project** means none of those existed.
+- **Saved project unavailable**, **Browser default unavailable**, or **Storage unavailable** means a stored value could not be read or storage is blocked. The example is shown instead.
 
-The dashboard falls back to the example when a saved project is corrupt. Open the editor to import a good backup. **Refresh** re-reads the current browser origin; it cannot load a project from another browser or device.
+The dashboard falls back to the example when a saved project is corrupt. Open the editor to import a good backup. **Refresh** re-reads the current browser origin and the server default; it does not replace an existing autosave.
 
-Saving a browser default does not overwrite the current autosave. To test the default, remove or clear the autosaved project, then reload. Editing a project loaded from the default creates a normal autosave.
+Saving a default project does not overwrite the current autosave. To test the default, clear this browser's site data or use a fresh browser profile, then reload. Editing a project loaded from the default creates a normal autosave.

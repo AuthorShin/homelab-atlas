@@ -18,6 +18,7 @@ class ReleaseTests(unittest.TestCase):
             "go.mod": "module example.invalid/atlas\n\ngo 1.26\n",
             "app/main.go": "package main\nfunc main() {}\n",
             "app/server.go": "package main\n",
+            "app/default_project.go": "package main\n",
             "app/main_test.go": "package main\n",
             "deploy/Dockerfile": "FROM golang:1.26-alpine\n",
             "compose.yaml": "services: {}\n",
@@ -53,6 +54,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn("homelab-atlas-0.1.0/app/public/index.html", names)
             self.assertIn("homelab-atlas-0.1.0/app/public/licenses/logo.txt", names)
             self.assertIn("homelab-atlas-0.1.0/go.mod", names)
+            self.assertIn("homelab-atlas-0.1.0/app/default_project.go", names)
             self.assertIn("homelab-atlas-0.1.0/deploy/Dockerfile", names)
             self.assertIn("homelab-atlas-0.1.0/compose.yaml", names)
             self.assertIn("homelab-atlas-0.1.0/.dockerignore", names)

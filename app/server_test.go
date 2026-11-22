@@ -19,7 +19,7 @@ func testAtlasServer(t *testing.T) *atlasServer {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, err := newAtlasServer(public)
+	server, err := newAtlasServer(public, newDefaultProjectStore(t.TempDir()))
 	if err != nil {
 		t.Fatal(err)
 	}

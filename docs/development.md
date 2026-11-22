@@ -2,7 +2,7 @@
 
 The app uses browser JavaScript and the Go standard library, with no runtime packages to install. Node.js is used for tests, building logo data, and this documentation site. Python is retained for deterministic release packaging tests.
 
-At startup, the Go server prepares reusable gzip representations for compressible embedded assets when they are smaller than the originals. Static responses use encoding-specific ETags and `Cache-Control: no-cache` revalidation. The server has no project API or other backend endpoints.
+At startup, the Go server prepares reusable gzip representations for compressible embedded assets when they are smaller than the originals. Static responses use encoding-specific ETags and `Cache-Control: no-cache` revalidation. The only backend endpoint is `/api/default-project`, which stores one optional shared default project in `ATLAS_DATA_DIR` (default `data/`; `/data` in the container). There is no discovery, collector, account, or database API.
 
 The final container includes `LICENSE` and `THIRD_PARTY_NOTICES.md` under `/usr/share/licenses/homelab-atlas/`.
 
@@ -13,6 +13,7 @@ The final container includes `LICENSE` and `THIRD_PARTY_NOTICES.md` under `/usr/
 | `app/public/` | Embedded editor, dashboard, logos, sources, and upstream licenses |
 | `app/main.go` | Embedded assets and the server plus the `healthcheck` command |
 | `app/server.go` | Restricted static server for the editor and dashboard |
+| `app/default_project.go` | Shared default-project storage and `/api/default-project` |
 | `deploy/` | Dockerfile and source/released Compose recipes |
 | `tools/scripts/` | Repeatable icon and release artifact tools |
 | `tools/tests/` | Node model/storage/dashboard tests and Python release tests |
@@ -31,12 +32,12 @@ npm run build:icons
 npm run check:icons
 docker compose config
 docker compose --project-directory . -f deploy/compose.release.yaml config
-python3 tools/scripts/release.py v0.12.1 --output dist
+python3 tools/scripts/release.py v0.13.0 --output dist
 ```
 
 `npm test` checks logo data, runs the Node tests, runs `go test ./...`, and runs the Python release tests. Release files go into the ignored `dist/` directory, and the release workflow checks their checksums too.
 
-Node tests cover the project schema, migrations, link and favicon validation, storage decoding, dashboard links, custom logos, and layout calculations. Go tests cover static serving, `/dashboard`, compression, caching, security headers, and legacy API 404s.
+Node tests cover the project schema, migrations, link and favicon validation, default-project storage and fallback order, dashboard links, custom logos, and layout calculations. Go tests cover static serving, `/dashboard`, compression, caching, security headers, the default-project API, and legacy discovery-route 404s.
 
 ## Documentation
 

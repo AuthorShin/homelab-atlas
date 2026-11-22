@@ -96,10 +96,17 @@ jobs:
       - name: Smoke-test source image
         run: |
           set -euo pipefail
-          docker run --detach --name atlas-release-check --read-only --tmpfs /tmp:size=16m,mode=1777 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 homelab-atlas:release
+          docker run --detach --name atlas-release-check --read-only --tmpfs /tmp:size=16m,mode=1777 --tmpfs /data:size=16m,mode=1777 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 homelab-atlas:release
           for attempt in {1..20}; do
             if curl --fail --silent --show-error http://127.0.0.1:8080/healthz; then
               curl --fail --silent --show-error http://127.0.0.1:8080/dashboard >/dev/null
+              curl --fail --silent --show-error -X PUT \
+                -H 'Content-Type: application/json' \
+                -H 'X-Atlas-Default: 1' \
+                --data-binary '{"schemaVersion":8,"title":"Release check","devices":[],"networks":[]}' \
+                http://127.0.0.1:8080/api/default-project
+              curl --fail --silent --show-error http://127.0.0.1:8080/api/default-project | grep -F '"title":"Release check"'
+              curl --fail --silent --show-error -X DELETE -H 'X-Atlas-Default: 1' http://127.0.0.1:8080/api/default-project
               exit 0
             fi
             sleep 1

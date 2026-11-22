@@ -2,6 +2,20 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.13.0] - 2026-11-22
+
+### Added
+
+- Added a shared default project stored in the container's `atlas-data` volume. **File → Save as default project** makes the current project open on new devices and fresh browser profiles; **Clear default project** removes it. Each browser's autosave still takes precedence.
+- Added `/api/default-project` with size, JSON-shape, and write-header checks. The endpoint reports a clear error when no writable data directory is available.
+- Added an `atlas-data` volume to both Compose files and updated container smoke tests to save and clear the default.
+
+### Changed
+
+- Replaced the browser-only default with the shared default while keeping older browser-stored defaults as a fallback.
+- A browser with an untouched example autosave now prefers the shared default.
+- Updated documentation, troubleshooting, and release metadata for v0.13.0.
+
 ## [0.12.1] - 2026-11-19
 
 ### Added
@@ -177,3 +191,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.11.1]: https://github.com/aiden0rchad/homelab-atlas/releases/tag/v0.11.1
 [0.12.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.0
 [0.12.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.1
+[0.13.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.13.0

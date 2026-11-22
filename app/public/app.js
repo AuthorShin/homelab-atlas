@@ -7,7 +7,10 @@ import { createExportSnapshot } from './export.js';
 import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions, updateSelection } from './state.js';
 import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
 import { applyDocumentFavicon, normalizeFaviconUpload } from './favicon.js';
-import { DEFAULT_PROJECT_STORAGE_KEY, decodeProjectRecord } from './project-storage.js';
+import {
+  DEFAULT_PROJECT_STORAGE_KEY, clearServerDefaultProject, fetchServerDefaultAvailable,
+  resolveStoredProject, saveServerDefaultProject,
+} from './project-storage.js';
 
 const $ = selector => document.querySelector(selector);
 const STORAGE_KEY = 'homelab-atlas.project';
@@ -165,7 +168,10 @@ function saveProject(force = false) {
   }
 }
 
-function hasStoredDefault() {
+let serverDefaultAvailable = false;
+let browserDefaultAvailable = false;
+
+function hasStoredBrowserDefault() {
   try {
     return Boolean(localStorage.getItem(DEFAULT_PROJECT_STORAGE_KEY));
   } catch {
@@ -174,79 +180,90 @@ function hasStoredDefault() {
 }
 
 function updateDefaultProjectActions() {
-  const available = hasStoredDefault();
+  const available = serverDefaultAvailable || browserDefaultAvailable;
   const clear = $('#clear-default');
   if (clear) clear.hidden = !available;
   const save = $('#save-default');
-  if (save) save.title = available ? 'Replace the browser default project with this project' : 'Open this project when no locally saved project exists';
+  if (save) save.title = available
+    ? 'Replace the default project that new devices and browsers open'
+    : 'Open this project on new devices and in fresh browsers';
 }
 
-function saveDefaultProject() {
+async function refreshDefaultAvailability() {
+  browserDefaultAvailable = hasStoredBrowserDefault();
   try {
-    const raw = JSON.stringify({ tab: TAB_ID, data: JSON.stringify(project) });
-    localStorage.setItem(DEFAULT_PROJECT_STORAGE_KEY, raw);
-    updateDefaultProjectActions();
-    toast('Saved as the browser default project.');
+    serverDefaultAvailable = await fetchServerDefaultAvailable();
   } catch {
-    toast('The browser default could not be saved. Local storage is full or unavailable.', true);
+    serverDefaultAvailable = false;
+  }
+  updateDefaultProjectActions();
+}
+
+async function saveDefaultProject() {
+  try {
+    await saveServerDefaultProject(project);
+    try { localStorage.removeItem(DEFAULT_PROJECT_STORAGE_KEY); } catch { /* The server copy is authoritative. */ }
+    serverDefaultAvailable = true;
+    browserDefaultAvailable = false;
+    updateDefaultProjectActions();
+    toast('Saved as the default project. New devices and browsers will open it.');
+    return true;
+  } catch (error) {
+    toast(`The default project could not be saved: ${error.message}`, true);
+    return false;
   }
 }
 
-function clearDefaultProject() {
+async function clearDefaultProject() {
   try {
-    localStorage.removeItem(DEFAULT_PROJECT_STORAGE_KEY);
+    await clearServerDefaultProject();
+    try { localStorage.removeItem(DEFAULT_PROJECT_STORAGE_KEY); } catch { /* Nothing else to clear. */ }
+    serverDefaultAvailable = false;
+    browserDefaultAvailable = false;
     updateDefaultProjectActions();
-    toast('Browser default project cleared.');
-  } catch {
-    toast('The browser default could not be cleared because local storage is unavailable.', true);
+    toast('Default project cleared. New devices and browsers will open the example.');
+    return true;
+  } catch (error) {
+    toast(`The default project could not be cleared: ${error.message}`, true);
+    return false;
   }
 }
 
 async function loadProject() {
-  let fresh = false;
-  let source = 'saved';
-  let defaultError = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const loaded = parseProject(JSON.parse(raw).data);
-      await verifyCustomLogoDecodes(loaded.customLogos);
-      project = loaded;
-      lastStored = raw;
-    } else {
-      const defaultRaw = localStorage.getItem(DEFAULT_PROJECT_STORAGE_KEY);
-      if (defaultRaw) {
-        try {
-          const loaded = decodeProjectRecord(defaultRaw);
-          await verifyCustomLogoDecodes(loaded.customLogos);
-          project = loaded;
-          source = 'default';
-        } catch (error) {
-          project = sampleProject();
-          source = 'default-error';
-          defaultError = error;
-        }
-      } else {
-        project = sampleProject();
-        fresh = true;
-      }
+    const defaultRaw = localStorage.getItem(DEFAULT_PROJECT_STORAGE_KEY);
+    const decoded = await resolveStoredProject(raw, defaultRaw);
+    if (decoded.source === 'error') {
+      project = sampleProject();
+      setSaveStatus('Not saved — storage unavailable', true);
+      toast(`Local project could not be loaded: ${decoded.error}`);
+      render();
+      return;
+    }
+    await verifyCustomLogoDecodes(decoded.project.customLogos);
+    project = decoded.project;
+    lastStored = raw || '';
+    render();
+    updateDefaultProjectActions();
+    void refreshDefaultAvailability();
+    if (decoded.source === 'server-default') setSaveStatus('Using default project');
+    else if (decoded.source === 'default') setSaveStatus('Using browser default');
+    else if (decoded.source === 'default-error') {
+      setSaveStatus('Default unavailable', true);
+      toast(`The default project could not be loaded: ${decoded.error}`);
+    } else if (decoded.source === 'sample') setSaveStatus('Using example');
+    else setSaveStatus('Saved locally');
+    if (decoded.serverError && decoded.source !== 'default-error' && decoded.source !== 'server-default') {
+      toast(`The server default could not be loaded: ${decoded.serverError}`, true);
     }
   } catch (error) {
-    updateDefaultProjectActions();
+    void refreshDefaultAvailability();
     project = sampleProject();
     setSaveStatus('Not saved — storage unavailable', true);
     toast(`Local project could not be loaded: ${error.message}`);
     render();
-    return;
   }
-  render();
-  updateDefaultProjectActions();
-  if (fresh) saveProject();
-  else if (source === 'default') setSaveStatus('Using browser default');
-  else if (source === 'default-error') {
-    setSaveStatus('Browser default unavailable', true);
-    toast(`Browser default could not be loaded: ${defaultError.message}`);
-  } else setSaveStatus('Saved locally');
 }
 
 function render() {
@@ -963,15 +980,15 @@ document.addEventListener('click', event => {
 $('#file-menu a').addEventListener('click', () => closeFileMenu());
 $('#sample').addEventListener('click', () => { closeFileMenu(); if (confirm('Replace this project with the example? You can undo afterward.')) replaceProject(sampleProject()); });
 $('#empty').addEventListener('click', () => { closeFileMenu(); if (confirm('Start empty? You can undo afterward.')) replaceProject(emptyProject()); });
-$('#save-default').addEventListener('click', () => {
-  const replacing = hasStoredDefault();
+$('#save-default').addEventListener('click', async () => {
+  const replacing = serverDefaultAvailable || browserDefaultAvailable;
   closeFileMenu();
-  if (replacing && !confirm('Replace the browser default project with this project?')) return;
-  saveDefaultProject();
+  if (replacing && !confirm('Replace the default project? New devices and browsers will open this project.')) return;
+  await saveDefaultProject();
 });
-$('#clear-default').addEventListener('click', () => {
+$('#clear-default').addEventListener('click', async () => {
   closeFileMenu();
-  if (confirm('Clear the browser default project? The project open in this tab will not change.')) clearDefaultProject();
+  if (confirm('Clear the default project? New devices and browsers will open the example.')) await clearDefaultProject();
 });
 
 function undo() {
@@ -1291,7 +1308,10 @@ $('#inventory-search').addEventListener('input', event => {
 
 addEventListener('storage', event => {
   if (event.key === STORAGE_KEY && hasStorageConflict(event.newValue, lastStored, TAB_ID)) showConflict(event.newValue);
-  if (event.key === DEFAULT_PROJECT_STORAGE_KEY || event.key === null) updateDefaultProjectActions();
+  if (event.key === DEFAULT_PROJECT_STORAGE_KEY || event.key === null) {
+    browserDefaultAvailable = hasStoredBrowserDefault();
+    updateDefaultProjectActions();
+  }
 });
 $('#conflict-keep').addEventListener('click', () => saveProject(true));
 $('#conflict-load').addEventListener('click', async () => {

@@ -8,8 +8,13 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=16m,mode=1777
+    volumes:
+      - atlas-data:/data
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     restart: unless-stopped
+
+volumes:
+  atlas-data:

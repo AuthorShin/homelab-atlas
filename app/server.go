@@ -22,6 +22,7 @@ const securityPolicy = "default-src 'self'; img-src 'self' data:; style-src 'sel
 type atlasServer struct {
 	assets      map[string]staticAsset
 	assetPrefix string
+	defaults    *defaultProjectStore
 }
 
 type staticAsset struct {
@@ -35,12 +36,15 @@ type staticRepresentation struct {
 	etag string
 }
 
-func newAtlasServer(public fs.FS) (*atlasServer, error) {
+func newAtlasServer(public fs.FS, defaults *defaultProjectStore) (*atlasServer, error) {
 	assets, assetPrefix, err := loadStaticAssets(public)
 	if err != nil {
 		return nil, err
 	}
-	return &atlasServer{assets: assets, assetPrefix: assetPrefix}, nil
+	if defaults == nil {
+		defaults = &defaultProjectStore{}
+	}
+	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults}, nil
 }
 
 func loadStaticAssets(public fs.FS) (map[string]staticAsset, string, error) {
@@ -156,6 +160,10 @@ func (server *atlasServer) ServeHTTP(writer http.ResponseWriter, request *http.R
 		serveHealth(writer, request)
 		return
 	}
+	if request.URL.Path == "/api/default-project" {
+		server.serveDefaultProject(writer, request)
+		return
+	}
 	server.serveStatic(writer, request)
 }
 
@@ -265,8 +273,8 @@ func writeBody(writer http.ResponseWriter, request *http.Request, status int, co
 	}
 }
 
-func serve(address string, public fs.FS) error {
-	handler, err := newAtlasServer(public)
+func serve(address string, public fs.FS, defaults *defaultProjectStore) error {
+	handler, err := newAtlasServer(public, defaults)
 	if err != nil {
 		return err
 	}

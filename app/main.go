@@ -45,7 +45,8 @@ func run(arguments []string) error {
 	if err != nil {
 		return err
 	}
-	return serve(address, public)
+	defaults := newDefaultProjectStore(environmentDefault("ATLAS_DATA_DIR", "data"))
+	return serve(address, public, defaults)
 }
 
 func environmentDefault(name, fallback string) string {
