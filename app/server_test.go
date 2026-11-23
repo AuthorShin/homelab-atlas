@@ -19,7 +19,8 @@ func testAtlasServer(t *testing.T) *atlasServer {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, err := newAtlasServer(public, newDefaultProjectStore(t.TempDir()))
+	directory := t.TempDir()
+	server, err := newAtlasServer(public, newDefaultProjectStore(directory), newBrandingStore(directory))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,6 +132,7 @@ func TestVersionedStaticAssets(t *testing.T) {
 		{"app.js", "text/javascript"},
 		{"styles.css", "text/css"},
 		{"model.js", "text/javascript"},
+		{"branding.js", "text/javascript"},
 		{"dashboard.js", "text/javascript"},
 		{"dashboard.css", "text/css"},
 		{"dashboard-model.js", "text/javascript"},

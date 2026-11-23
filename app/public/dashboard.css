@@ -92,6 +92,8 @@ button:focus-visible, a.button:focus-visible { outline: 2px solid var(--accent);
 .brand-mark i:nth-child(1) { height: 8px; }
 .brand-mark i:nth-child(2) { height: 15px; }
 .brand-mark i:nth-child(3) { height: 11px; }
+.brand-mark.has-logo { width: 22px; height: 22px; padding: 0; border-radius: 4px; background-position: center; background-repeat: no-repeat; background-size: contain; }
+.brand-mark.has-logo i { display: none; }
 
 .topbar-mode {
   padding: 2px 7px;

@@ -12,13 +12,15 @@ The editor and dashboard have:
 - no background polling or network discovery
 - a local bundled logo catalog
 
-The Go process serves embedded editor and dashboard files. Your working project stays in the browser's `localStorage`. The only server-side project data is the optional default project stored in the `atlas-data` volume so new devices can load it. Atlas creates JSON or image files only when you choose to download them. Service links are opened only when you select a linked tile on the dashboard.
+The Go process serves embedded editor and dashboard files. Your working project stays in the browser's `localStorage`. The only server-side project data is the optional default project stored in the `atlas-data` volume so new devices can load it. The same volume stores the optional app name, tab title, and logo used across devices. Atlas creates JSON or image files only when you choose to download them. Service links are opened only when you select a linked tile on the dashboard.
 
 ## Browser and server storage
 
 Autosave and the older browser-default fallback use `localStorage` on the current browser origin. The browser keeps separate storage for each hostname, port, protocol, and profile. Clearing site data removes the autosaved project and any older browser default.
 
 The default project saved with **File → Save as default project** is different: it is written to the container's `atlas-data` volume and shared by every browser and device that opens this Atlas instance. It is used only when a browser has no autosaved project. It can contain the same inventory and private service URLs as any other saved project. Anyone who can reach Atlas can read and replace it.
+
+App branding is separate from project data. It is stored in `branding.json` in the same `atlas-data` volume and read by the editor and dashboard on load. It contains only the app name, optional tab title, and a PNG data URL for the logo. Changing it does not send or replace the current project.
 
 The server does not receive autosaved edits, and it does not synchronize open editors. Each browser's autosave stays local.
 
@@ -28,9 +30,9 @@ This GitHub Pages site only hosts the documentation. It does not run the editor 
 
 ## Where to run it {#deployment-boundary}
 
-Run the app on localhost or a LAN you trust. Atlas has no login screen, user roles, or built-in TLS. There is no API token or discovery endpoint to configure. The only API is the default-project endpoint, and it is not authenticated. Do not put Atlas directly on the public internet.
+Run the app on localhost or a LAN you trust. Atlas has no login screen, user roles, or built-in TLS. There is no API token or discovery endpoint to configure. The APIs are the default-project and app-branding endpoints, and neither is authenticated. Do not put Atlas directly on the public internet.
 
-If you bind Compose to `0.0.0.0`, anyone who can reach port 8080 can open the editor, read the shared default project, and replace it. Each browser still has its own autosave, but the app itself has no authentication. Keep the default localhost binding unless you need access from a trusted LAN, and use a reverse proxy with authentication if you need stronger protection.
+If you bind Compose to `0.0.0.0`, anyone who can reach port 8080 can open the editor, read or replace the shared default project, and read or replace app branding. Each browser still has its own autosave, but the app itself has no authentication. Keep the default localhost binding unless you need access from a trusted LAN, and use a reverse proxy with authentication if you need stronger protection.
 
 ## Before you share {#content-and-sharing}
 

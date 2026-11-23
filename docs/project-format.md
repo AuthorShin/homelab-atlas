@@ -65,7 +65,9 @@ Custom logo IDs start with `custom-` and use the same safe ASCII ID characters, 
 
 ## Favicon
 
-The optional project favicon is uploaded from **Diagram settings → Appearance → Upload favicon**. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB, 4096px per side, and 16 million pixels. It converts the image to a square PNG with a maximum side of 128px and stores the canonical data URL in `favicon`. Leave the field empty to use the default Atlas mark. Favicons are shown in the editor and dashboard browser tabs, are part of saved JSON, and are never rendered into SVG or PNG diagrams.
+The optional project favicon is uploaded from **Diagram settings → Diagram appearance → Project tab icon → Upload tab icon**. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB, 4096px per side, and 16 million pixels. It converts the image to a square PNG with a maximum side of 128px and stores the canonical data URL in `favicon`. Leave the field empty to use the default Atlas mark. The project favicon is shown in the editor and dashboard browser tabs when no app logo is saved, is part of saved JSON, and is never rendered into SVG or PNG diagrams.
+
+App branding is not part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo in a separate `branding.json` file served by `/api/branding`. It applies to the whole Atlas instance and is not included in project JSON, project imports, or the shared default project.
 
 ## IDs and references
 
@@ -130,4 +132,4 @@ The group limit applies to each device array and to the whole project. Each obje
 }
 ```
 
-For a full example with every record type, see [`docs/example.json` on GitHub](https://github.com/AuthorShin/homelab-atlas/blob/main/docs/example.json). Atlas does not have a separate schema file or a project API endpoint.
+For a full example with every record type, see [`docs/example.json` on GitHub](https://github.com/AuthorShin/homelab-atlas/blob/main/docs/example.json). Atlas does not have a separate schema file or a general project API endpoint. The only server APIs are the optional shared default project and app branding.

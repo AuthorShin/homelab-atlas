@@ -6,7 +6,10 @@ import {
 import { createExportSnapshot } from './export.js';
 import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions, updateSelection } from './state.js';
 import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
-import { applyDocumentFavicon, normalizeFaviconUpload } from './favicon.js';
+import { normalizeFaviconUpload } from './favicon.js';
+import {
+  DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, fetchServerBranding, normalizeBranding, saveServerBranding,
+} from './branding.js';
 import {
   DEFAULT_PROJECT_STORAGE_KEY, clearServerDefaultProject, fetchServerDefaultAvailable,
   resolveStoredProject, saveServerDefaultProject,
@@ -49,6 +52,12 @@ let lastStored = '';
 let conflictRaw = '';
 let logoDialogState = null;
 let logoSelection = new Set();
+let branding = { ...DEFAULT_BRANDING };
+let brandingLoaded = false;
+let brandingTouched = false;
+let brandingStatus = { message: '', error: false };
+let brandingSaveToken = 0;
+let brandingSaveChain = Promise.resolve();
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
@@ -86,6 +95,82 @@ function toast(message, persistent = false) {
 function setSaveStatus(message, warning = false) {
   $('#save-status').textContent = message;
   $('#save-status').classList.toggle('warn', warning);
+}
+
+function applyBrandingState() {
+  applyBranding(branding, {
+    projectFavicon: project?.favicon || '',
+    projectTitle: project?.title || '',
+    brandLabel: `${branding.name} home`,
+  });
+}
+
+function brandingStatusText() {
+  return brandingStatus.message || 'Applies to this editor, the dashboard, and new browsers.';
+}
+
+function setBrandingStatus(message, error = false) {
+  brandingStatus = { message, error };
+  const status = document.querySelector('[data-branding-status]');
+  if (!status) return;
+  status.textContent = brandingStatusText();
+  status.classList.toggle('bad', error);
+}
+
+function updateBrandingForm(root = document) {
+  const nameInput = root.querySelector('[data-branding="name"]');
+  const titleInput = root.querySelector('[data-branding="tabTitle"]');
+  if (nameInput && document.activeElement !== nameInput) nameInput.value = branding.name;
+  if (titleInput && document.activeElement !== titleInput) titleInput.value = branding.tabTitle;
+  const logo = effectiveBrandLogo(branding, project?.favicon || '');
+  const preview = root.querySelector('[data-branding-preview]');
+  if (preview) {
+    preview.src = logo || '/favicon.svg';
+    preview.alt = branding.favicon ? 'Custom app logo'
+      : logo ? 'Project tab icon used until an app logo is saved'
+        : 'Default Homelab Atlas logo';
+  }
+  const clear = root.querySelector('[data-brand-logo-clear]');
+  if (clear) clear.hidden = !branding.favicon;
+  const status = root.querySelector('[data-branding-status]');
+  if (status) {
+    status.textContent = brandingStatusText();
+    status.classList.toggle('bad', brandingStatus.error);
+  }
+}
+
+function queueBrandingSave(next, { successMessage = '' } = {}) {
+  branding = next;
+  brandingTouched = true;
+  applyBrandingState();
+  updateBrandingForm();
+  setBrandingStatus('Saving app branding…');
+  const token = ++brandingSaveToken;
+  brandingSaveChain = brandingSaveChain.catch(() => {}).then(async () => {
+    await saveServerBranding(next);
+    if (token !== brandingSaveToken) return;
+    setBrandingStatus('Saved on this Atlas server for all devices.');
+    if (successMessage) toast(successMessage);
+  }).catch(error => {
+    if (token !== brandingSaveToken) return;
+    setBrandingStatus(`Could not save app branding: ${error.message}`, true);
+    toast(`App branding could not be saved: ${error.message}`, true);
+  });
+}
+
+async function loadBranding() {
+  if (brandingLoaded) return;
+  brandingLoaded = true;
+  try {
+    const saved = await fetchServerBranding();
+    if (brandingTouched) return;
+    branding = saved || { ...DEFAULT_BRANDING };
+    applyBrandingState();
+    updateBrandingForm();
+  } catch (error) {
+    if (brandingTouched) return;
+    setBrandingStatus(`Saved app branding could not be loaded: ${error.message}`, true);
+  }
 }
 
 function countServices(source = project) {
@@ -268,7 +353,7 @@ async function loadProject() {
 
 function render() {
   validateProject(project);
-  applyDocumentFavicon(project.favicon);
+  applyBrandingState();
   $('#project-title').value = project.title;
   $('#preview').innerHTML = renderProject(project);
   const selectedNode = selected && $(`#preview [data-device="${CSS.escape(selected)}"], #preview [data-network="${CSS.escape(selected)}"]`);
@@ -383,14 +468,53 @@ function renderInventory() {
 }
 
 function projectForm() {
-  return `<div class="settings"><section class="inspector-section"><h3>Appearance</h3><label>Subtitle<input data-project="subtitle" maxlength="120"></label><div class="form-grid"><label>Theme<select data-project="theme"><option value="navy">Navy</option><option value="light">Light</option><option value="midnight">Midnight</option></select></label><label>Columns<select data-project="columns"><option>1</option><option>2</option><option>3</option><option>4</option></select></label></div><label>Density<select data-project="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><div class="favicon-setting"><span class="favicon-preview"><img data-favicon-preview alt=""></span><div class="favicon-copy"><strong>Browser tab icon</strong><span>PNG, JPG, WebP, SVG, or ICO. Stored as a PNG up to 128px.</span><div class="favicon-actions"><button type="button" data-favicon-upload>Upload favicon</button><button type="button" class="danger" data-favicon-clear hidden>Remove</button></div></div></div><input data-favicon-file type="file" accept=".png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon" hidden></section><section class="inspector-section"><div class="section-head"><h3>VLANs</h3><button type="button" data-add-vlan>${icon('add')}VLAN</button></div><div id="vlan-list" class="vlan-list"></div></section><section class="inspector-section"><h3>Links</h3><button type="button" data-edit-connections>Edit connections</button></section></div>`;
+  return `<div class="settings"><section class="inspector-section"><h3>App branding</h3><p class="help">Shown in the editor, dashboard, and browser tabs on every device. Saved on this Atlas server.</p><label>App name<input data-branding="name" maxlength="60" autocomplete="off"></label><label>Browser tab title <span class="muted">Optional</span><input data-branding="tabTitle" maxlength="80" autocomplete="off" placeholder="Uses the app name"></label><div class="favicon-setting"><span class="favicon-preview"><img data-branding-preview alt=""></span><div class="favicon-copy"><strong>App logo</strong><span>Used in the header and browser tab. Falls back to the project tab icon. PNG, JPG, WebP, SVG, or ICO; stored as a PNG up to 128px.</span><div class="favicon-actions"><button type="button" data-brand-logo-upload>Upload logo</button><button type="button" class="danger" data-brand-logo-clear hidden>Remove</button></div></div></div><input data-brand-logo-file type="file" accept=".png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon" hidden><p class="help branding-status" data-branding-status role="status" aria-live="polite"></p></section><section class="inspector-section"><h3>Diagram appearance</h3><label>Subtitle<input data-project="subtitle" maxlength="120"></label><div class="form-grid"><label>Theme<select data-project="theme"><option value="navy">Navy</option><option value="light">Light</option><option value="midnight">Midnight</option></select></label><label>Columns<select data-project="columns"><option>1</option><option>2</option><option>3</option><option>4</option></select></label></div><label>Density<select data-project="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><div class="favicon-setting"><span class="favicon-preview"><img data-favicon-preview alt=""></span><div class="favicon-copy"><strong>Project tab icon</strong><span>Used when no app logo is saved. PNG, JPG, WebP, SVG, or ICO; stored as a PNG up to 128px.</span><div class="favicon-actions"><button type="button" data-favicon-upload>Upload tab icon</button><button type="button" class="danger" data-favicon-clear hidden>Remove</button></div></div></div><input data-favicon-file type="file" accept=".png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon" hidden></section><section class="inspector-section"><div class="section-head"><h3>VLANs</h3><button type="button" data-add-vlan>${icon('add')}VLAN</button></div><div id="vlan-list" class="vlan-list"></div></section><section class="inspector-section"><h3>Links</h3><button type="button" data-edit-connections>Edit connections</button></section></div>`;
 }
 
 function bindProjectForm(root) {
   for (const key of ['subtitle', 'theme', 'columns', 'density']) root.querySelector(`[data-project=${key}]`).value = project[key];
+  updateBrandingForm(root);
+  const nameInput = root.querySelector('[data-branding="name"]');
+  const titleInput = root.querySelector('[data-branding="tabTitle"]');
+  const saveFields = () => {
+    try {
+      queueBrandingSave(normalizeBranding({ ...branding, name: nameInput.value, tabTitle: titleInput.value }));
+    } catch (error) {
+      setBrandingStatus(error.message, true);
+      updateBrandingForm(root);
+      toast(error.message);
+    }
+  };
+  for (const input of [nameInput, titleInput]) {
+    input.addEventListener('input', () => { brandingTouched = true; });
+    input.addEventListener('change', saveFields);
+    input.addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      input.blur();
+    });
+  }
+  const logoInput = root.querySelector('[data-brand-logo-file]');
+  root.querySelector('[data-brand-logo-upload]').addEventListener('click', () => logoInput.click());
+  logoInput.addEventListener('change', async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const current = project;
+    try {
+      const favicon = await normalizeFaviconUpload(file);
+      if (project !== current) throw new Error('The project changed while the logo was loading. Try again.');
+      queueBrandingSave(normalizeBranding({ ...branding, favicon }), { successMessage: 'App logo saved for all devices and browsers.' });
+    } catch (error) {
+      toast(error.message);
+    }
+  });
+  root.querySelector('[data-brand-logo-clear]').addEventListener('click', () => {
+    queueBrandingSave(normalizeBranding({ ...branding, favicon: '' }), { successMessage: 'App logo removed for all devices and browsers.' });
+  });
   const faviconPreview = root.querySelector('[data-favicon-preview]');
   faviconPreview.src = project.favicon || '/favicon.svg';
-  faviconPreview.alt = project.favicon ? 'Custom browser tab icon' : 'Default Homelab Atlas icon';
+  faviconPreview.alt = project.favicon ? 'Custom project tab icon' : 'Default Homelab Atlas icon';
   root.querySelector('[data-favicon-clear]').hidden = !project.favicon;
   const faviconInput = root.querySelector('[data-favicon-file]');
   root.querySelector('[data-favicon-upload]').addEventListener('click', () => faviconInput.click());
@@ -401,14 +525,14 @@ function bindProjectForm(root) {
     const current = project;
     try {
       const favicon = await normalizeFaviconUpload(file);
-      if (project !== current) throw new Error('The project changed while the favicon was loading. Try again.');
-      if (change(candidate => { candidate.favicon = favicon; })) toast('Browser tab icon updated.');
+      if (project !== current) throw new Error('The project changed while the tab icon was loading. Try again.');
+      if (change(candidate => { candidate.favicon = favicon; })) toast('Project tab icon updated.');
     } catch (error) {
       toast(error.message);
     }
   });
   root.querySelector('[data-favicon-clear]').addEventListener('click', () => {
-    if (change(candidate => { candidate.favicon = ''; })) toast('Browser tab icon reset to default.');
+    if (change(candidate => { candidate.favicon = ''; })) toast('Project tab icon reset to default.');
   });
   root.querySelector('#vlan-list').replaceChildren(...project.vlans.map(vlan => {
     const row = document.createElement('div');
@@ -1333,4 +1457,5 @@ $('#conflict-load').addEventListener('click', async () => {
 $('#conflict-download').addEventListener('click', () => download(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), filename('.json')));
 
 buildTemplates();
+void loadBranding();
 loadProject();

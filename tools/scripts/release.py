@@ -18,6 +18,8 @@ FILES = (
     "app/main.go",
     "app/server.go",
     "app/default_project.go",
+    "app/branding.go",
+    "app/file_store.go",
     "deploy/Dockerfile",
     "compose.yaml",
     ".dockerignore",

@@ -2,11 +2,11 @@
 
 JSON is your editable project file. SVG and PNG are images of it. The dashboard is a read-only browser view of the same project.
 
-Atlas 0.13.0 saves schema version 8. Imports from schema versions 1 through 7 preserve inventory, custom logos, connections, manual layout, and service links. Discovery data from older projects is discarded. Valid schema-5 service links are kept; other older services gain an empty link. Schema-7 projects gain an empty favicon. Older Atlas versions cannot open schema version 8.
+Atlas 0.14.0 saves schema version 8. Imports from schema versions 1 through 7 preserve inventory, custom logos, connections, manual layout, and service links. Discovery data from older projects is discarded. Valid schema-5 service links are kept; other older services gain an empty link. Schema-7 projects gain an empty favicon. Older Atlas versions cannot open schema version 8.
 
 ## Browser autosave
 
-Changes autosave to `localStorage` in the current browser profile. The browser keeps separate storage for each hostname, port, and protocol. Autosave is not sent to the Go server. The only project data the server stores is the optional default project in the `atlas-data` volume.
+Changes autosave to `localStorage` in the current browser profile. The browser keeps separate storage for each hostname, port, and protocol. Autosave is not sent to the Go server. The only project data the server stores is the optional default project in the `atlas-data` volume. App branding is stored separately in that volume and is not part of a project backup.
 
 A project can appear missing after you:
 
@@ -22,6 +22,8 @@ Use **Save project** regularly, especially before updates or before changing the
 **File → Save as default project** stores the current project in the container's `atlas-data` volume. When a browser opens Atlas and has no autosaved project, it loads this default instead of the included example. Loading it does not immediately create an autosave; the first edit does. **File → Clear default project** removes it without changing the project currently open.
 
 The default is separate from autosave and from **Load example** / **Start empty**. Saving a default does not overwrite the current autosave, and loading a different project does not replace the default unless you save it explicitly. Because the default lives on the Atlas server, a new device or fresh browser profile opens it. A browser that already has an autosave keeps that autosave. See [Dashboard and default project](/dashboard).
+
+App branding is also separate. **Diagram settings → App branding** stores the app name, optional tab title, and app logo in `branding.json` in the same volume. It applies to every browser that opens the instance, regardless of which project is loaded. It is not included in **Save project** JSON, and changing it does not change the default project or any autosave.
 
 ## JSON backup and transfer
 

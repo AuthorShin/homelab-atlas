@@ -23,6 +23,7 @@ type atlasServer struct {
 	assets      map[string]staticAsset
 	assetPrefix string
 	defaults    *defaultProjectStore
+	branding    *jsonFileStore
 }
 
 type staticAsset struct {
@@ -36,7 +37,7 @@ type staticRepresentation struct {
 	etag string
 }
 
-func newAtlasServer(public fs.FS, defaults *defaultProjectStore) (*atlasServer, error) {
+func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore) (*atlasServer, error) {
 	assets, assetPrefix, err := loadStaticAssets(public)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,10 @@ func newAtlasServer(public fs.FS, defaults *defaultProjectStore) (*atlasServer, 
 	if defaults == nil {
 		defaults = &defaultProjectStore{}
 	}
-	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults}, nil
+	if branding == nil {
+		branding = &jsonFileStore{label: "App branding"}
+	}
+	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding}, nil
 }
 
 func loadStaticAssets(public fs.FS) (map[string]staticAsset, string, error) {
@@ -164,6 +168,10 @@ func (server *atlasServer) ServeHTTP(writer http.ResponseWriter, request *http.R
 		server.serveDefaultProject(writer, request)
 		return
 	}
+	if request.URL.Path == "/api/branding" {
+		server.serveBranding(writer, request)
+		return
+	}
 	server.serveStatic(writer, request)
 }
 
@@ -273,8 +281,8 @@ func writeBody(writer http.ResponseWriter, request *http.Request, status int, co
 	}
 }
 
-func serve(address string, public fs.FS, defaults *defaultProjectStore) error {
-	handler, err := newAtlasServer(public, defaults)
+func serve(address string, public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore) error {
+	handler, err := newAtlasServer(public, defaults, branding)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,20 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.14.0] - 2026-11-23
+
+### Added
+
+- Added app-wide branding under **Diagram settings → App branding**. The app name, optional browser-tab title, and uploaded logo are stored on the Atlas server and applied in the editor, dashboard, and browser tabs on every device.
+- Added `/api/branding` with atomic JSON storage in the `atlas-data` volume, strict validation, a 200 KB limit, and write-header and content-type checks.
+- Added an app logo fallback order: saved app logo, then the project tab icon, then the default Atlas mark.
+
+### Changed
+
+- Kept the existing per-project tab icon under **Diagram settings → Diagram appearance → Project tab icon**, where it is used when no app logo is saved.
+- Changing app branding no longer edits the current project or creates an autosave.
+- Updated documentation, troubleshooting, and release metadata for v0.14.0.
+
 ## [0.13.0] - 2026-11-22
 
 ### Added
@@ -192,3 +206,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.12.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.0
 [0.12.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.1
 [0.13.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.13.0
+[0.14.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.14.0

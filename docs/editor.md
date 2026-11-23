@@ -48,6 +48,14 @@ Choose **Dashboard** in the top bar, or open `/dashboard`, for a read-only view 
 
 Use **File → Save as default project** to make the current project the starting point for new devices and fresh browsers. The default is stored on the Atlas server, separately from autosave. When you open Atlas and no autosaved project exists, the default loads without immediately creating an autosave; your first edit does. **Clear default project** removes it without changing the project currently open in the tab.
 
+## App branding
+
+Choose **Diagram settings → App branding** to change the name shown beside the header logo, an optional browser-tab title, and an uploaded app logo. The logo is also used as the browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px. **Remove** clears the saved app logo.
+
+Branding is stored on the Atlas server in `branding.json`, so it applies to every browser and device that opens this instance. It is separate from the project, the browser autosave, and the shared default project. Changing branding does not edit the open project or create an autosave. If the data directory is unavailable, the editor keeps working with default branding and reports the storage problem in the branding section.
+
+The app logo wins in the header and tab. If no app logo is saved, Atlas uses the current project's tab icon, then the default Atlas mark. App branding is never drawn into SVG or PNG exports. See [Dashboard and default project](/dashboard) for the server storage and trust boundary.
+
 ## Appearance
 
 Choose **Diagram settings** in the canvas header to change:
@@ -56,10 +64,10 @@ Choose **Diagram settings** in the canvas header to change:
 - Navy, Light, or Midnight diagram theme
 - 1–4 columns
 - Comfortable or Compact density
-- browser tab icon
+- project tab icon
 - VLAN chip names and colors
 
-Use **Upload favicon** to give this project its own browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px in the project. **Remove** restores the default Atlas mark. The favicon appears in the editor and dashboard tabs and is not drawn into SVG or PNG exports.
+The **Project tab icon** under **Diagram appearance** belongs to the project. Use **Upload tab icon** to give this project its own browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px in the project. **Remove** restores the default Atlas mark. The project icon is used when no app logo is saved, appears in the editor and dashboard tabs, and is not drawn into SVG or PNG exports.
 
 The project title is in the top bar. These settings change your diagram. They are separate from the light/dark switch on this documentation site.
 

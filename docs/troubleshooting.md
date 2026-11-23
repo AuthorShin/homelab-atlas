@@ -11,7 +11,9 @@ Start with the [FAQ](/faq) for setup, dashboard, storage, layout, and saving exp
 | Another-tab conflict banner | Download the project in the current tab first. Then choose **Keep my edits** or **Load saved version** based on which copy you want. |
 | Import rejected | Make sure it is valid Homelab Atlas schema-version-8 JSON, or schema version 1 through 7 for migration, no larger than 2 MB. Unknown keys, duplicate or unsafe IDs, unknown logo IDs, bad references, malformed links, and invalid favicons are rejected. |
 | Custom logo upload rejected | Use a PNG, JPG, WebP, or safe SVG no larger than 2 MB, 4096px per side, or 16 million pixels. Active or externally loaded SVG content is rejected. |
-| Favicon upload rejected | Use a PNG, JPG, WebP, SVG, or ICO no larger than 2 MB, 4096px per side, or 16 million pixels. Atlas resizes it to a square PNG up to 128px. Active or externally loaded SVG content is rejected. |
+| Favicon or app-logo upload rejected | Use a PNG, JPG, WebP, SVG, or ICO no larger than 2 MB, 4096px per side, or 16 million pixels. Atlas resizes it to a square PNG up to 128px. Active or externally loaded SVG content is rejected. |
+| App branding does not change | Check the status line under **Diagram settings → App branding**. If it reports a storage error, make sure the container has a writable `atlas-data` volume or that `ATLAS_DATA_DIR` points to a writable directory, then check `docker compose logs atlas`. Refresh another open tab after saving. |
+| Header still shows the old logo | The saved app logo wins over the project tab icon. Remove the app logo to fall back to the project tab icon, or upload a new app logo. Reload a tab that was open before the change. |
 | Service link rejected | Leave the field empty or use a complete `http://` or `https://` URL up to 2,048 characters with no spaces. Bare hostnames, relative paths, and other schemes are rejected. |
 | Dashboard tile does not open | The service has no valid link, or the saved project is invalid. Check the link in the editor's **Apps** tab. Only linked services become anchors. |
 | Dashboard shows the example | This browser origin has no autosaved project, the server has no default project, and there is no older browser default. Open the editor, import or create a project, or save a default project. |
@@ -66,6 +68,16 @@ Atlas checks the entire import before replacing your current project. If the fil
 - collection or text limits described in [project format](/project-format)
 
 Older projects are validated in their original schema before migration. Schema 7 gains an empty favicon. Discovery data from schema 5 and 6 is removed; a malformed legacy binding still causes the import to be rejected. If the storage or import problem continues, replace any private details with fictional data before opening a [bug report](https://github.com/AuthorShin/homelab-atlas/issues/new?template=bug_report.yml).
+
+## App branding
+
+The editor and dashboard read app branding from the same Atlas server. The app name replaces the header label, the optional tab title changes the browser tab, and the app logo becomes both the header mark and tab icon. Branding is stored in `branding.json` in the `atlas-data` volume and is separate from project JSON.
+
+- If the app logo upload or name change reports a storage error, the rest of Atlas still works with the previous or default branding.
+- If another browser still shows the old branding, refresh it or switch away from and back to the tab.
+- If no app logo is saved, Atlas uses the project tab icon, then the default Atlas mark.
+- Clearing site data removes browser autosave but not server branding.
+- Removing the `atlas-data` volume removes branding and the shared default project.
 
 ## Dashboard and default project
 

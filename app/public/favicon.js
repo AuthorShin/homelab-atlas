@@ -67,14 +67,14 @@ export function validateFaviconDataUrl(dataUrl) {
   return true;
 }
 
-export function applyDocumentFavicon(dataUrl) {
-  if (typeof document === 'undefined') return;
-  let link = document.getElementById('app-favicon');
+export function applyDocumentFavicon(dataUrl, documentRef = globalThis.document) {
+  if (!documentRef) return;
+  let link = documentRef.getElementById('app-favicon');
   if (!link) {
-    link = document.createElement('link');
+    link = documentRef.createElement('link');
     link.id = 'app-favicon';
     link.rel = 'icon';
-    document.head.append(link);
+    documentRef.head.append(link);
   }
   const custom = typeof dataUrl === 'string' && dataUrl !== '';
   link.type = custom ? 'image/png' : 'image/svg+xml';

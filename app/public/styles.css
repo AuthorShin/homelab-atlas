@@ -42,6 +42,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .brand-mark { display: grid; width: 18px; height: 18px; grid-template-columns: repeat(3, 4px); align-items: end; gap: 2px; padding: 1px; }
 .brand-mark i { display: block; border-radius: 2px; background: var(--accent); }
 .brand-mark i:nth-child(1) { height: 8px; } .brand-mark i:nth-child(2) { height: 15px; } .brand-mark i:nth-child(3) { height: 11px; }
+.brand-mark.has-logo { width: 22px; height: 22px; padding: 0; border-radius: 4px; background-position: center; background-repeat: no-repeat; background-size: contain; }
+.brand-mark.has-logo i { display: none; }
 .topbar-divider { width: 1px; height: 22px; background: var(--line); }
 .project-identity { display: flex; min-width: 130px; max-width: 520px; flex: 1; align-items: center; gap: 9px; }
 .title-field { min-width: 70px; flex: 1; }
@@ -165,6 +167,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .favicon-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .favicon-actions button { min-height: 28px; font-size: 11px; }
 .favicon-actions [hidden] { display: none; }
+.branding-status { margin: 6px 0 0; font-size: 10px; }
+.branding-status.bad { color: var(--danger); }
 .network-logo-field { display: grid; gap: 5px; margin-top: 10px; }
 .network-logo-field > span { font-size: 11px; font-weight: 650; }
 .network-logo-field button { justify-content: flex-start; width: 100%; min-height: 46px; text-align: left; }

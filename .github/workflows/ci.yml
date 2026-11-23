@@ -34,6 +34,13 @@ jobs:
                 http://127.0.0.1:8080/api/default-project
               curl --fail --silent --show-error http://127.0.0.1:8080/api/default-project | grep -F '"title":"CI"'
               curl --fail --silent --show-error -X DELETE -H 'X-Atlas-Default: 1' http://127.0.0.1:8080/api/default-project
+              curl --fail --silent --show-error -X PUT \
+                -H 'Content-Type: application/json' \
+                -H 'X-Atlas-Branding: 1' \
+                --data-binary '{"name":"CI Atlas","tabTitle":"CI","favicon":""}' \
+                http://127.0.0.1:8080/api/branding
+              curl --fail --silent --show-error http://127.0.0.1:8080/api/branding | grep -F '"name":"CI Atlas"'
+              curl --fail --silent --show-error -X DELETE -H 'X-Atlas-Branding: 1' http://127.0.0.1:8080/api/branding
               exit 0
             fi
             sleep 1

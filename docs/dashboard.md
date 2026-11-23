@@ -13,7 +13,15 @@ The dashboard reads:
 3. an older browser default, when neither exists
 4. the included example, when none exists
 
-The source is shown in the top bar and in a notice above the diagram. **Refresh** re-reads browser storage and the server default. The dashboard also updates when another tab saves the project, when storage changes, and when the tab becomes visible again. A custom browser-tab icon saved with the project is applied to the dashboard tab too; projects without one use the default Atlas mark.
+The source is shown in the top bar and in a notice above the diagram. **Refresh** re-reads browser storage, the server default, and app branding. The dashboard also updates when another tab saves the project, when storage changes, and when the tab becomes visible again. A custom browser-tab icon saved with the project is applied to the dashboard tab when no app logo is saved; otherwise the app logo or default Atlas mark is used.
+
+## App branding
+
+Open **Diagram settings → App branding** in the editor to set the app name, optional browser-tab title, and header logo. The dashboard reads the same branding from the Atlas server, so the name and logo follow you to a new browser or device even when that browser has its own project autosave.
+
+Branding is stored in `branding.json` in the `atlas-data` volume and served by `/api/branding`. It is separate from project JSON. Loading a project, saving a default, or importing JSON does not change it, and changing branding does not create or overwrite a browser autosave. The app logo is used in the header and tab first; if none is saved, Atlas falls back to the project tab icon and then the default Atlas mark.
+
+The endpoint is not authenticated and Atlas has no user roles. Anyone who can reach the instance can read or replace the shared default project and app branding. Keep Atlas on localhost or a trusted LAN.
 
 ## Service links
 
