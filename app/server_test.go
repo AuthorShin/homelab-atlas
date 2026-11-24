@@ -20,7 +20,7 @@ func testAtlasServer(t *testing.T) *atlasServer {
 		t.Fatal(err)
 	}
 	directory := t.TempDir()
-	server, err := newAtlasServer(public, newDefaultProjectStore(directory), newBrandingStore(directory))
+	server, err := newAtlasServer(public, newDefaultProjectStore(directory), newBrandingStore(directory), newUploadStore(directory))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,12 +221,17 @@ func TestStaticServerHealthAssetsAndRestrictions(t *testing.T) {
 		{"/dashboard/extra", http.StatusNotFound, "text/plain"},
 		{"/model.js", http.StatusOK, "text/javascript"},
 		{"/dashboard-model.js", http.StatusOK, "text/javascript"},
+		{"/uploads.js", http.StatusOK, "text/javascript"},
+		{"/appearance.js", http.StatusOK, "text/javascript"},
 		{"/logos/docker.svg", http.StatusOK, "image/svg+xml"},
 		{"/healthz", http.StatusOK, "text/plain"},
 		{"/licenses/", http.StatusNotFound, "text/plain"},
 		{"/../main.go", http.StatusNotFound, "text/plain"},
 		{"/.git/config", http.StatusNotFound, "text/plain"},
 		{"/api/discovery/sources", http.StatusNotFound, "text/plain"},
+		{"/api/default-project/", http.StatusNotFound, "text/plain"},
+		{"/api/branding/", http.StatusNotFound, "text/plain"},
+		{"/api/uploads/", http.StatusNotFound, "text/plain"},
 	} {
 		record := request(server, http.MethodGet, item.path, nil, nil)
 		if record.Code != item.status || !strings.HasPrefix(record.Header().Get("Content-Type"), item.contentType) {

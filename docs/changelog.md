@@ -2,6 +2,22 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.15.0] - 2026-11-24
+
+### Added
+
+- Added group ordering with up/down buttons in the device inspector's **Apps** tab, plus an optional per-group logo shown to the left of the group name, including for unnamed groups.
+- Added a per-device **Side-by-side groups** toggle that uses the **Columns** value from **Diagram appearance** (1 → 1, 2 → 2, 3 → 3, 4 → 4).
+- Added project-only **Custom CSS** and a project **Background image** setting. Custom CSS is stored in project JSON and applies in the editor and dashboard; the background image is stored on the Atlas server.
+- Added **Network row** and **VLAN row** placement settings (Top or Bottom, independently) under **Diagram appearance**.
+- Added `/api/uploads` for server-side image uploads. New app logos, project tab icons, custom logos, group logos, and background images live in the `atlas-data` volume under `uploads/`. Legacy data URLs remain valid.
+- Added schema version 9 with `css`, `background`, `networkRow`, `vlanRow`, `device.groupLayout`, and `group.logo`. Schema-8 projects migrate automatically.
+
+### Changed
+
+- Image uploads are addressed by a server URL instead of being embedded as data URLs. The browser inlines them when exporting so logos still appear in SVG and PNG images.
+- The Content-Security-Policy allows inline styles for project CSS. Custom CSS, the background image, service links, favicons, and app branding are still excluded from exported SVG and PNG files.
+
 ## [0.14.0] - 2026-11-23
 
 ### Added
@@ -207,3 +223,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.12.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.1
 [0.13.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.13.0
 [0.14.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.14.0
+[0.15.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.15.0

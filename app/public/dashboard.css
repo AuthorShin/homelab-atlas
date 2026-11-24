@@ -134,6 +134,13 @@ button:focus-visible, a.button:focus-visible { outline: 2px solid var(--accent);
   pointer-events: none;
 }
 
+.has-project-background .stage {
+  background-image: linear-gradient(#0d1119d9,#0d1119d9), var(--project-background-image);
+  background-position: center;
+  background-size: cover;
+}
+.has-project-background .stage::before { opacity: .12; }
+
 #diagram {
   position: relative;
   z-index: 1;

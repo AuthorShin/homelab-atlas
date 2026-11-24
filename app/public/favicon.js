@@ -1,4 +1,5 @@
 import { svgTextHasUnsafeContent } from './custom-logos.js';
+import { isUploadReference } from './uploads.js';
 
 export const FAVICON_LIMITS = {
   uploadBytes: 2_000_000,
@@ -63,6 +64,7 @@ function parsePng(dataUrl) {
 
 export function validateFaviconDataUrl(dataUrl) {
   if (dataUrl === '') return true;
+  if (isUploadReference(dataUrl, '.png')) return true;
   parsePng(dataUrl);
   return true;
 }
@@ -77,7 +79,7 @@ export function applyDocumentFavicon(dataUrl, documentRef = globalThis.document)
     documentRef.head.append(link);
   }
   const custom = typeof dataUrl === 'string' && dataUrl !== '';
-  link.type = custom ? 'image/png' : 'image/svg+xml';
+  link.type = custom ? (dataUrl.endsWith('.svg') || dataUrl.startsWith('data:image/svg+xml') ? 'image/svg+xml' : 'image/png') : 'image/svg+xml';
   link.href = custom ? dataUrl : DEFAULT_FAVICON_PATH;
 }
 

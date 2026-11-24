@@ -21,6 +21,7 @@ class ReleaseTests(unittest.TestCase):
             "app/default_project.go": "package main\n",
             "app/branding.go": "package main\n",
             "app/file_store.go": "package main\n",
+            "app/uploads.go": "package main\n",
             "app/main_test.go": "package main\n",
             "deploy/Dockerfile": "FROM golang:1.26-alpine\n",
             "compose.yaml": "services: {}\n",

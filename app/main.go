@@ -48,7 +48,8 @@ func run(arguments []string) error {
 	dataDirectory := environmentDefault("ATLAS_DATA_DIR", "data")
 	defaults := newDefaultProjectStore(dataDirectory)
 	branding := newBrandingStore(dataDirectory)
-	return serve(address, public, defaults, branding)
+	uploads := newUploadStore(dataDirectory)
+	return serve(address, public, defaults, branding, uploads)
 }
 
 func environmentDefault(name, fallback string) string {

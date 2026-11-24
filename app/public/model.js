@@ -1,8 +1,9 @@
 import { LOGO_IDS, logoDataUri, logoPlate, networkLogoId } from './catalog.js';
 import { validateCustomLogos } from './custom-logos.js';
 import { validateFaviconDataUrl } from './favicon.js';
+import { isImageReference } from './uploads.js';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 export const THEMES = ['navy', 'light', 'midnight'];
 export const DENSITIES = ['comfortable', 'compact'];
 export const LIMITS = {
@@ -15,8 +16,10 @@ export const LIMITS = {
   text: 120,
   link: 2048,
   hardware: 12,
+  css: 20_000,
+  imageReference: 1_200_000,
 };
-const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7];
+const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8];
 const LEGACY_BINDING_LIMIT = 1600;
 
 const ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
@@ -52,7 +55,7 @@ function services(prefix, items) {
 
 export function sampleProject() {
   return {
-    schemaVersion: 8,
+    schemaVersion: 9,
     revision: 1,
     title: 'Home Lab',
     subtitle: 'Private infrastructure · Local services · Built to last',
@@ -60,6 +63,10 @@ export function sampleProject() {
     columns: 3,
     density: 'comfortable',
     favicon: '',
+    css: '',
+    background: '',
+    networkRow: 'top',
+    vlanRow: 'top',
     layout: { mode: 'auto', cards: [] },
     customLogos: [],
     networks: [
@@ -77,35 +84,35 @@ export function sampleProject() {
     ],
     devices: [
       {
-        id: 'dev-storage', name: 'Atlas', role: 'TrueNAS / storage', icon: 'truenas', accent: '#55d6c9', network: '20 Servers',
+        id: 'dev-storage', name: 'Atlas', role: 'TrueNAS / storage', icon: 'truenas', accent: '#55d6c9', network: '20 Servers', groupLayout: 'stacked',
         hardware: ['i5-13500 · 32 GB RAM', '5 × 26 TB · RAIDZ1', '2 × 2 TB NVMe · mirror'],
         groups: [
-          { id: 'grp-infra', name: 'Containers', services: services('atlas-a', [['nginx-proxy-manager', 'Proxy Manager'], ['adguard-home', 'AdGuard'], ['syncthing', 'DNS Sync'], ['portainer', 'Portainer'], ['dockge', 'Dockge'], ['homepage', 'Homepage'], ['gitea', 'Gitea'], ['uptime-kuma', 'Uptime Kuma'], ['searxng', 'SearXNG'], ['xwiki', 'XWiki'], ['docmost', 'Docmost'], ['prometheus', 'Metrics'], ['freshrss', 'FreshRSS'], ['paperless-ngx', 'Paperless'], ['immich', 'Immich'], ['nextcloud', 'Nextcloud'], ['vaultwarden', 'Vaultwarden'], ['tailscale', 'Tailscale'], ['nginx', 'Admin ingress'], ['wireguard', 'Net guards']]) },
-          { id: 'grp-cloud', name: 'Data services', services: services('atlas-b', [['postgresql', 'Postgres', 2], ['redis', 'Redis'], ['minio', 'MinIO'], ['restic', 'Backups']]) },
+          { id: 'grp-infra', name: 'Containers', logo: '', services: services('atlas-a', [['nginx-proxy-manager', 'Proxy Manager'], ['adguard-home', 'AdGuard'], ['syncthing', 'DNS Sync'], ['portainer', 'Portainer'], ['dockge', 'Dockge'], ['homepage', 'Homepage'], ['gitea', 'Gitea'], ['uptime-kuma', 'Uptime Kuma'], ['searxng', 'SearXNG'], ['xwiki', 'XWiki'], ['docmost', 'Docmost'], ['prometheus', 'Metrics'], ['freshrss', 'FreshRSS'], ['paperless-ngx', 'Paperless'], ['immich', 'Immich'], ['nextcloud', 'Nextcloud'], ['vaultwarden', 'Vaultwarden'], ['tailscale', 'Tailscale'], ['nginx', 'Admin ingress'], ['wireguard', 'Net guards']]) },
+          { id: 'grp-cloud', name: 'Data services', logo: '', services: services('atlas-b', [['postgresql', 'Postgres', 2], ['redis', 'Redis'], ['minio', 'MinIO'], ['restic', 'Backups']]) },
         ],
       },
       {
-        id: 'dev-media', name: 'Relay', role: 'Unraid / media + voice', icon: 'unraid', accent: '#f28a61', network: '20 Servers',
+        id: 'dev-media', name: 'Relay', role: 'Unraid / media + voice', icon: 'unraid', accent: '#f28a61', network: '20 Servers', groupLayout: 'stacked',
         hardware: ['i9-10900K · 32 GB RAM', 'RTX 3060 · 12 GB', '7 data HDDs + 2 parity · NVMe mirror'],
         groups: [
-          { id: 'grp-media', name: 'Containers', services: services('relay-a', [['jellyfin', 'Jellyfin'], ['sonarr', 'Sonarr', 3], ['radarr', 'Radarr'], ['prowlarr', 'Prowlarr'], ['bazarr', 'Bazarr', 3], ['seerr', 'Seerr'], ['sabnzbd', 'SABnzbd'], ['qbittorrent', 'qBittorrent'], ['tdarr', 'Tdarr', 3], ['open-webui', 'Open WebUI'], ['adguard-home', 'AdGuard'], ['grafana', 'Grafana'], ['postgresql', 'Postgres'], ['home-assistant', 'HA helper'], ['generic', 'llama.cpp'], ['music-assistant', 'Music Assistant'], ['mosquitto', 'Mosquitto'], ['node-red', 'Node-RED']]) },
-          { id: 'grp-ha', name: 'Home automation', services: services('relay-b', [['home-assistant', 'Home Assistant'], ['node-red', 'Node-RED'], ['music-assistant', 'Music'], ['mosquitto', 'MQTT']]) },
+          { id: 'grp-media', name: 'Containers', logo: '', services: services('relay-a', [['jellyfin', 'Jellyfin'], ['sonarr', 'Sonarr', 3], ['radarr', 'Radarr'], ['prowlarr', 'Prowlarr'], ['bazarr', 'Bazarr', 3], ['seerr', 'Seerr'], ['sabnzbd', 'SABnzbd'], ['qbittorrent', 'qBittorrent'], ['tdarr', 'Tdarr', 3], ['open-webui', 'Open WebUI'], ['adguard-home', 'AdGuard'], ['grafana', 'Grafana'], ['postgresql', 'Postgres'], ['home-assistant', 'HA helper'], ['generic', 'llama.cpp'], ['music-assistant', 'Music Assistant'], ['mosquitto', 'Mosquitto'], ['node-red', 'Node-RED']]) },
+          { id: 'grp-ha', name: 'Home automation', logo: '', services: services('relay-b', [['home-assistant', 'Home Assistant'], ['node-red', 'Node-RED'], ['music-assistant', 'Music'], ['mosquitto', 'MQTT']]) },
         ],
       },
       {
-        id: 'dev-ai', name: 'Vector', role: 'Fedora / local AI', icon: 'amd', accent: '#a78bfa', network: '40 Lab',
+        id: 'dev-ai', name: 'Vector', role: 'Fedora / local AI', icon: 'amd', accent: '#a78bfa', network: '40 Lab', groupLayout: 'stacked',
         hardware: ['Ryzen AI Max+ 395', '128 GB unified memory', '2 TB NVMe'],
-        groups: [{ id: 'grp-ai', name: 'Inference', services: services('vector', [['ollama', 'Ollama'], ['open-webui', 'Open WebUI'], ['qwen', 'Qwen', 3], ['n8n', 'n8n'], ['podman', 'Podman']]) }],
+        groups: [{ id: 'grp-ai', name: 'Inference', logo: '', services: services('vector', [['ollama', 'Ollama'], ['open-webui', 'Open WebUI'], ['qwen', 'Qwen', 3], ['n8n', 'n8n'], ['podman', 'Podman']]) }],
       },
       {
-        id: 'dev-edge', name: 'Edge Pi', role: 'Raspberry Pi / edge', icon: 'raspberry-pi', accent: '#ef6f91', network: '30 IoT',
+        id: 'dev-edge', name: 'Edge Pi', role: 'Raspberry Pi / edge', icon: 'raspberry-pi', accent: '#ef6f91', network: '30 IoT', groupLayout: 'stacked',
         hardware: ['Pi 4 · 4 GB RAM'],
-        groups: [{ id: 'grp-edge', name: 'Native services', services: services('edge', [['nginx', 'nginx'], ['cloudflare', 'Cloudflare'], ['tailscale', 'Tailscale']]) }],
+        groups: [{ id: 'grp-edge', name: 'Native services', logo: '', services: services('edge', [['nginx', 'nginx'], ['cloudflare', 'Cloudflare'], ['tailscale', 'Tailscale']]) }],
       },
       {
-        id: 'dev-remote', name: 'Remote', role: 'Friend-owned node', icon: 'tailscale', accent: '#f0a36a', network: '50 Guest',
+        id: 'dev-remote', name: 'Remote', role: 'Friend-owned node', icon: 'tailscale', accent: '#f0a36a', network: '50 Guest', groupLayout: 'stacked',
         hardware: ['K3s · remote tunnel'],
-        groups: [{ id: 'grp-remote', name: 'Remote stack', services: services('remote', [['docmost', 'Docmost'], ['nextcloud', 'Files'], ['postgresql', 'Postgres'], ['redis', 'Redis']]) }],
+        groups: [{ id: 'grp-remote', name: 'Remote stack', logo: '', services: services('remote', [['docmost', 'Docmost'], ['nextcloud', 'Files'], ['postgresql', 'Postgres'], ['redis', 'Redis']]) }],
       },
     ],
     connections: [
@@ -137,11 +144,19 @@ export function parseProject(text) {
     if (version < 3) migrated.networks = migrated.networks.map(network => ({ ...network, icon: '', secondaryIcon: '' }));
     if (version < 4) migrated.customLogos = [];
     if (version < 8) migrated.favicon = '';
+    if (version < 9) {
+      migrated.css = '';
+      migrated.background = '';
+      migrated.networkRow = 'top';
+      migrated.vlanRow = 'top';
+    }
     if (version >= 5) delete migrated.discovery;
     for (const device of migrated.devices) {
+      if (version < 9) device.groupLayout = 'stacked';
       for (const group of device.groups) {
+        if (version < 9) group.logo = '';
         for (const service of group.services) {
-          if (version === 7 || (version === 5 && typeof service.link === 'string')) continue;
+          if (version === 7 || version === 8 || (version === 5 && typeof service.link === 'string')) continue;
           service.link = '';
         }
       }
@@ -166,7 +181,7 @@ function validateProjectVersion(project, version) {
     if (!object || typeof object !== 'object' || Array.isArray(object) || Object.keys(object).some(key => !allowed.includes(key))) fail(`${label} has an invalid structure.`);
   };
   if (!project || typeof project !== 'object' || Array.isArray(project)) fail('Project must be an object.');
-  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
+  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 9 ? ['css', 'background', 'networkRow', 'vlanRow'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
   exact(project, keys, 'Project');
   if (project.schemaVersion !== version) fail(`Unsupported schema version: ${project.schemaVersion ?? 'missing'}.`);
   string(project.title, 'Title');
@@ -176,6 +191,12 @@ function validateProjectVersion(project, version) {
   if (!DENSITIES.includes(project.density)) fail('Unknown density.');
   if (!Number.isInteger(project.columns) || project.columns < 1 || project.columns > 4) fail('Columns must be 1–4.');
   if (version >= 8) validateFaviconDataUrl(project.favicon);
+  if (version >= 9) {
+    if (typeof project.css !== 'string' || project.css.length > LIMITS.css) fail(`Custom CSS must be text under ${LIMITS.css + 1} characters.`);
+    if (!isImageReference(project.background, LIMITS.imageReference)) fail('Background must be empty or a valid image upload reference.');
+    if (!['top', 'bottom'].includes(project.networkRow)) fail('Network row must be top or bottom.');
+    if (!['top', 'bottom'].includes(project.vlanRow)) fail('VLAN row must be top or bottom.');
+  }
   for (const [key, maximum] of [['devices', LIMITS.devices], ['networks', LIMITS.networks], ['vlans', LIMITS.networks], ['connections', LIMITS.connections]]) {
     if (!Array.isArray(project[key]) || project[key].length > maximum) fail(`Invalid or excessive ${key}.`);
   }
@@ -203,16 +224,18 @@ function validateProjectVersion(project, version) {
     if (!COLOR_RE.test(vlan.color)) fail('Invalid VLAN color.');
   }
   for (const device of project.devices) {
-    exact(device, ['id', 'name', 'role', 'icon', 'accent', 'network', 'hardware', 'groups'], 'Device');
+    exact(device, ['id', 'name', 'role', 'icon', 'accent', 'network', 'hardware', ...(version >= 9 ? ['groupLayout'] : []), 'groups'], 'Device');
     addId(device.id, 'Device'); string(device.name); string(device.role); string(device.network);
     if (!validLogo(device.icon)) fail(`Unknown logo: ${device.icon}.`);
     if (!COLOR_RE.test(device.accent)) fail('Invalid device color.');
+    if (version >= 9 && !['stacked', 'sideBySide'].includes(device.groupLayout)) fail('Group layout must be stacked or sideBySide.');
     if (!Array.isArray(device.hardware) || device.hardware.length > LIMITS.hardware) fail('Invalid hardware facts.');
     device.hardware.forEach(fact => string(fact, 'Hardware fact'));
     if (!Array.isArray(device.groups) || device.groups.length > LIMITS.groups) fail('Invalid service groups.');
     for (const group of device.groups) {
-      exact(group, ['id', 'name', 'services'], 'Group');
+      exact(group, ['id', 'name', ...(version >= 9 ? ['logo'] : []), 'services'], 'Group');
       addId(group.id, 'Group'); string(group.name); groupCount += 1;
+      if (version >= 9 && !isImageReference(group.logo, LIMITS.imageReference)) fail('Group logo must be empty or a valid image upload reference.');
       if (!Array.isArray(group.services)) fail('Invalid services.');
       for (const service of group.services) {
         exact(service, version >= 7 ? ['id', 'logo', 'name', 'count', 'link'] : version === 5 ? ['id', 'logo', 'name', 'count', 'link'] : ['id', 'logo', 'name', 'count'], 'Service');
@@ -341,36 +364,57 @@ function hardwareGeometry(device, fact, index, width, compact) {
   return { label, value, labelWidth, mark, markWidth, chars, lines, lineHeight, size: index ? (compact ? 14 : 15) : (compact ? 15 : 16), height: lines.length * lineHeight + (index ? 5 : 9) };
 }
 
-function groupGeometry(group, width, compact, secondary, index) {
-  const inset = index > 0;
-  const contentWidth = width - (inset ? 20 : 0);
-  const nameChars = Math.max(10, Math.floor(contentWidth / 7));
+function groupGeometry(group, width, compact, secondary, index, { inset = index > 0 } = {}) {
+  const padding = inset ? 10 : 0;
+  const contentWidth = width - padding * 2;
+  const logoSize = group.logo ? (compact ? 16 : 18) : 0;
+  const logoGap = logoSize ? 6 : 0;
+  const nameWidth = Math.max(40, contentWidth - logoSize - logoGap);
+  const nameChars = Math.max(8, Math.floor(nameWidth / 7));
   const nameLines = wrapText(group.name.toUpperCase(), nameChars, 2);
-  const headerHeight = nameLines.length * (compact ? 15 : 17) + (compact ? 9 : 11);
+  const headerHeight = Math.max(logoSize, nameLines.length * (compact ? 15 : 17)) + (compact ? 9 : 11);
   let mode = 'grid';
   let columns = width < 380 ? 3 : 4;
   let itemHeight = compact ? 72 : 78;
-  if (group.services.length <= 2) {
+  if (width < 190 || group.services.length <= 2) {
     mode = 'rows'; columns = 1; itemHeight = compact ? 52 : 58;
   } else if (group.services.length <= 4) {
     columns = width < 380 ? group.services.length : 4;
     itemHeight = compact ? 72 : 78;
   }
   const rows = Math.ceil(group.services.length / columns);
-  const padding = inset ? 10 : 0;
   const gap = compact ? 6 : 8;
-  return { mode, columns, itemHeight, rows, inset, padding, gap, nameChars, nameLines, headerHeight, contentWidth, height: headerHeight + rows * itemHeight + Math.max(0, rows - 1) * gap + padding * 2 + (compact ? 8 : 12) };
+  return { mode, columns, itemHeight, rows, inset, padding, gap, nameChars, nameLines, headerHeight, contentWidth, logoSize, logoGap, height: headerHeight + rows * itemHeight + Math.max(0, rows - 1) * gap + padding * 2 + (compact ? 8 : 12) };
 }
 
-function cardMetrics(device, width, compact, secondary) {
+function cardMetrics(device, width, compact, secondary, groupColumns = 1) {
   const name = nameGeometry(device, width, secondary);
   const headerHeight = (secondary ? (compact ? 85 : 89) : (compact ? 104 : 116)) + (name.lines - 1) * name.lineHeight;
   const hardwareFacts = device.hardware.map((fact, index) => hardwareGeometry(device, fact, index, width - 40, compact));
   const hardwareHeight = hardwareFacts.reduce((sum, fact) => sum + fact.height, 0) + (hardwareFacts.length > 1 ? 14 : hardwareFacts.length ? 6 : 0);
-  const groups = device.groups.map((group, index) => groupGeometry(group, width - 40, compact, secondary, index));
-  const groupsHeight = groups.reduce((sum, group) => sum + group.height, 0);
+  const innerWidth = width - 40;
+  const columns = device.groupLayout === 'sideBySide'
+    ? Math.max(1, Math.min(groupColumns, Math.max(1, device.groups.length)))
+    : 1;
+  const groupGap = compact ? 8 : 10;
+  const groupWidth = columns === 1 ? innerWidth : (innerWidth - groupGap * (columns - 1)) / columns;
+  const groups = [];
+  let groupsHeight = 0;
+  for (let index = 0; index < device.groups.length; index += columns) {
+    const row = device.groups.slice(index, index + columns);
+    const geometries = row.map((group, offset) => groupGeometry(group, groupWidth, compact, secondary, index + offset, { inset: columns > 1 || index + offset > 0 }));
+    const rowHeight = Math.max(0, ...geometries.map(group => group.height));
+    geometries.forEach((geometry, offset) => groups.push({
+      ...geometry,
+      x: offset * (groupWidth + groupGap),
+      y: groupsHeight,
+      w: groupWidth,
+      h: rowHeight,
+    }));
+    groupsHeight += rowHeight + (index + columns < device.groups.length ? groupGap : 0);
+  }
   const contentHeight = headerHeight + hardwareHeight + groupsHeight;
-  return { secondary, compact, name, hardwareFacts, headerHeight, hardwareHeight, groups, contentHeight, height: Math.max(compact ? 190 : 212, contentHeight + (compact ? 12 : 18)) };
+  return { secondary, compact, name, hardwareFacts, headerHeight, hardwareHeight, groups, groupsHeight, contentHeight, height: Math.max(compact ? 190 : 212, contentHeight + (compact ? 12 : 18)) };
 }
 
 export function serviceTileGeometry(name, width, height, secondary = false) {
@@ -413,37 +457,25 @@ export function layoutProject(project) {
   const titleMaxChars = oneColumnHeader ? Math.max(9, Math.floor(contentWidth / 39)) : Math.max(10, Math.floor((contentWidth - 420) / 39));
   const titleLines = wrapText(project.title, titleMaxChars, 2).length;
   const headerHeight = (oneColumnHeader ? 252 : 160) + (titleLines - 1) * 74;
-  const networkY = headerHeight + 22;
   const networkGap = 18;
   const networksPerRow = Math.min(5, Math.max(1, project.networks.length), Math.max(1, Math.floor((contentWidth + networkGap) / (200 + networkGap))));
   const networkWidth = (contentWidth - networkGap * (networksPerRow - 1)) / networksPerRow;
   const networkRows = Math.ceil(project.networks.length / networksPerRow);
   const networkHeight = project.networks.length ? networkRows * 96 + Math.max(0, networkRows - 1) * 14 : 0;
-  const networks = project.networks.map((network, index) => ({
-    id: network.id,
-    x: margin + (index % networksPerRow) * (networkWidth + networkGap),
-    y: networkY + Math.floor(index / networksPerRow) * 110,
-    w: networkWidth,
-    h: 96,
-  }));
-
   const vlanGap = 10;
   const vlansPerRow = Math.min(6, Math.max(1, project.vlans.length), Math.max(1, Math.floor((contentWidth + vlanGap) / (130 + vlanGap))));
   const vlanWidth = (contentWidth - vlanGap * (vlansPerRow - 1)) / vlansPerRow;
   const vlanRows = Math.ceil(project.vlans.length / vlansPerRow);
-  const vlanY = networkY + networkHeight + (project.networks.length && project.vlans.length ? 30 : 0);
   const vlanHeight = project.vlans.length ? vlanRows * 46 + Math.max(0, vlanRows - 1) * 10 : 0;
-  const vlans = project.vlans.map((vlan, index) => ({
-    id: vlan.id,
-    x: margin + (index % vlansPerRow) * (vlanWidth + vlanGap),
-    y: vlanY + Math.floor(index / vlansPerRow) * 56,
-    w: vlanWidth,
-    h: 46,
-  }));
-  const vlanGaps = Array.from({ length: Math.max(0, vlansPerRow - 1) }, (_, index) => margin + (index + 1) * vlanWidth + index * vlanGap + vlanGap / 2);
-  const vlanRouteXs = vlanGaps.length ? vlanGaps : [width - margin / 2];
-  const routingLaneY = Math.max(networkY + networkHeight, vlanY + vlanHeight) + 28;
-  const cardsY = routingLaneY + 34;
+  const networkBottom = project.networkRow === 'bottom';
+  const vlanBottom = project.vlanRow === 'bottom';
+  const topNetworkY = headerHeight + 22;
+  const topVlanY = topNetworkY + networkHeight + (project.networks.length && project.vlans.length ? 30 : 0);
+  const topRowsBottom = Math.max(
+    project.networks.length && !networkBottom ? topNetworkY + networkHeight : headerHeight,
+    project.vlans.length && !vlanBottom ? topVlanY + vlanHeight : headerHeight,
+  );
+  const cardsY = topRowsBottom + (project.networks.length && !networkBottom ? 62 : 28);
   const columnX = [];
   widths.reduce((x, cardWidth, index) => {
     columnX[index] = x;
@@ -455,11 +487,11 @@ export function layoutProject(project) {
     const secondary = index >= columns && device.hardware.length <= 1 && device.groups.length === 1 && serviceCount <= 4;
     let column = index < columns ? index : columnBottoms.indexOf(Math.min(...columnBottoms));
     if (index >= columns && columns === 3 && secondary) {
-      const narrowMetrics = cardMetrics(device, widths[2], compact, true);
+      const narrowMetrics = cardMetrics(device, widths[2], compact, true, project.columns);
       const mainBottom = Math.max(columnBottoms[0], columnBottoms[1]);
       if (columnBottoms[2] + narrowMetrics.height <= mainBottom + 160) column = 2;
     }
-    const metrics = cardMetrics(device, widths[column], compact, secondary);
+    const metrics = cardMetrics(device, widths[column], compact, secondary, project.columns);
     const card = { id: device.id, column, x: columnX[column], y: columnBottoms[column], w: widths[column], h: metrics.height, contentBottom: columnBottoms[column] + metrics.contentHeight, ...metrics };
     columnBottoms[column] += card.h + gap;
     return card;
@@ -471,7 +503,7 @@ export function layoutProject(project) {
       const w = Math.max(240, Math.min(Math.round(requested.w), contentWidth, 100_000));
       const x = Math.max(0, Math.min(Math.round(requested.x), contentWidth - w, 100_000));
       const y = Math.max(0, Math.min(Math.round(requested.y), 100_000));
-      const metrics = cardMetrics(device, w, compact, secondary);
+      const metrics = cardMetrics(device, w, compact, secondary, project.columns);
       return { x, y, w, h: Math.max(Math.min(Math.round(requested.h), 100_000), metrics.height), metrics };
     };
     let unpinnedY = 0;
@@ -491,8 +523,46 @@ export function layoutProject(project) {
       return { id: device.id, column: null, x: margin + x, y: cardsY + y, w, h, contentBottom: cardsY + y + metrics.contentHeight, ...metrics };
     });
   }
+  const cardsBottom = cards.length ? Math.max(...cards.map(card => card.y + card.h)) : cardsY;
+  let routingLaneY;
+  let networkY;
+  if (networkBottom) {
+    routingLaneY = cardsBottom + 28;
+    networkY = routingLaneY + 34;
+  } else {
+    routingLaneY = topRowsBottom + 28;
+    networkY = topNetworkY;
+  }
+  const vlanY = vlanBottom
+    ? (networkBottom
+      ? networkY + networkHeight + (project.networks.length && project.vlans.length ? 30 : 0)
+      : cardsBottom + 28)
+    : topVlanY;
+  const networks = project.networks.map((network, index) => ({
+    id: network.id,
+    x: margin + (index % networksPerRow) * (networkWidth + networkGap),
+    y: networkY + Math.floor(index / networksPerRow) * 110,
+    w: networkWidth,
+    h: 96,
+  }));
+  const vlans = project.vlans.map((vlan, index) => ({
+    id: vlan.id,
+    x: margin + (index % vlansPerRow) * (vlanWidth + vlanGap),
+    y: vlanY + Math.floor(index / vlansPerRow) * 56,
+    w: vlanWidth,
+    h: 46,
+  }));
+  const vlanGaps = Array.from({ length: Math.max(0, vlansPerRow - 1) }, (_, index) => margin + (index + 1) * vlanWidth + index * vlanGap + vlanGap / 2);
+  const vlanRouteXs = vlanGaps.length ? vlanGaps : [width - margin / 2];
+  const bottomRowsBottom = Math.max(
+    project.networks.length && networkBottom ? networkY + networkHeight : 0,
+    project.vlans.length && vlanBottom ? vlanY + vlanHeight : 0,
+  );
+  const contentBottom = Math.max(cardsBottom, bottomRowsBottom);
   const networkIds = new Set(project.networks.map(network => network.id));
-  const bottomNetworkY = networks.length ? Math.max(...networks.map(network => network.y)) : 0;
+  const closestNetworkY = networks.length
+    ? (networkBottom ? Math.min(...networks.map(network => network.y)) : Math.max(...networks.map(network => network.y)))
+    : 0;
   const drawable = connection => {
     const fromNetwork = networkIds.has(connection.from);
     const toNetwork = networkIds.has(connection.to);
@@ -504,16 +574,15 @@ export function layoutProject(project) {
     if (fromNetwork === toNetwork) return false;
     const network = networks.find(item => item.id === (fromNetwork ? connection.from : connection.to));
     const device = cards.find(item => item.id === (fromNetwork ? connection.to : connection.from));
-    return Boolean(network && network.y === bottomNetworkY && device && device.y === cardsY);
+    return Boolean(network && network.y === closestNetworkY && device && device.y === cardsY);
   };
   const relationships = project.connections;
   const relationshipColumns = width < 900 ? 1 : 3;
   const relationshipRows = Math.ceil(relationships.length / relationshipColumns);
-  const cardsBottom = cards.length ? Math.max(...cards.map(card => card.y + card.h)) : cardsY;
-  const relationshipsY = cardsBottom + 64;
+  const relationshipsY = contentBottom + 64;
   const footerY = relationshipsY + Math.max(28, relationshipRows * 32) + 32;
   const height = Math.max(560, footerY + 52);
-  return { width, height, margin, gap, columns, widths, cardsY, networks, vlans, vlanGaps, vlanRouteXs, cards, relationships, relationshipColumns, relationshipsY, footerY, routingLaneY, oneColumnHeader, titleMaxChars, drawable };
+  return { width, height, margin, gap, columns, widths, cardsY, networks, vlans, vlanGaps, vlanRouteXs, cards, relationships, relationshipColumns, relationshipsY, footerY, routingLaneY, oneColumnHeader, titleMaxChars, drawable, networkRow: project.networkRow, vlanRow: project.vlanRow };
 }
 
 export function snapshotManualLayout(project) {
@@ -622,23 +691,28 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     y += geometry.height;
   });
   if (device.hardware.length) y += device.hardware.length > 1 ? 14 : 6;
+  const groupsTop = y;
   const groups = device.groups.map((group, groupIndex) => {
     const geometry = box.groups[groupIndex];
-    const groupX = innerX + geometry.padding;
-    const groupWidth = innerWidth - geometry.padding * 2;
-    const groupTop = y;
-    const inset = geometry.inset ? `<rect x="${innerX}" y="${groupTop}" width="${innerWidth}" height="${geometry.height - (box.compact ? 8 : 12)}" rx="8" fill="${theme.tile}" fill-opacity=".38" stroke="${theme.line}"/>` : '';
-    const groupName = textElement(group.name.toUpperCase(), groupX, y + geometry.padding + (box.compact ? 12 : 14), { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: box.compact ? 15 : 17 });
-    y += geometry.padding + geometry.headerHeight;
+    const groupLeft = innerX + geometry.x;
+    const groupX = groupLeft + geometry.padding;
+    const groupWidth = geometry.w - geometry.padding * 2;
+    const groupTop = groupsTop + geometry.y;
+    const inset = geometry.inset ? `<rect x="${groupLeft}" y="${groupTop}" width="${geometry.w}" height="${geometry.height - (box.compact ? 8 : 12)}" rx="8" fill="${theme.tile}" fill-opacity=".38" stroke="${theme.line}"/>` : '';
+    const logo = geometry.logoSize
+      ? `<image href="${escapeXml(group.logo)}" x="${groupX}" y="${groupTop + geometry.padding + 1}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>`
+      : '';
+    const nameX = groupX + geometry.logoSize + geometry.logoGap;
+    const groupName = textElement(group.name.toUpperCase(), nameX, groupTop + geometry.padding + (box.compact ? 12 : 14), { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: box.compact ? 15 : 17 });
+    const servicesTop = groupTop + geometry.padding + geometry.headerHeight;
     const tileGap = geometry.gap;
     const tileWidth = (groupWidth - tileGap * (geometry.columns - 1)) / geometry.columns;
     const services = group.services.map((service, index) => {
       const x = groupX + (index % geometry.columns) * (tileWidth + tileGap);
-      const serviceY = y + Math.floor(index / geometry.columns) * (geometry.itemHeight + tileGap);
+      const serviceY = servicesTop + Math.floor(index / geometry.columns) * (geometry.itemHeight + tileGap);
       return geometry.mode === 'rows' ? renderServiceRow(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.compact, customLogos) : renderService(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.secondary, customLogos);
     }).join('');
-    y = groupTop + geometry.height;
-    return `<g>${inset}${groupName}${services}</g>`;
+    return `<g>${inset}${logo}${groupName}${services}</g>`;
   }).join('');
   const editor = interactive ? ` data-device="${device.id}" role="button" tabindex="0" aria-label="Edit ${escapeXml(device.name)}"` : '';
   return `<g${editor}><title>${escapeXml(device.name)}</title><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="12" fill="${theme.card}" stroke="${theme.line}"/><rect x="${innerX}" y="${box.y + 22}" width="3" height="58" rx="1.5" fill="${device.accent}"/>${iconPlate}<image href="${logoDataUri(device.icon, customLogos)}" x="${box.x + box.w - 67}" y="${box.y + 27}" width="42" height="42" preserveAspectRatio="xMidYMid meet"/>${role}${name}${network}${hardware}${groups}</g>`;
@@ -663,8 +737,9 @@ function connectionLines(project, layout, theme) {
     const network = networkIds.has(connection.from) ? from : to;
     const device = network === from ? to : from;
     const gapX = layout.vlanRouteXs.reduce((best, x) => Math.abs(x - network.x) < Math.abs(best - network.x) ? x : best);
-    const laneTop = layout.vlans.length ? layout.vlans[0].y - 14 : network.bottom + 12;
-    const path = `M ${network.x} ${network.bottom} V ${laneTop} H ${gapX} V ${layout.routingLaneY} H ${device.x} V ${device.top}`;
+    const networkEnd = layout.networkRow === 'bottom' ? network.top : network.bottom;
+    const deviceEnd = layout.networkRow === 'bottom' ? device.bottom : device.top;
+    const path = `M ${network.x} ${networkEnd} V ${layout.routingLaneY} H ${device.x} V ${deviceEnd}`;
     return `<g><path d="${path}" fill="none" stroke="${theme.muted}" stroke-width="1.4"/><circle cx="${gapX}" cy="${layout.routingLaneY}" r="3" fill="${theme.teal}"/><circle cx="${device.x}" cy="${layout.routingLaneY}" r="3" fill="${theme.teal}"/></g>`;
   }).join('');
 }

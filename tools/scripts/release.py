@@ -20,6 +20,7 @@ FILES = (
     "app/default_project.go",
     "app/branding.go",
     "app/file_store.go",
+    "app/uploads.go",
     "deploy/Dockerfile",
     "compose.yaml",
     ".dockerignore",

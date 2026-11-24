@@ -1,3 +1,5 @@
+import { isUploadReference } from './uploads.js';
+
 export const CUSTOM_LOGO_LIMITS = {
   count: 32,
   uploadBytes: 2_000_000,
@@ -74,13 +76,14 @@ export function validateCustomLogo(logo) {
   if (typeof logo.id !== 'string' || !ID_RE.test(logo.id) || logo.id.length > 64) fail('Custom logo has an invalid ID.');
   if (typeof logo.label !== 'string' || !logo.label.trim() || logo.label !== logo.label.trim() || logo.label.length > 120) fail('Custom logo name must be trimmed text under 121 characters.');
   if (!['none', 'light', 'dark'].includes(logo.background)) fail('Custom logo background is invalid.');
+  if (isUploadReference(logo.dataUrl, '.png')) return true;
   pngInfo(logo.dataUrl);
   return true;
 }
 
 export function validateCustomLogos(logos, usedIds = new Set()) {
   if (!Array.isArray(logos) || logos.length > CUSTOM_LOGO_LIMITS.count) fail('Project contains too many custom logos.');
-  if (logos.reduce((total, logo) => total + (typeof logo?.dataUrl === 'string' ? logo.dataUrl.length : 0), 0) > CUSTOM_LOGO_LIMITS.totalDataUrlChars) fail('Custom logo data exceeds the project limit.');
+  if (logos.reduce((total, logo) => total + (typeof logo?.dataUrl === 'string' && !isUploadReference(logo.dataUrl, '.png') ? logo.dataUrl.length : 0), 0) > CUSTOM_LOGO_LIMITS.totalDataUrlChars) fail('Custom logo data exceeds the project limit.');
   const ids = new Set(usedIds);
   const customIds = new Set();
   for (const logo of logos) {
@@ -137,7 +140,7 @@ async function verifyNativeImageDecode(logo) {
 }
 
 export async function verifyCustomLogoDecodes(logos) {
-  await Promise.all(logos.map(async logo => {
+  await Promise.all(logos.filter(logo => !isUploadReference(logo.dataUrl, '.png')).map(async logo => {
     await verifyPngImageData(logo.dataUrl);
     await verifyNativeImageDecode(logo);
   }));

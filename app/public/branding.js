@@ -31,7 +31,7 @@ export function normalizeBranding(value) {
   if ([...tabTitle].length > BRANDING_LIMITS.tabTitle) throw new Error(`The browser tab title must be ${BRANDING_LIMITS.tabTitle} characters or fewer.`);
   if (CONTROL_RE.test(tabTitle)) throw new Error('The browser tab title contains unsupported control characters.');
   const favicon = value.favicon === undefined ? '' : value.favicon;
-  if (typeof favicon !== 'string') throw new Error('The app logo must be empty or a PNG data URL.');
+  if (typeof favicon !== 'string') throw new Error('The app logo must be empty, a PNG data URL, or an Atlas PNG upload.');
   try {
     validateFaviconDataUrl(favicon);
   } catch (error) {

@@ -17,13 +17,14 @@ import (
 	"time"
 )
 
-const securityPolicy = "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+const securityPolicy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
 
 type atlasServer struct {
 	assets      map[string]staticAsset
 	assetPrefix string
 	defaults    *defaultProjectStore
 	branding    *jsonFileStore
+	uploads     *uploadStore
 }
 
 type staticAsset struct {
@@ -37,7 +38,7 @@ type staticRepresentation struct {
 	etag string
 }
 
-func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore) (*atlasServer, error) {
+func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore) (*atlasServer, error) {
 	assets, assetPrefix, err := loadStaticAssets(public)
 	if err != nil {
 		return nil, err
@@ -48,7 +49,10 @@ func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonF
 	if branding == nil {
 		branding = &jsonFileStore{label: "App branding"}
 	}
-	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding}, nil
+	if uploads == nil {
+		uploads = &uploadStore{}
+	}
+	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding, uploads: uploads}, nil
 }
 
 func loadStaticAssets(public fs.FS) (map[string]staticAsset, string, error) {
@@ -172,6 +176,10 @@ func (server *atlasServer) ServeHTTP(writer http.ResponseWriter, request *http.R
 		server.serveBranding(writer, request)
 		return
 	}
+	if request.URL.Path == "/api/uploads" || strings.HasPrefix(request.URL.Path, "/api/uploads/") {
+		server.serveUploads(writer, request)
+		return
+	}
 	server.serveStatic(writer, request)
 }
 
@@ -281,8 +289,8 @@ func writeBody(writer http.ResponseWriter, request *http.Request, status int, co
 	}
 }
 
-func serve(address string, public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore) error {
-	handler, err := newAtlasServer(public, defaults, branding)
+func serve(address string, public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore) error {
+	handler, err := newAtlasServer(public, defaults, branding, uploads)
 	if err != nil {
 		return err
 	}

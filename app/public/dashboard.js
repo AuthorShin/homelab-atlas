@@ -1,4 +1,5 @@
 import { DEFAULT_BRANDING, applyBranding, fetchServerBranding } from './branding.js';
+import { applyProjectAppearance } from './appearance.js';
 import { renderProject } from './model.js';
 import { DASHBOARD_DEFAULT_KEY, DASHBOARD_STORAGE_KEY, dashboardStats, decodeStoredProject, serviceLinks } from './dashboard-model.js';
 import { resolveStoredProject } from './project-storage.js';
@@ -93,6 +94,7 @@ async function render() {
   const project = decoded.project;
   const stats = dashboardStats(project);
   const scroll = { x: window.scrollX, y: window.scrollY };
+  applyProjectAppearance(project);
   applyBranding(branding, {
     projectFavicon: project.favicon,
     projectTitle: project.title,
