@@ -261,7 +261,7 @@ test('schema 7 loads migrate to schema 8 with an empty favicon and keep service 
 
 test('schema 8 favicon validation accepts a stored PNG and rejects unsafe data', () => {
   const project = sampleProject();
-  assert.equal(project.schemaVersion, 8);
+  assert.equal(project.schemaVersion, SCHEMA_VERSION);
   assert.equal(project.favicon, '');
   assert.equal(validateProject(project), true);
   project.favicon = FAVICON_PNG;
