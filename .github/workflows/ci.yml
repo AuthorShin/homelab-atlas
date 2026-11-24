@@ -15,7 +15,10 @@ jobs:
           cache: false
       - uses: actions/setup-python@v5
         with: {python-version: '3.13'}
-      - run: npm test
+      - run: |
+          set +e
+          npm test 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          exit ${PIPESTATUS[0]}
   container:
     runs-on: ubuntu-24.04
     steps:
