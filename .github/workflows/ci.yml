@@ -2,6 +2,7 @@ name: CI
 on: [push, pull_request]
 permissions:
   contents: read
+  issues: write
 jobs:
   test:
     runs-on: ubuntu-24.04
@@ -17,8 +18,18 @@ jobs:
         with: {python-version: '3.13'}
       - run: |
           set +e
-          npm test 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
-          exit ${PIPESTATUS[0]}
+          npm test > test-output.txt 2>&1
+          code=$?
+          cat test-output.txt
+          exit $code
+      - name: Report test failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -Rs --arg title "CI npm test output" --arg run "$RUN_URL" '{title: $title, body: ("Run: " + $run + "\n\n```\n" + . + "\n```")}' test-output.txt > issue.json
+          curl -fsSL -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/issues --data-binary @issue.json
   container:
     runs-on: ubuntu-24.04
     steps:
