@@ -665,6 +665,7 @@ test('manual layout keeps tall content and places new devices below it', () => {
   tall.groups = [{
     id: 'group-tall',
     name: 'Services',
+    logo: '',
     services: Array.from({ length: 800 }, (_, index) => ({ id: `service-${index}`, logo: 'generic', name: 'Service', count: 1, link: '' })),
   }];
   project.devices = [tall];

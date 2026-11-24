@@ -1,7 +1,7 @@
 name: CI
 on: [push, pull_request]
 permissions:
-  contents: write
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-24.04
@@ -15,22 +15,7 @@ jobs:
           cache: false
       - uses: actions/setup-python@v5
         with: {python-version: '3.13'}
-      - run: |
-          set +e
-          npm test > test-output.txt 2>&1
-          code=$?
-          cat test-output.txt
-          exit $code
-      - name: Publish test output
-        if: failure()
-        run: |
-          git config user.email "ci@example.invalid"
-          git config user.name "CI Debug"
-          git checkout -B debug/test-output
-          cp test-output.txt debug-output.txt
-          git add debug-output.txt
-          git commit -m "Publish npm test output"
-          git push -f origin debug/test-output
+      - run: npm test
   container:
     runs-on: ubuntu-24.04
     steps:
