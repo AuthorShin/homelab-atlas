@@ -6,7 +6,7 @@ You enter your devices and services, and Atlas starts with an automatic layout. 
 
 ## Start from a sample or empty project
 
-Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens editable JSON, and **Save project** downloads a JSON backup. **Save as default project** stores the current project on the Atlas server for new devices and fresh browsers, and **Clear default project** removes it. See [Dashboard and default project](/dashboard).
+Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens editable JSON, and **Save project** downloads a JSON backup. Every project change is autosaved as the default on the Atlas server for new devices and fresh browsers. **Move embedded images to Atlas** converts older embedded data URLs into server-backed upload references. See [Dashboard and default project](/dashboard).
 
 ## Add and organize devices
 
@@ -46,13 +46,13 @@ Links are used only by the [dashboard](/dashboard). They are stored in project J
 
 Choose **Dashboard** in the top bar, or open `/dashboard`, for a read-only view of the project saved in this browser. Linked service tiles open in a new tab. The dashboard falls back to the default project saved on the Atlas server when no autosaved project exists, then to the included example. See [Dashboard and default project](/dashboard) for details.
 
-Use **File → Save as default project** to make the current project the starting point for new devices and fresh browsers. The default is stored on the Atlas server, separately from autosave. When you open Atlas and no autosaved project exists, the default loads without immediately creating an autosave; your first edit does. **Clear default project** removes it without changing the project currently open in the tab.
+The editor automatically saves the current project as the default on the Atlas server after every change, so new devices and fresh browsers open the latest project. The default is stored separately from each browser's autosave. When you open Atlas and no autosaved project exists, the default loads without immediately creating an autosave; your first edit does.
 
 ## App branding
 
 Choose **Diagram settings → App branding** to change the name shown beside the header logo, an optional browser-tab title, and an uploaded app logo. The logo is also used as the browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px. **Remove** clears the saved app logo.
 
-Branding is stored on the Atlas server in `branding.json`, so it applies to every browser and device that opens this instance. It is separate from the project, the browser autosave, and the shared default project. Changing branding does not edit the open project or create an autosave. If the data directory is unavailable, the editor keeps working with default branding and reports the storage problem in the branding section.
+Branding is stored in the project JSON (`branding` object), so it travels with the project and its autosaved default. Changing branding edits the open project and creates an autosave, just like any other project change.
 
 The app logo wins in the header and tab. If no app logo is saved, Atlas uses the current project's tab icon, then the default Atlas mark. App branding is never drawn into SVG or PNG exports. See [Dashboard and default project](/dashboard) for the server storage and trust boundary.
 

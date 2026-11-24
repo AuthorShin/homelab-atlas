@@ -2,6 +2,23 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.16.0] - 2026-11-24
+
+### Added
+
+- Moved app branding (name, browser-tab title, and logo) into project JSON under **Diagram settings → App branding**. The editor and dashboard now read `project.branding`; the server `/api/branding` endpoint is no longer used by the UI.
+- Added debounced autosave of the current project to `/api/default-project` on every change, replacing the manual **Save as default project** / **Clear default project** actions.
+- Added a per-group **Side-by-side** checkbox, replacing the per-device toggle. Ticked groups use the **Columns** value from **Diagram appearance**; older projects migrate their device setting into per-group flags.
+- Added **File → Move embedded images to Atlas**, which uploads existing data URLs and replaces them with `/api/uploads` references.
+- Added a **Custom CSS** documentation page.
+
+### Changed
+
+- Image fields (app logo, project tab icon, custom logos, group logos, and background image) now use `/data` upload references instead of embedded data URLs.
+- The background image is now drawn inside the exported SVG behind all diagram content, sized to the full viewBox instead of an A4-like page.
+- Project schema is now version 10, adding `branding` and per-group `sideBySide` and removing `device.groupLayout`. Schema-9 projects migrate automatically.
+- Service links, favicons, app branding, and custom CSS remain excluded from SVG and PNG exports.
+
 ## [0.15.0] - 2026-11-24
 
 ### Added
@@ -223,4 +240,5 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.12.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.12.1
 [0.13.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.13.0
 [0.14.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.14.0
+[0.16.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.0
 [0.15.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.15.0

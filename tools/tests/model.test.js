@@ -21,14 +21,18 @@ function removeServiceLinks(project) {
   return project;
 }
 
-function stripSchema9Fields(project) {
+function stripModernFields(project) {
   delete project.css;
   delete project.background;
   delete project.networkRow;
   delete project.vlanRow;
+  delete project.branding;
   for (const device of project.devices) {
     delete device.groupLayout;
-    for (const group of device.groups) delete group.logo;
+    for (const group of device.groups) {
+      delete group.logo;
+      delete group.sideBySide;
+    }
   }
   return project;
 }
@@ -104,7 +108,7 @@ test('bad and oversized imports are rejected', () => {
   assert.throws(() => parseProject('{no'), /valid JSON/);
   assert.throws(() => parseProject(' '.repeat(LIMITS.bytes + 1)), /larger/);
   const project = sampleProject();
-  project.schemaVersion = 10;
+  project.schemaVersion = SCHEMA_VERSION + 1;
   assert.throws(() => parseProject(JSON.stringify(project)), /schema/);
   project.schemaVersion = SCHEMA_VERSION;
   project.devices[0].icon = 'data:image/svg+xml,<script>';
@@ -148,7 +152,7 @@ test('schema 1 through 4 imports migrate strictly while preserving data', () => 
   const version2 = sampleProject();
   setManualCard(version2, 'dev-storage', { x: 64, y: 32, w: 300, h: 400 });
   version2.schemaVersion = 2;
-  stripSchema9Fields(version2);
+  stripModernFields(version2);
   delete version2.customLogos;
   delete version2.favicon;
   removeServiceLinks(version2);
@@ -165,7 +169,7 @@ test('schema 1 through 4 imports migrate strictly while preserving data', () => 
 
   const version1 = structuredClone(version2);
   version1.schemaVersion = 1;
-  stripSchema9Fields(version1);
+  stripModernFields(version1);
   delete version1.layout;
   const migrated1 = parseProject(JSON.stringify(version1));
   assert.equal(migrated1.schemaVersion, SCHEMA_VERSION);
@@ -181,7 +185,7 @@ test('schema 1 through 4 imports migrate strictly while preserving data', () => 
 
   const version3 = sampleProject();
   version3.schemaVersion = 3;
-  stripSchema9Fields(version3);
+  stripModernFields(version3);
   delete version3.customLogos;
   delete version3.favicon;
   removeServiceLinks(version3);
@@ -195,7 +199,7 @@ test('schema 1 through 4 imports migrate strictly while preserving data', () => 
 
   const version4 = sampleProject();
   version4.schemaVersion = 4;
-  stripSchema9Fields(version4);
+  stripModernFields(version4);
   version4.customLogos = [];
   delete version4.favicon;
   removeServiceLinks(version4);
@@ -208,7 +212,7 @@ test('schema 1 through 4 imports migrate strictly while preserving data', () => 
 test('schema 5 and 6 imports drop discovery data and preserve or backfill links', () => {
   const upstream5 = sampleProject();
   upstream5.schemaVersion = 5;
-  stripSchema9Fields(upstream5);
+  stripModernFields(upstream5);
   delete upstream5.favicon;
   removeServiceLinks(upstream5);
   const target = upstream5.devices[0].groups[0].services[0];
@@ -223,7 +227,7 @@ test('schema 5 and 6 imports drop discovery data and preserve or backfill links'
 
   const fork5 = sampleProject();
   fork5.schemaVersion = 5;
-  stripSchema9Fields(fork5);
+  stripModernFields(fork5);
   delete fork5.favicon;
   fork5.devices[0].groups[0].services[0].link = 'https://atlas.example.test/';
   const migratedFork = parseProject(JSON.stringify(fork5));
@@ -234,7 +238,7 @@ test('schema 5 and 6 imports drop discovery data and preserve or backfill links'
 
   const upstream6 = sampleProject();
   upstream6.schemaVersion = 6;
-  stripSchema9Fields(upstream6);
+  stripModernFields(upstream6);
   delete upstream6.favicon;
   removeServiceLinks(upstream6);
   upstream6.discovery = { bindings: [] };
@@ -247,7 +251,7 @@ test('schema 5 and 6 imports drop discovery data and preserve or backfill links'
 test('schema 7 loads migrate to schema 8 with an empty favicon and keep service links', () => {
   const project = sampleProject();
   project.schemaVersion = 7;
-  stripSchema9Fields(project);
+  stripModernFields(project);
   delete project.favicon;
   project.devices[0].groups[0].services[0].link = 'https://atlas.example.test/';
   const before = structuredClone(project);
@@ -279,7 +283,7 @@ test('legacy project record IDs may match bundled logo IDs', () => {
   for (const version of [1, 2, 3]) {
     const project = sampleProject();
     project.schemaVersion = version;
-    stripSchema9Fields(project);
+    stripModernFields(project);
     delete project.customLogos;
     delete project.favicon;
     removeServiceLinks(project);
@@ -666,6 +670,7 @@ test('manual layout keeps tall content and places new devices below it', () => {
     id: 'group-tall',
     name: 'Services',
     logo: '',
+    sideBySide: false,
     services: Array.from({ length: 800 }, (_, index) => ({ id: `service-${index}`, logo: 'generic', name: 'Service', count: 1, link: '' })),
   }];
   project.devices = [tall];

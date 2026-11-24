@@ -3,7 +3,7 @@ import { validateCustomLogos } from './custom-logos.js';
 import { validateFaviconDataUrl } from './favicon.js';
 import { isImageReference } from './uploads.js';
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 export const THEMES = ['navy', 'light', 'midnight'];
 export const DENSITIES = ['comfortable', 'compact'];
 export const LIMITS = {
@@ -18,8 +18,10 @@ export const LIMITS = {
   hardware: 12,
   css: 20_000,
   imageReference: 1_200_000,
+  brandName: 60,
+  brandTitle: 80,
 };
-const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8];
+const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const LEGACY_BINDING_LIMIT = 1600;
 
 const ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
@@ -55,7 +57,7 @@ function services(prefix, items) {
 
 export function sampleProject() {
   return {
-    schemaVersion: 9,
+    schemaVersion: SCHEMA_VERSION,
     revision: 1,
     title: 'Home Lab',
     subtitle: 'Private infrastructure · Local services · Built to last',
@@ -63,6 +65,7 @@ export function sampleProject() {
     columns: 3,
     density: 'comfortable',
     favicon: '',
+    branding: { name: 'Homelab Atlas', tabTitle: '', favicon: '' },
     css: '',
     background: '',
     networkRow: 'top',
@@ -84,35 +87,35 @@ export function sampleProject() {
     ],
     devices: [
       {
-        id: 'dev-storage', name: 'Atlas', role: 'TrueNAS / storage', icon: 'truenas', accent: '#55d6c9', network: '20 Servers', groupLayout: 'stacked',
+        id: 'dev-storage', name: 'Atlas', role: 'TrueNAS / storage', icon: 'truenas', accent: '#55d6c9', network: '20 Servers',
         hardware: ['i5-13500 · 32 GB RAM', '5 × 26 TB · RAIDZ1', '2 × 2 TB NVMe · mirror'],
         groups: [
-          { id: 'grp-infra', name: 'Containers', logo: '', services: services('atlas-a', [['nginx-proxy-manager', 'Proxy Manager'], ['adguard-home', 'AdGuard'], ['syncthing', 'DNS Sync'], ['portainer', 'Portainer'], ['dockge', 'Dockge'], ['homepage', 'Homepage'], ['gitea', 'Gitea'], ['uptime-kuma', 'Uptime Kuma'], ['searxng', 'SearXNG'], ['xwiki', 'XWiki'], ['docmost', 'Docmost'], ['prometheus', 'Metrics'], ['freshrss', 'FreshRSS'], ['paperless-ngx', 'Paperless'], ['immich', 'Immich'], ['nextcloud', 'Nextcloud'], ['vaultwarden', 'Vaultwarden'], ['tailscale', 'Tailscale'], ['nginx', 'Admin ingress'], ['wireguard', 'Net guards']]) },
-          { id: 'grp-cloud', name: 'Data services', logo: '', services: services('atlas-b', [['postgresql', 'Postgres', 2], ['redis', 'Redis'], ['minio', 'MinIO'], ['restic', 'Backups']]) },
+          { id: 'grp-infra', name: 'Containers', logo: '', sideBySide: false, services: services('atlas-a', [['nginx-proxy-manager', 'Proxy Manager'], ['adguard-home', 'AdGuard'], ['syncthing', 'DNS Sync'], ['portainer', 'Portainer'], ['dockge', 'Dockge'], ['homepage', 'Homepage'], ['gitea', 'Gitea'], ['uptime-kuma', 'Uptime Kuma'], ['searxng', 'SearXNG'], ['xwiki', 'XWiki'], ['docmost', 'Docmost'], ['prometheus', 'Metrics'], ['freshrss', 'FreshRSS'], ['paperless-ngx', 'Paperless'], ['immich', 'Immich'], ['nextcloud', 'Nextcloud'], ['vaultwarden', 'Vaultwarden'], ['tailscale', 'Tailscale'], ['nginx', 'Admin ingress'], ['wireguard', 'Net guards']]) },
+          { id: 'grp-cloud', name: 'Data services', logo: '', sideBySide: false, services: services('atlas-b', [['postgresql', 'Postgres', 2], ['redis', 'Redis'], ['minio', 'MinIO'], ['restic', 'Backups']]) },
         ],
       },
       {
-        id: 'dev-media', name: 'Relay', role: 'Unraid / media + voice', icon: 'unraid', accent: '#f28a61', network: '20 Servers', groupLayout: 'stacked',
+        id: 'dev-media', name: 'Relay', role: 'Unraid / media + voice', icon: 'unraid', accent: '#f28a61', network: '20 Servers',
         hardware: ['i9-10900K · 32 GB RAM', 'RTX 3060 · 12 GB', '7 data HDDs + 2 parity · NVMe mirror'],
         groups: [
-          { id: 'grp-media', name: 'Containers', logo: '', services: services('relay-a', [['jellyfin', 'Jellyfin'], ['sonarr', 'Sonarr', 3], ['radarr', 'Radarr'], ['prowlarr', 'Prowlarr'], ['bazarr', 'Bazarr', 3], ['seerr', 'Seerr'], ['sabnzbd', 'SABnzbd'], ['qbittorrent', 'qBittorrent'], ['tdarr', 'Tdarr', 3], ['open-webui', 'Open WebUI'], ['adguard-home', 'AdGuard'], ['grafana', 'Grafana'], ['postgresql', 'Postgres'], ['home-assistant', 'HA helper'], ['generic', 'llama.cpp'], ['music-assistant', 'Music Assistant'], ['mosquitto', 'Mosquitto'], ['node-red', 'Node-RED']]) },
-          { id: 'grp-ha', name: 'Home automation', logo: '', services: services('relay-b', [['home-assistant', 'Home Assistant'], ['node-red', 'Node-RED'], ['music-assistant', 'Music'], ['mosquitto', 'MQTT']]) },
+          { id: 'grp-media', name: 'Containers', logo: '', sideBySide: false, services: services('relay-a', [['jellyfin', 'Jellyfin'], ['sonarr', 'Sonarr', 3], ['radarr', 'Radarr'], ['prowlarr', 'Prowlarr'], ['bazarr', 'Bazarr', 3], ['seerr', 'Seerr'], ['sabnzbd', 'SABnzbd'], ['qbittorrent', 'qBittorrent'], ['tdarr', 'Tdarr', 3], ['open-webui', 'Open WebUI'], ['adguard-home', 'AdGuard'], ['grafana', 'Grafana'], ['postgresql', 'Postgres'], ['home-assistant', 'HA helper'], ['generic', 'llama.cpp'], ['music-assistant', 'Music Assistant'], ['mosquitto', 'Mosquitto'], ['node-red', 'Node-RED']]) },
+          { id: 'grp-ha', name: 'Home automation', logo: '', sideBySide: false, services: services('relay-b', [['home-assistant', 'Home Assistant'], ['node-red', 'Node-RED'], ['music-assistant', 'Music'], ['mosquitto', 'MQTT']]) },
         ],
       },
       {
-        id: 'dev-ai', name: 'Vector', role: 'Fedora / local AI', icon: 'amd', accent: '#a78bfa', network: '40 Lab', groupLayout: 'stacked',
+        id: 'dev-ai', name: 'Vector', role: 'Fedora / local AI', icon: 'amd', accent: '#a78bfa', network: '40 Lab',
         hardware: ['Ryzen AI Max+ 395', '128 GB unified memory', '2 TB NVMe'],
-        groups: [{ id: 'grp-ai', name: 'Inference', logo: '', services: services('vector', [['ollama', 'Ollama'], ['open-webui', 'Open WebUI'], ['qwen', 'Qwen', 3], ['n8n', 'n8n'], ['podman', 'Podman']]) }],
+        groups: [{ id: 'grp-ai', name: 'Inference', logo: '', sideBySide: false, services: services('vector', [['ollama', 'Ollama'], ['open-webui', 'Open WebUI'], ['qwen', 'Qwen', 3], ['n8n', 'n8n'], ['podman', 'Podman']]) }],
       },
       {
-        id: 'dev-edge', name: 'Edge Pi', role: 'Raspberry Pi / edge', icon: 'raspberry-pi', accent: '#ef6f91', network: '30 IoT', groupLayout: 'stacked',
+        id: 'dev-edge', name: 'Edge Pi', role: 'Raspberry Pi / edge', icon: 'raspberry-pi', accent: '#ef6f91', network: '30 IoT',
         hardware: ['Pi 4 · 4 GB RAM'],
-        groups: [{ id: 'grp-edge', name: 'Native services', logo: '', services: services('edge', [['nginx', 'nginx'], ['cloudflare', 'Cloudflare'], ['tailscale', 'Tailscale']]) }],
+        groups: [{ id: 'grp-edge', name: 'Native services', logo: '', sideBySide: false, services: services('edge', [['nginx', 'nginx'], ['cloudflare', 'Cloudflare'], ['tailscale', 'Tailscale']]) }],
       },
       {
-        id: 'dev-remote', name: 'Remote', role: 'Friend-owned node', icon: 'tailscale', accent: '#f0a36a', network: '50 Guest', groupLayout: 'stacked',
+        id: 'dev-remote', name: 'Remote', role: 'Friend-owned node', icon: 'tailscale', accent: '#f0a36a', network: '50 Guest',
         hardware: ['K3s · remote tunnel'],
-        groups: [{ id: 'grp-remote', name: 'Remote stack', logo: '', services: services('remote', [['docmost', 'Docmost'], ['nextcloud', 'Files'], ['postgresql', 'Postgres'], ['redis', 'Redis']]) }],
+        groups: [{ id: 'grp-remote', name: 'Remote stack', logo: '', sideBySide: false, services: services('remote', [['docmost', 'Docmost'], ['nextcloud', 'Files'], ['postgresql', 'Postgres'], ['redis', 'Redis']]) }],
       },
     ],
     connections: [
@@ -150,13 +153,19 @@ export function parseProject(text) {
       migrated.networkRow = 'top';
       migrated.vlanRow = 'top';
     }
+    if (version < 10) {
+      migrated.branding = { name: 'Homelab Atlas', tabTitle: '', favicon: '' };
+    }
     if (version >= 5) delete migrated.discovery;
     for (const device of migrated.devices) {
+      const deviceSideBySide = device.groupLayout === 'sideBySide';
       if (version < 9) device.groupLayout = 'stacked';
+      if (version < 10) delete device.groupLayout;
       for (const group of device.groups) {
         if (version < 9) group.logo = '';
+        if (version < 10) group.sideBySide = version >= 9 && deviceSideBySide;
         for (const service of group.services) {
-          if (version === 7 || version === 8 || (version === 5 && typeof service.link === 'string')) continue;
+          if (version === 7 || version === 8 || version === 9 || (version === 5 && typeof service.link === 'string')) continue;
           service.link = '';
         }
       }
@@ -181,7 +190,7 @@ function validateProjectVersion(project, version) {
     if (!object || typeof object !== 'object' || Array.isArray(object) || Object.keys(object).some(key => !allowed.includes(key))) fail(`${label} has an invalid structure.`);
   };
   if (!project || typeof project !== 'object' || Array.isArray(project)) fail('Project must be an object.');
-  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 9 ? ['css', 'background', 'networkRow', 'vlanRow'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
+  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 9 ? ['css', 'background', 'networkRow', 'vlanRow'] : []), ...(version >= 10 ? ['branding'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
   exact(project, keys, 'Project');
   if (project.schemaVersion !== version) fail(`Unsupported schema version: ${project.schemaVersion ?? 'missing'}.`);
   string(project.title, 'Title');
@@ -196,6 +205,13 @@ function validateProjectVersion(project, version) {
     if (!isImageReference(project.background, LIMITS.imageReference)) fail('Background must be empty or a valid image upload reference.');
     if (!['top', 'bottom'].includes(project.networkRow)) fail('Network row must be top or bottom.');
     if (!['top', 'bottom'].includes(project.vlanRow)) fail('VLAN row must be top or bottom.');
+  }
+  if (version >= 10) {
+    const branding = project.branding;
+    if (!branding || typeof branding !== 'object' || Array.isArray(branding) || Object.keys(branding).sort().join(',') !== 'favicon,name,tabTitle') fail('Branding has an invalid structure.');
+    if (typeof branding.name !== 'string' || ! branding.name.trim() || branding.name !== branding.name.trim() || [...branding.name].length > LIMITS.brandName) fail('Branding name must be trimmed text.');
+    if (typeof branding.tabTitle !== 'string' || branding.tabTitle !== branding.tabTitle.trim() || [...branding.tabTitle].length > LIMITS.brandTitle) fail('Branding tab title is invalid.');
+    if (!isImageReference(branding.favicon, LIMITS.imageReference)) fail('Branding logo must be empty or a valid image reference.');
   }
   for (const [key, maximum] of [['devices', LIMITS.devices], ['networks', LIMITS.networks], ['vlans', LIMITS.networks], ['connections', LIMITS.connections]]) {
     if (!Array.isArray(project[key]) || project[key].length > maximum) fail(`Invalid or excessive ${key}.`);
@@ -224,18 +240,18 @@ function validateProjectVersion(project, version) {
     if (!COLOR_RE.test(vlan.color)) fail('Invalid VLAN color.');
   }
   for (const device of project.devices) {
-    exact(device, ['id', 'name', 'role', 'icon', 'accent', 'network', 'hardware', ...(version >= 9 ? ['groupLayout'] : []), 'groups'], 'Device');
+    exact(device, ['id', 'name', 'role', 'icon', 'accent', 'network', 'hardware', 'groups'], 'Device');
     addId(device.id, 'Device'); string(device.name); string(device.role); string(device.network);
     if (!validLogo(device.icon)) fail(`Unknown logo: ${device.icon}.`);
     if (!COLOR_RE.test(device.accent)) fail('Invalid device color.');
-    if (version >= 9 && !['stacked', 'sideBySide'].includes(device.groupLayout)) fail('Group layout must be stacked or sideBySide.');
     if (!Array.isArray(device.hardware) || device.hardware.length > LIMITS.hardware) fail('Invalid hardware facts.');
     device.hardware.forEach(fact => string(fact, 'Hardware fact'));
     if (!Array.isArray(device.groups) || device.groups.length > LIMITS.groups) fail('Invalid service groups.');
     for (const group of device.groups) {
-      exact(group, ['id', 'name', ...(version >= 9 ? ['logo'] : []), 'services'], 'Group');
+      exact(group, ['id', 'name', ...(version >= 9 ? ['logo'] : []), ...(version >= 10 ? ['sideBySide'] : []), 'services'], 'Group');
       addId(group.id, 'Group'); string(group.name); groupCount += 1;
       if (version >= 9 && !isImageReference(group.logo, LIMITS.imageReference)) fail('Group logo must be empty or a valid image upload reference.');
+      if (version >= 10 && typeof group.sideBySide !== 'boolean') fail('Group side-by-side flag must be a boolean.');
       if (!Array.isArray(group.services)) fail('Invalid services.');
       for (const service of group.services) {
         exact(service, version >= 7 ? ['id', 'logo', 'name', 'count', 'link'] : version === 5 ? ['id', 'logo', 'name', 'count', 'link'] : ['id', 'logo', 'name', 'count'], 'Service');
@@ -393,25 +409,31 @@ function cardMetrics(device, width, compact, secondary, groupColumns = 1) {
   const hardwareFacts = device.hardware.map((fact, index) => hardwareGeometry(device, fact, index, width - 40, compact));
   const hardwareHeight = hardwareFacts.reduce((sum, fact) => sum + fact.height, 0) + (hardwareFacts.length > 1 ? 14 : hardwareFacts.length ? 6 : 0);
   const innerWidth = width - 40;
-  const columns = device.groupLayout === 'sideBySide'
-    ? Math.max(1, Math.min(groupColumns, Math.max(1, device.groups.length)))
-    : 1;
+  const columns = Math.max(1, Math.min(groupColumns, Math.max(1, device.groups.length)));
   const groupGap = compact ? 8 : 10;
-  const groupWidth = columns === 1 ? innerWidth : (innerWidth - groupGap * (columns - 1)) / columns;
   const groups = [];
   let groupsHeight = 0;
-  for (let index = 0; index < device.groups.length; index += columns) {
-    const row = device.groups.slice(index, index + columns);
-    const geometries = row.map((group, offset) => groupGeometry(group, groupWidth, compact, secondary, index + offset, { inset: columns > 1 || index + offset > 0 }));
+  let index = 0;
+  while (index < device.groups.length) {
+    const row = [];
+    if (device.groups[index].sideBySide) {
+      while (index < device.groups.length && row.length < columns && device.groups[index].sideBySide) row.push(device.groups[index++]);
+    } else {
+      row.push(device.groups[index++]);
+    }
+    const stacked = row.length === 1 && !row[0].sideBySide;
+    const rowWidth = stacked ? innerWidth : (innerWidth - groupGap * (row.length - 1)) / row.length;
+    const firstIndex = index - row.length;
+    const geometries = row.map((group, offset) => groupGeometry(group, rowWidth, compact, secondary, firstIndex + offset, { inset: stacked ? firstIndex > 0 : true }));
     const rowHeight = Math.max(0, ...geometries.map(group => group.height));
     geometries.forEach((geometry, offset) => groups.push({
       ...geometry,
-      x: offset * (groupWidth + groupGap),
+      x: stacked ? 0 : offset * (rowWidth + groupGap),
       y: groupsHeight,
-      w: groupWidth,
+      w: rowWidth,
       h: rowHeight,
     }));
-    groupsHeight += rowHeight + (index + columns < device.groups.length ? groupGap : 0);
+    groupsHeight += rowHeight + (index < device.groups.length ? groupGap : 0);
   }
   const contentHeight = headerHeight + hardwareHeight + groupsHeight;
   return { secondary, compact, name, hardwareFacts, headerHeight, hardwareHeight, groups, groupsHeight, contentHeight, height: Math.max(compact ? 190 : 212, contentHeight + (compact ? 12 : 18)) };
@@ -779,5 +801,5 @@ export function renderProject(project, { displayProject = project, interactive =
   }).join('');
   const relationshipTitle = layout.relationships.length ? `<text x="${layout.margin}" y="${layout.relationshipsY - 14}" fill="${theme.muted}" font-family="${FONT}" font-size="10" font-weight="700" letter-spacing="1.5">RELATIONSHIPS</text>` : '';
   const footer = `<line x1="${layout.margin}" y1="${layout.footerY}" x2="${layout.width - layout.margin}" y2="${layout.footerY}" stroke="${theme.line}"/><text x="${layout.margin}" y="${layout.footerY + 28}" fill="${theme.muted}" font-family="${FONT}" font-size="10" font-weight="700" letter-spacing="1.5">HOMELAB ATLAS</text><text x="${layout.width - layout.margin}" y="${layout.footerY + 28}" fill="${theme.muted}" font-family="${FONT}" font-size="10" text-anchor="end">Logical links · Service groups</text>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${escapeXml(displayProject.title)}"><defs><pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="${theme.line}" opacity="0.22"/></pattern><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="${theme.muted}" stroke-width="1.2"/></marker></defs><rect width="100%" height="100%" fill="${theme.bg}"/><rect width="100%" height="100%" fill="url(#dots)"/><line x1="${layout.margin}" y1="42" x2="${layout.margin + 38}" y2="42" stroke="${theme.teal}" stroke-width="4" stroke-linecap="round"/><text x="${layout.margin + 52}" y="46" fill="${theme.muted}" font-family="${FONT}" font-size="11" font-weight="700" letter-spacing="2">BUILT AT HOME</text>${title}${subtitle}${stats}${connectionLines(project, layout, theme)}${networks}${vlans}${cards}${relationshipTitle}${relationships}${footer}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${escapeXml(displayProject.title)}"><defs><pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="${theme.line}" opacity="0.22"/></pattern><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="${theme.muted}" stroke-width="1.2"/></marker></defs><rect width="100%" height="100%" fill="${theme.bg}"/>${project.background ? `<image href="${escapeXml(project.background)}" x="0" y="0" width="${layout.width}" height="${layout.height}" preserveAspectRatio="xMidYMid slice"/>` : ''}<rect width="100%" height="100%" fill="url(#dots)"/><line x1="${layout.margin}" y1="42" x2="${layout.margin + 38}" y2="42" stroke="${theme.teal}" stroke-width="4" stroke-linecap="round"/><text x="${layout.margin + 52}" y="46" fill="${theme.muted}" font-family="${FONT}" font-size="11" font-weight="700" letter-spacing="2">BUILT AT HOME</text>${title}${subtitle}${stats}${connectionLines(project, layout, theme)}${networks}${vlans}${cards}${relationshipTitle}${relationships}${footer}</svg>`;
 }

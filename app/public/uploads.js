@@ -92,6 +92,22 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { fetcher =
   return uploadBlob(blob, { mime, fetcher });
 }
 
+export async function migrateEmbeddedImages(project, { fetcher = globalThis.fetch } = {}) {
+  const clone = structuredClone(project);
+  const targets = [];
+  const add = (object, key, filename) => {
+    const value = object?.[key];
+    if (typeof value === 'string' && value && !isUploadReference(value) && DATA_URL_RE.test(value)) targets.push({ object, key, filename });
+  };
+  add(clone, 'favicon', 'favicon.png');
+  add(clone, 'background', 'background.png');
+  add(clone.branding, 'favicon', 'app-logo.png');
+  for (const logo of clone.customLogos || []) add(logo, 'dataUrl', `${logo.id}.png`);
+  for (const device of clone.devices || []) for (const group of device.groups || []) add(group, 'logo', 'group-logo.png');
+  for (const target of targets) target.object[target.key] = await uploadDataUrl(target.object[target.key], target.filename, { fetcher });
+  return clone;
+}
+
 function readBlobAsDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -105,6 +121,9 @@ export async function inlineUploadReferences(project, { fetcher = globalThis.fet
   if (typeof fetcher !== 'function') throw new Error('Uploaded images cannot be loaded.');
   const clone = structuredClone(project);
   const references = new Set();
+  if (isUploadReference(clone.background)) references.add(clone.background);
+  if (isUploadReference(clone.favicon)) references.add(clone.favicon);
+  if (isUploadReference(clone.branding?.favicon)) references.add(clone.branding.favicon);
   for (const logo of clone.customLogos || []) if (isUploadReference(logo.dataUrl)) references.add(logo.dataUrl);
   for (const device of clone.devices || []) {
     for (const group of device.groups || []) if (isUploadReference(group.logo)) references.add(group.logo);
@@ -116,6 +135,9 @@ export async function inlineUploadReferences(project, { fetcher = globalThis.fet
     if (!response.ok) throw new Error(`Uploaded image could not be loaded for export (HTTP ${response.status}).`);
     dataUrls.set(reference, await readBlobAsDataUrl(await response.blob()));
   }));
+  if (dataUrls.has(clone.background)) clone.background = dataUrls.get(clone.background);
+  if (dataUrls.has(clone.favicon)) clone.favicon = dataUrls.get(clone.favicon);
+  if (dataUrls.has(clone.branding?.favicon)) clone.branding.favicon = dataUrls.get(clone.branding.favicon);
   for (const logo of clone.customLogos || []) if (dataUrls.has(logo.dataUrl)) logo.dataUrl = dataUrls.get(logo.dataUrl);
   for (const device of clone.devices || []) {
     for (const group of device.groups || []) if (dataUrls.has(group.logo)) group.logo = dataUrls.get(group.logo);

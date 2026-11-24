@@ -45,6 +45,7 @@ export default defineConfig({
         items: [
           { text: 'Sharing and backup', link: '/sharing' },
           { text: 'Exporting', link: '/exporting' },
+          { text: 'Custom CSS', link: '/custom-css' },
         ],
       },
       {
@@ -54,6 +55,7 @@ export default defineConfig({
           { text: 'Troubleshooting', link: '/troubleshooting' },
           { text: 'Project format', link: '/project-format' },
           { text: 'Releases', link: '/releases/' },
+          { text: 'v0.16.0', link: '/releases/v0.16.0' },
           { text: 'v0.15.0', link: '/releases/v0.15.0' },
           { text: 'v0.14.0', link: '/releases/v0.14.0' },
           { text: 'v0.13.0', link: '/releases/v0.13.0' },

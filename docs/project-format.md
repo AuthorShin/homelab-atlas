@@ -1,6 +1,6 @@
 # Project format
 
-**File → Save project** downloads schema-version-8 JSON. **File → Import project** accepts schema versions 1 through 7 after strict validation. Version 1 gains automatic layout, versions 1 and 2 gain empty network-logo fields, versions 1 through 3 gain an empty `customLogos` array, versions 5 and 6 lose their discovery data, and version 7 gains an empty `favicon`. A schema-5 project that already has valid service links keeps them; other older services gain an empty `link`. A schema-7 project keeps its service links. Older Atlas versions cannot open schema version 8.
+**File → Save project** downloads schema-version-10 JSON. **File → Import project** accepts schema versions 1 through 9 after strict validation. Version 1 gains automatic layout, versions 1 and 2 gain empty network-logo fields, versions 1 through 3 gain an empty `customLogos` array, versions 5 and 6 lose their discovery data, and version 7 gains an empty `favicon`. A schema-5 project that already has valid service links keeps them; other older services gain an empty `link`. A schema-7 project keeps its service links. Older Atlas versions cannot open schema version 8.
 
 ## Top-level fields
 
@@ -46,7 +46,7 @@ Links appear only on the [dashboard](/dashboard). They are not rendered into SVG
 
 ## Migration
 
-Imports are validated in their original schema before migration, then validated again as schema version 8. The current project stays open if any step fails.
+Imports are validated in their original schema before migration, then validated again as schema version 10. The current project stays open if any step fails.
 
 | Old schema | Migration |
 |---|---|
@@ -67,7 +67,7 @@ Custom logo IDs start with `custom-` and use the same safe ASCII ID characters, 
 
 The optional project favicon is uploaded from **Diagram settings → Diagram appearance → Project tab icon → Upload tab icon**. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB, 4096px per side, and 16 million pixels. It converts the image to a square PNG with a maximum side of 128px and stores the canonical data URL in `favicon`. Leave the field empty to use the default Atlas mark. The project favicon is shown in the editor and dashboard browser tabs when no app logo is saved, is part of saved JSON, and is never rendered into SVG or PNG diagrams.
 
-App branding is not part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo in a separate `branding.json` file served by `/api/branding`. It applies to the whole Atlas instance and is not included in project JSON, project imports, or the shared default project.
+App branding is part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the project's `branding` object. It travels with project JSON, project imports, and the autosaved default. Service links, favicons, branding, custom CSS, and the background image are excluded from SVG and PNG exports.
 
 ## IDs and references
 

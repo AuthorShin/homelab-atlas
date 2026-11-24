@@ -1,4 +1,4 @@
-import { DEFAULT_BRANDING, applyBranding, fetchServerBranding } from './branding.js';
+import { DEFAULT_BRANDING, applyBranding } from './branding.js';
 import { applyProjectAppearance } from './appearance.js';
 import { renderProject } from './model.js';
 import { DASHBOARD_DEFAULT_KEY, DASHBOARD_STORAGE_KEY, dashboardStats, decodeStoredProject, serviceLinks } from './dashboard-model.js';
@@ -7,19 +7,6 @@ import { resolveStoredProject } from './project-storage.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = selector => document.querySelector(selector);
 const afterPaint = callback => typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 0);
-let branding = { ...DEFAULT_BRANDING };
-let brandingLoaded = false;
-
-async function ensureBranding() {
-  if (brandingLoaded) return;
-  try {
-    branding = (await fetchServerBranding()) || { ...DEFAULT_BRANDING };
-  } catch {
-    branding = { ...DEFAULT_BRANDING };
-  }
-  brandingLoaded = true;
-}
-
 async function readStoredProject() {
   let raw;
   let defaultRaw;
@@ -89,17 +76,18 @@ let renderToken = 0;
 
 async function render() {
   const token = ++renderToken;
-  const [decoded] = await Promise.all([readStoredProject(), ensureBranding()]);
+  const decoded = await readStoredProject();
   if (token !== renderToken) return;
   const project = decoded.project;
   const stats = dashboardStats(project);
   const scroll = { x: window.scrollX, y: window.scrollY };
   applyProjectAppearance(project);
-  applyBranding(branding, {
+  const projectBranding = project.branding || DEFAULT_BRANDING;
+  applyBranding(projectBranding, {
     projectFavicon: project.favicon,
     projectTitle: project.title,
     dashboard: true,
-    brandLabel: `${branding.name} editor`,
+    brandLabel: `${projectBranding.name} editor`,
   });
   $('#dashboard-title').textContent = project.title;
   $('#dashboard-status').textContent = decoded.source === 'saved'
@@ -148,7 +136,6 @@ async function render() {
 }
 
 $('#refresh').addEventListener('click', () => {
-  brandingLoaded = false;
   render();
 });
 addEventListener('storage', event => {
@@ -156,12 +143,10 @@ addEventListener('storage', event => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  brandingLoaded = false;
   render();
 });
 addEventListener('pageshow', event => {
   if (!event.persisted) return;
-  brandingLoaded = false;
   render();
 });
 if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitDiagram()).observe($('#diagram'));

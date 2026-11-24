@@ -71,7 +71,7 @@ Older projects are validated in their original schema before migration. Schema 7
 
 ## App branding
 
-The editor and dashboard read app branding from the same Atlas server. The app name replaces the header label, the optional tab title changes the browser tab, and the app logo becomes both the header mark and tab icon. Branding is stored in `branding.json` in the `atlas-data` volume and is separate from project JSON.
+The editor and dashboard read app branding from the current project's `branding` object. The app name replaces the header label, the optional tab title changes the browser tab, and the app logo becomes both the header mark and tab icon. Branding travels with project JSON and the autosaved default.
 
 - If the app logo upload or name change reports a storage error, the rest of Atlas still works with the previous or default branding.
 - If another browser still shows the old branding, refresh it or switch away from and back to the tab.

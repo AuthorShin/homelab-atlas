@@ -6,7 +6,7 @@ Atlas 0.14.0 saves schema version 8. Imports from schema versions 1 through 7 pr
 
 ## Browser autosave
 
-Changes autosave to `localStorage` in the current browser profile. The browser keeps separate storage for each hostname, port, and protocol. Autosave is not sent to the Go server. The only project data the server stores is the optional default project in the `atlas-data` volume. App branding is stored separately in that volume and is not part of a project backup.
+Changes autosave to `localStorage` in the current browser profile. The browser keeps separate storage for each hostname, port, and protocol. The server also receives an autosaved copy as the default project in the `atlas-data` volume on every change. App branding is part of the project JSON, including its autosaved default.
 
 A project can appear missing after you:
 
@@ -19,11 +19,11 @@ Use **Save project** regularly, especially before updates or before changing the
 
 ## Default project
 
-**File → Save as default project** stores the current project in the container's `atlas-data` volume. When a browser opens Atlas and has no autosaved project, it loads this default instead of the included example. Loading it does not immediately create an autosave; the first edit does. **File → Clear default project** removes it without changing the project currently open.
+The editor automatically saves the current project to the container's `atlas-data` volume after every change. When a browser opens Atlas and has no autosaved project, it loads this default instead of the included example. Loading it does not immediately create an autosave; the first edit does.
 
 The default is separate from autosave and from **Load example** / **Start empty**. Saving a default does not overwrite the current autosave, and loading a different project does not replace the default unless you save it explicitly. Because the default lives on the Atlas server, a new device or fresh browser profile opens it. A browser that already has an autosave keeps that autosave. See [Dashboard and default project](/dashboard).
 
-App branding is also separate. **Diagram settings → App branding** stores the app name, optional tab title, and app logo in `branding.json` in the same volume. It applies to every browser that opens the instance, regardless of which project is loaded. It is not included in **Save project** JSON, and changing it does not change the default project or any autosave.
+App branding is part of the project. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the `branding` object of the project JSON. It is included in **Save project** JSON and the autosaved default, and changing it edits the current project.
 
 ## JSON backup and transfer
 

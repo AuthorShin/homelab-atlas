@@ -14,7 +14,7 @@ No. Atlas only shows what you add manually or load from a project file. There is
 
 ### Why is my project empty after changing the URL or updating Atlas?
 
-Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a JSON backup. Atlas does not synchronize autosaved edits; the optional default project is the only project data stored in the container volume. App branding is stored separately and is not part of a project. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
+Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a JSON backup. Atlas does not synchronize autosaved edits; the autosaved default project is the only project data stored in the container volume. App branding is part of the project JSON. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
 
 ### Why can’t I find or upload a custom logo?
 
@@ -48,15 +48,15 @@ If this browser origin has no autosaved project, the dashboard falls back to the
 
 ### How do I choose a starting project?
 
-Open the project in the editor and choose **File → Save as default project**. Any browser or device that opens this Atlas server without an autosave loads it. **File → Clear default project** removes it without changing the project currently open. Each browser keeps its own autosave, which takes precedence over the default.
+The editor automatically saves the current project as the default on the Atlas server after every change. Any browser or device that opens this Atlas server without an autosave loads it. Each browser keeps its own autosave, which takes precedence over the default.
 
 ### Can I change the app name, browser-tab title, and logo?
 
-Yes. Open **Diagram settings → App branding** in the editor. The name replaces **Homelab Atlas** beside the header logo, the optional tab title replaces the browser-tab title, and an uploaded logo becomes the header mark and tab icon. Branding is saved on the Atlas server, so another browser or device sees it without importing a project. The app logo is used first, then the project tab icon, then the default Atlas mark. See [App branding](/editor#app-branding).
+Yes. Open **Diagram settings → App branding** in the editor. The name replaces **Homelab Atlas** beside the header logo, the optional tab title replaces the browser-tab title, and an uploaded logo becomes the header mark and tab icon. Branding is stored in the project, so it travels with saved JSON and the autosaved default. The app logo is used first, then the project tab icon, then the default Atlas mark. See [App branding](/editor#app-branding).
 
 ### Does app branding travel with my project JSON?
 
-No. App branding is not part of the project schema or a JSON backup. It is stored separately in `branding.json` in the `atlas-data` volume. Saving or importing a project does not change branding, and changing branding does not change the open project or create an autosave. To move branding to another Atlas instance, upload the logo and set the name again there.
+Yes. App branding is part of the project schema (version 10) and is included in JSON backups and the autosaved default. Saving or importing a project carries the name, tab title, and logo reference with it.
 
 ### Does the dashboard work on my phone or another computer?
 

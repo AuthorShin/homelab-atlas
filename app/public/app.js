@@ -8,9 +8,9 @@ import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions,
 import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
-import { inlineUploadReferences, uploadDataUrl, uploadImageFile } from './uploads.js';
+import { inlineUploadReferences, migrateEmbeddedImages, uploadDataUrl, uploadImageFile } from './uploads.js';
 import {
-  DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, fetchServerBranding, normalizeBranding, saveServerBranding,
+  DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, normalizeBranding,
 } from './branding.js';
 import {
   DEFAULT_PROJECT_STORAGE_KEY, clearServerDefaultProject, fetchServerDefaultAvailable,
@@ -54,12 +54,7 @@ let lastStored = '';
 let conflictRaw = '';
 let logoDialogState = null;
 let logoSelection = new Set();
-let branding = { ...DEFAULT_BRANDING };
-let brandingLoaded = false;
-let brandingTouched = false;
 let brandingStatus = { message: '', error: false };
-let brandingSaveToken = 0;
-let brandingSaveChain = Promise.resolve();
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
@@ -146,15 +141,16 @@ function setSaveStatus(message, warning = false) {
 }
 
 function applyBrandingState() {
-  applyBranding(branding, {
+  const value = project?.branding || DEFAULT_BRANDING;
+  applyBranding(value, {
     projectFavicon: project?.favicon || '',
     projectTitle: project?.title || '',
-    brandLabel: `${branding.name} home`,
+    brandLabel: `${value.name} home`,
   });
 }
 
 function brandingStatusText() {
-  return brandingStatus.message || 'Applies to this editor, the dashboard, and new browsers.';
+  return brandingStatus.message || 'Saved in this project and applied in the editor and dashboard.';
 }
 
 function setBrandingStatus(message, error = false) {
@@ -166,58 +162,26 @@ function setBrandingStatus(message, error = false) {
 }
 
 function updateBrandingForm(root = document) {
+  const value = project?.branding || DEFAULT_BRANDING;
   const nameInput = root.querySelector('[data-branding="name"]');
   const titleInput = root.querySelector('[data-branding="tabTitle"]');
-  if (nameInput && document.activeElement !== nameInput) nameInput.value = branding.name;
-  if (titleInput && document.activeElement !== titleInput) titleInput.value = branding.tabTitle;
-  const logo = effectiveBrandLogo(branding, project?.favicon || '');
+  if (nameInput && document.activeElement !== nameInput) nameInput.value = value.name;
+  if (titleInput && document.activeElement !== titleInput) titleInput.value = value.tabTitle;
+  const logo = effectiveBrandLogo(value, project?.favicon || '');
   const preview = root.querySelector('[data-branding-preview]');
   if (preview) {
     preview.src = logo || '/favicon.svg';
-    preview.alt = branding.favicon ? 'Custom app logo'
+    preview.alt = value.favicon ? 'Project app logo'
       : logo ? 'Project tab icon used until an app logo is saved'
         : 'Default Homelab Atlas logo';
   }
   const clear = root.querySelector('[data-brand-logo-clear]');
-  if (clear) clear.hidden = !branding.favicon;
-  const status = root.querySelector('[data-branding-status]');
-  if (status) {
-    status.textContent = brandingStatusText();
-    status.classList.toggle('bad', brandingStatus.error);
-  }
+  if (clear) clear.hidden = !value.favicon;
 }
 
 function queueBrandingSave(next, { successMessage = '' } = {}) {
-  branding = next;
-  brandingTouched = true;
-  applyBrandingState();
-  updateBrandingForm();
-  setBrandingStatus('Saving app branding…');
-  const token = ++brandingSaveToken;
-  brandingSaveChain = brandingSaveChain.catch(() => {}).then(async () => {
-    await saveServerBranding(next);
-    if (token !== brandingSaveToken) return;
-    setBrandingStatus('Saved on this Atlas server for all devices.');
+  if (change(candidate => { candidate.branding = next; })) {
     if (successMessage) toast(successMessage);
-  }).catch(error => {
-    if (token !== brandingSaveToken) return;
-    setBrandingStatus(`Could not save app branding: ${error.message}`, true);
-    toast(`App branding could not be saved: ${error.message}`, true);
-  });
-}
-
-async function loadBranding() {
-  if (brandingLoaded) return;
-  brandingLoaded = true;
-  try {
-    const saved = await fetchServerBranding();
-    if (brandingTouched) return;
-    branding = saved || { ...DEFAULT_BRANDING };
-    applyBrandingState();
-    updateBrandingForm();
-  } catch (error) {
-    if (brandingTouched) return;
-    setBrandingStatus(`Saved app branding could not be loaded: ${error.message}`, true);
   }
 }
 
@@ -264,10 +228,31 @@ function replaceProject(next) {
   scheduleSave();
 }
 
+let serverAutosaveTimer;
+let serverAutosaveToken = 0;
+function queueServerAutosave() {
+  clearTimeout(serverAutosaveTimer);
+  const token = ++serverAutosaveToken;
+  serverAutosaveTimer = setTimeout(async () => {
+    try {
+      const response = await fetch('/api/default-project', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Atlas-Default': '1' },
+        body: JSON.stringify(project),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (token === serverAutosaveToken) setSaveStatus('Saved locally and on Atlas');
+    } catch (error) {
+      if (token === serverAutosaveToken) setSaveStatus(`Not saved on Atlas — ${error.message}`, true);
+    }
+  }, 800);
+}
+
 function scheduleSave() {
   clearTimeout(saveTimer);
   setSaveStatus('Saving…');
   saveTimer = setTimeout(() => saveProject(), 350);
+  queueServerAutosave();
 }
 
 function showConflict(raw) {
@@ -570,7 +555,7 @@ function bindProjectForm(root) {
   const titleInput = root.querySelector('[data-branding="tabTitle"]');
   const saveFields = () => {
     try {
-      queueBrandingSave(normalizeBranding({ ...branding, name: nameInput.value, tabTitle: titleInput.value }));
+      queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), name: nameInput.value, tabTitle: titleInput.value }));
     } catch (error) {
       setBrandingStatus(error.message, true);
       updateBrandingForm(root);
@@ -578,7 +563,6 @@ function bindProjectForm(root) {
     }
   };
   for (const input of [nameInput, titleInput]) {
-    input.addEventListener('input', () => { brandingTouched = true; });
     input.addEventListener('change', saveFields);
     input.addEventListener('keydown', event => {
       if (event.key !== 'Enter') return;
@@ -596,13 +580,13 @@ function bindProjectForm(root) {
     try {
       const favicon = await uploadFavicon(file);
       if (project !== current) throw new Error('The project changed while the logo was uploading. Try again.');
-      queueBrandingSave(normalizeBranding({ ...branding, favicon }), { successMessage: 'App logo saved for all devices and browsers.' });
+      queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), favicon }), { successMessage: 'App logo saved in this project.' });
     } catch (error) {
       toast(error.message);
     }
   });
   root.querySelector('[data-brand-logo-clear]').addEventListener('click', () => {
-    queueBrandingSave(normalizeBranding({ ...branding, favicon: '' }), { successMessage: 'App logo removed for all devices and browsers.' });
+    queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), favicon: '' }), { successMessage: 'App logo removed from this project.' });
   });
   const faviconPreview = root.querySelector('[data-favicon-preview]');
   faviconPreview.src = project.favicon || '/favicon.svg';
@@ -700,7 +684,7 @@ function renderInspector() {
     ['apps', `Apps (${serviceCount})`],
     ['layout', 'Layout'],
   ];
-  root.innerHTML = `<div class="inspector-head"><div class="inspector-identity"><img class="inspector-logo ${logoPlateClass(device.icon)}" alt="" src="${logoSource(device.icon)}"><div><span class="eyebrow">Device</span><h2>${escapeHtml(device.name)}</h2></div></div></div><div class="inspector-actions"><button data-duplicate title="Duplicate" aria-label="Duplicate device">Copy</button><button data-delete class="danger">Delete</button></div><div class="inspector-tabs" role="tablist" aria-label="Device inspector">${tabs.map(([id, label]) => `<button id="inspector-tab-${id}" role="tab" aria-selected="${inspectorTab === id}" aria-controls="inspector-panel-${id}" tabindex="${inspectorTab === id ? 0 : -1}" data-inspector-tab="${id}">${label}</button>`).join('')}</div><div id="inspector-panel-details" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-details" ${inspectorTab === 'details' ? '' : 'hidden'}><section class="inspector-section"><h3>Identity</h3><label>Name<input data-device="name" maxlength="120"></label><label>Role<input data-device="role" maxlength="120"></label><div class="form-grid"><label>Network / VLAN<input data-device="network" maxlength="120"></label><label>Accent<input data-device="accent" type="color"></label></div><div class="network-logo-field"><span>Device icon</span><button type="button" data-device-logo aria-haspopup="dialog" aria-label="Choose device icon: ${escapeHtml(deviceLogo.label)}"><img class="${logoPlateClass(device.icon)}" alt="" src="${logoSource(device.icon)}"><span>${escapeHtml(deviceLogo.label)}</span></button></div></section><section class="inspector-section"><h3>Hardware</h3><label>Facts <span class="muted">One per line. Optional Label: value.</span><textarea data-hardware maxlength="1451"></textarea></label></section></div><div id="inspector-panel-apps" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-apps" ${inspectorTab === 'apps' ? '' : 'hidden'}><section class="inspector-section"><div class="section-head"><h3>Service groups</h3><button data-add-group>${icon('add')}Group</button></div><label class="check-row"><input type="checkbox" data-group-layout ${device.groupLayout === 'sideBySide' ? 'checked' : ''}><span><strong>Side-by-side groups</strong><small>Uses the ${project.columns} column${project.columns === 1 ? '' : 's'} from Diagram appearance.</small></span></label><div id="groups"></div></section></div><div id="inspector-panel-layout" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-layout" ${inspectorTab === 'layout' ? '' : 'hidden'}><section class="inspector-section"><h3>Position</h3><div class="position-grid"><label>X<input data-position="x" type="number" min="0" max="100000" step="1" value="${position.x}"></label><label>Y<input data-position="y" type="number" min="0" max="100000" step="1" value="${position.y}"></label><label>Width<input data-position="w" type="number" min="240" max="100000" step="1" value="${position.w}"></label><label>Height<input data-position="h" type="number" min="100" max="100000" step="1" value="${position.h}"></label></div><p class="help">Positions use diagram units. Content sets the minimum height.</p></section></div>`;
+  root.innerHTML = `<div class="inspector-head"><div class="inspector-identity"><img class="inspector-logo ${logoPlateClass(device.icon)}" alt="" src="${logoSource(device.icon)}"><div><span class="eyebrow">Device</span><h2>${escapeHtml(device.name)}</h2></div></div></div><div class="inspector-actions"><button data-duplicate title="Duplicate" aria-label="Duplicate device">Copy</button><button data-delete class="danger">Delete</button></div><div class="inspector-tabs" role="tablist" aria-label="Device inspector">${tabs.map(([id, label]) => `<button id="inspector-tab-${id}" role="tab" aria-selected="${inspectorTab === id}" aria-controls="inspector-panel-${id}" tabindex="${inspectorTab === id ? 0 : -1}" data-inspector-tab="${id}">${label}</button>`).join('')}</div><div id="inspector-panel-details" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-details" ${inspectorTab === 'details' ? '' : 'hidden'}><section class="inspector-section"><h3>Identity</h3><label>Name<input data-device="name" maxlength="120"></label><label>Role<input data-device="role" maxlength="120"></label><div class="form-grid"><label>Network / VLAN<input data-device="network" maxlength="120"></label><label>Accent<input data-device="accent" type="color"></label></div><div class="network-logo-field"><span>Device icon</span><button type="button" data-device-logo aria-haspopup="dialog" aria-label="Choose device icon: ${escapeHtml(deviceLogo.label)}"><img class="${logoPlateClass(device.icon)}" alt="" src="${logoSource(device.icon)}"><span>${escapeHtml(deviceLogo.label)}</span></button></div></section><section class="inspector-section"><h3>Hardware</h3><label>Facts <span class="muted">One per line. Optional Label: value.</span><textarea data-hardware maxlength="1451"></textarea></label></section></div><div id="inspector-panel-apps" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-apps" ${inspectorTab === 'apps' ? '' : 'hidden'}><section class="inspector-section"><div class="section-head"><h3>Service groups</h3><button data-add-group>${icon('add')}Group</button></div><p class="help">Tick any groups you want to place side by side. They use the ${project.columns} column${project.columns === 1 ? '' : 's'} from Diagram appearance.</p><div id="groups"></div></section></div><div id="inspector-panel-layout" class="tab-panel" role="tabpanel" aria-labelledby="inspector-tab-layout" ${inspectorTab === 'layout' ? '' : 'hidden'}><section class="inspector-section"><h3>Position</h3><div class="position-grid"><label>X<input data-position="x" type="number" min="0" max="100000" step="1" value="${position.x}"></label><label>Y<input data-position="y" type="number" min="0" max="100000" step="1" value="${position.y}"></label><label>Width<input data-position="w" type="number" min="240" max="100000" step="1" value="${position.w}"></label><label>Height<input data-position="h" type="number" min="100" max="100000" step="1" value="${position.h}"></label></div><p class="help">Positions use diagram units. Content sets the minimum height.</p></section></div>`;
   for (const key of ['name', 'role', 'network', 'accent']) root.querySelector(`[data-device=${key}]`).value = device[key];
   root.querySelector('[data-hardware]').value = device.hardware.join('\n');
   root.querySelector('#groups').replaceChildren(...device.groups.map((group, index) => groupElement(group, index, device.groups.length)));
@@ -713,7 +697,7 @@ function groupElement(group, index, count) {
   const logo = group.logo
     ? `<button type="button" class="group-logo-button" data-group-logo aria-label="Replace group logo"><img src="${escapeHtml(group.logo)}" alt=""></button><button type="button" class="group-logo-clear danger" data-group-logo-clear aria-label="Remove group logo">${icon('close')}</button>`
     : `<button type="button" class="group-logo-button empty" data-group-logo aria-label="Upload group logo">${icon('add')}</button>`;
-  element.innerHTML = `<div class="group-head"><span class="group-logo-wrap">${logo}</span><input data-group-name maxlength="120" aria-label="Group name"><span class="group-actions"><button data-group-up class="mini" aria-label="Move group up" ${index === 0 ? 'disabled' : ''}>${icon('up')}</button><button data-group-down class="mini" aria-label="Move group down" ${index === count - 1 ? 'disabled' : ''}>${icon('down')}</button><button data-add-services>${icon('add')}Apps</button><button data-remove-group class="danger" aria-label="Remove group">${icon('close')}</button></span></div><div class="service-list"></div>`;
+  element.innerHTML = `<div class="group-head"><span class="group-logo-wrap">${logo}</span><input data-group-name maxlength="120" aria-label="Group name"><label class="group-side-toggle" title="Place side by side with other ticked groups"><input type="checkbox" data-group-side-by-side ${group.sideBySide ? 'checked' : ''} aria-label="Place group side by side"></label><span class="group-actions"><button data-group-up class="mini" aria-label="Move group up" ${index === 0 ? 'disabled' : ''}>${icon('up')}</button><button data-group-down class="mini" aria-label="Move group down" ${index === count - 1 ? 'disabled' : ''}>${icon('down')}</button><button data-add-services>${icon('add')}Apps</button><button data-remove-group class="danger" aria-label="Remove group">${icon('close')}</button></span></div><div class="service-list"></div>`;
   element.querySelector('[data-group-name]').value = group.name;
   element.querySelector('.service-list').replaceChildren(...group.services.map(service => {
     const row = document.createElement('div');
@@ -770,9 +754,10 @@ $('#inspector-content').addEventListener('change', event => {
   } else if (event.target.dataset.device && deviceId) {
     const key = event.target.dataset.device;
     change(candidate => { candidate.devices.find(item => item.id === deviceId)[key] = event.target.value; });
-  } else if (event.target.matches('[data-group-layout]') && deviceId) {
-    const layout = event.target.checked ? 'sideBySide' : 'stacked';
-    change(candidate => { candidate.devices.find(item => item.id === deviceId).groupLayout = layout; });
+  } else if (event.target.matches('[data-group-side-by-side]') && deviceId) {
+    const groupId = event.target.closest('[data-group]').dataset.group;
+    const sideBySide = event.target.checked;
+    change(candidate => { candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).sideBySide = sideBySide; });
   } else if (event.target.matches('[data-hardware]') && deviceId) {
     const facts = event.target.value.split('\n').map(value => value.trim()).filter(Boolean);
     if (facts.length > LIMITS.hardware || facts.some(value => value.length > LIMITS.text)) {
@@ -1238,17 +1223,17 @@ document.addEventListener('click', event => {
 $('#file-menu a').addEventListener('click', () => closeFileMenu());
 $('#sample').addEventListener('click', () => { closeFileMenu(); if (confirm('Replace this project with the example? You can undo afterward.')) replaceProject(sampleProject()); });
 $('#empty').addEventListener('click', () => { closeFileMenu(); if (confirm('Start empty? You can undo afterward.')) replaceProject(emptyProject()); });
-$('#save-default').addEventListener('click', async () => {
-  const replacing = serverDefaultAvailable || browserDefaultAvailable;
+$('#migrate-images').addEventListener('click', async () => {
   closeFileMenu();
-  if (replacing && !confirm('Replace the default project? New devices and browsers will open this project.')) return;
-  await saveDefaultProject();
+  try {
+    const migrated = await migrateEmbeddedImages(project);
+    if (JSON.stringify(migrated) === JSON.stringify(project)) return toast('No embedded images to move.');
+    replaceProject(migrated);
+    toast('Embedded images were uploaded to Atlas and replaced with server references.');
+  } catch (error) {
+    toast(`Could not move embedded images: ${error.message}`, true);
+  }
 });
-$('#clear-default').addEventListener('click', async () => {
-  closeFileMenu();
-  if (confirm('Clear the default project? New devices and browsers will open the example.')) await clearDefaultProject();
-});
-
 function undo() {
   if (!history.length) return;
   future.push(structuredClone(project));
@@ -1601,5 +1586,4 @@ $('#conflict-load').addEventListener('click', async () => {
 $('#conflict-download').addEventListener('click', () => download(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), filename('.json')));
 
 buildTemplates();
-void loadBranding();
 loadProject();
