@@ -1,8 +1,7 @@
 name: CI
 on: [push, pull_request]
 permissions:
-  contents: read
-  issues: write
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-24.04
@@ -22,14 +21,16 @@ jobs:
           code=$?
           cat test-output.txt
           exit $code
-      - name: Report test failure
+      - name: Publish test output
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          jq -Rs --arg title "CI npm test output" --arg run "$RUN_URL" '{title: $title, body: ("Run: " + $run + "\n\n```\n" + . + "\n```")}' test-output.txt > issue.json
-          curl -fsSL -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/issues --data-binary @issue.json
+          git config user.email "ci@example.invalid"
+          git config user.name "CI Debug"
+          git checkout -B debug/test-output
+          cp test-output.txt debug-output.txt
+          git add debug-output.txt
+          git commit -m "Publish npm test output"
+          git push -f origin debug/test-output
   container:
     runs-on: ubuntu-24.04
     steps:
