@@ -69,7 +69,7 @@ export const guideFigures = {
       { rect: { x: 225, y: 151.8046875, width: 308.796875, height: 50.8359375 }, circle: [166, 177], target: [225, 177], caption: 'Keep Hide network details checked unless the image should include addresses.' },
       { rect: { x: 225, y: 273.4296875, width: 308.796875, height: 72.53125 }, circle: [166, 309.5], target: [225, 309.5], caption: 'Relay is listed as a literal custom term for this image.' },
       { rect: { x: 577.796875, y: 150.8046875, width: 477.203125, height: 448.1953125 }, circle: [1114, 375], target: [1055, 375], caption: 'Inspect the filtered preview. Text baked into logos is not filtered.' },
-      { rect: { x: 211, y: 625, width: 858, height: 58 }, circle: [166, 654], target: [211, 654], caption: 'Download SVG or PNG. Editable project JSON remains separate and keeps the full project.' },
+      { rect: { x: 211, y: 625, width: 858, height: 58 }, circle: [166, 654], target: [211, 654], caption: 'Download SVG or PNG. The editable project ZIP remains separate and keeps the full project plus its images.' },
     ],
   },
 } satisfies Record<string, GuideFigure>

@@ -1,10 +1,10 @@
 # Custom CSS guide
 
-Project CSS is plain CSS stored in the project JSON under **Diagram settings → Custom CSS**. It applies to the editor and the dashboard, and is not written into exported SVG or PNG files. The page allows inline styles so your rules can take effect.
+Project CSS is plain CSS stored in the project under **Diagram settings → Custom CSS**. It applies to the editor and the dashboard, and is not written into exported SVG or PNG files. The page allows inline styles so your rules can take effect.
 
 ## How it is applied
 
-Atlas injects your text into a `<style id="project-css">` element in the page head. It is rebuilt whenever the project changes, so edits appear immediately. Because it is project data, it is saved with browser autosave, exported in project JSON, and sent to Atlas by the server autosave.
+Atlas injects your text into a `<style id="project-css">` element in the page head. It is rebuilt whenever the project changes, so edits appear immediately. Because it is project data, it is saved with browser autosave, included in the saved project ZIP, and sent to Atlas by the server autosave.
 
 Use stable selectors from the editor and dashboard markup:
 

@@ -43,12 +43,12 @@ docker compose -f compose.release.yaml pull
 docker compose -f compose.release.yaml up -d
 ```
 
-Save an editable JSON project before you update or downgrade. Your working project is stored by the browser. The autosaved default project and uploaded images are stored in the `atlas-data` volume, which Compose keeps across normal updates. Atlas 0.16.0 uses schema version 10 and imports schema versions 1 through 9. Existing inventory, uploaded logos, connections, layouts, service links, CSS, and per-group layout are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. Older projects gain an empty branding block and per-group side-by-side flags. App branding now lives in the project. Atlas does not migrate projects backward; older releases cannot open schema-10 projects.
+Save an editable project ZIP before you update or downgrade. Your working project is stored by the browser. The autosaved default project and uploaded images are stored in the `atlas-data` volume, which Compose keeps across normal updates. Atlas 0.16.0 uses schema version 10 and imports schema versions 1 through 9. Existing inventory, uploaded logos, connections, layouts, service links, CSS, and per-group layout are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. Older projects gain an empty branding block and per-group side-by-side flags. App branding now lives in the project. Atlas does not migrate projects backward; older releases cannot open schema-10 projects.
 
 The image tags work like this:
 
 - `0.16.0` and `v0.16.0` identify this release.
-- `0.14` moves to the newest compatible 0.14 patch.
+- `0.16` moves to the newest compatible 0.16 patch.
 - `latest` moves to the newest stable release.
 - A published image digest never changes; the [release guide](/releases/) explains how to pin one.
 
@@ -107,9 +107,9 @@ Atlas has no login system. Only make it available on a LAN you trust:
 ATLAS_BIND=0.0.0.0 docker compose -f compose.release.yaml up -d
 ```
 
-Open `http://<server-address>:8080` from the other computer. The browser sees that address as a different site from `localhost`, so it has separate browser storage. Save JSON before changing the hostname, port, or protocol. Do not expose Homelab Atlas directly to the public internet.
+Open `http://<server-address>:8080` from the other computer. The browser sees that address as a different site from `localhost`, so it has separate browser storage. Save a project ZIP before changing the hostname, port, or protocol. Do not expose Homelab Atlas directly to the public internet.
 
-The server has no login, API token, or host allowlist. Each browser keeps its own autosave. The current project is autosaved to the server as the default, so a new browser or device with no autosave opens it; a browser that already has an autosave keeps that copy. App branding is part of the project, so it travels with the autosaved default. Use **File → Save project** on the first computer and **Import project** on the other when you want to move a project that already has local edits. Anyone who can reach the instance can read or replace the default project, including its branding, so do not expose Homelab Atlas directly to the public internet.
+The server has no login, API token, or host allowlist. Each browser keeps its own autosave. The current project is autosaved to the server as the default, so a new browser or device with no autosave opens it; a browser that already has an autosave keeps that copy. App branding is part of the project, so it travels with the autosaved default and the project ZIP. Use **File → Save project** on the first computer and **Import project** on the other when you want to move a project that already has local edits. Anyone who can reach the instance can read or replace the default project, including its branding, so do not expose Homelab Atlas directly to the public internet.
 
 ## First diagram
 

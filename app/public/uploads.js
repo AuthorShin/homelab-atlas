@@ -44,7 +44,7 @@ async function responseDetail(response) {
   }
 }
 
-async function uploadBlob(blob, { mime, fetcher = globalThis.fetch } = {}) {
+export async function uploadBlob(blob, { mime, fetcher = globalThis.fetch } = {}) {
   if (!blob || !blob.size) throw new Error('Choose an image file.');
   if (blob.size > UPLOAD_LIMITS.bytes) throw new Error('Image files must be 2 MB or smaller.');
   if (!mime) throw new Error('Choose a PNG, JPG, WebP, SVG, or ICO file.');
@@ -90,22 +90,6 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { fetcher =
   const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
   const blob = new Blob([bytes], { type: mime });
   return uploadBlob(blob, { mime, fetcher });
-}
-
-export async function migrateEmbeddedImages(project, { fetcher = globalThis.fetch } = {}) {
-  const clone = structuredClone(project);
-  const targets = [];
-  const add = (object, key, filename) => {
-    const value = object?.[key];
-    if (typeof value === 'string' && value && !isUploadReference(value) && DATA_URL_RE.test(value)) targets.push({ object, key, filename });
-  };
-  add(clone, 'favicon', 'favicon.png');
-  add(clone, 'background', 'background.png');
-  add(clone.branding, 'favicon', 'app-logo.png');
-  for (const logo of clone.customLogos || []) add(logo, 'dataUrl', `${logo.id}.png`);
-  for (const device of clone.devices || []) for (const group of device.groups || []) add(group, 'logo', 'group-logo.png');
-  for (const target of targets) target.object[target.key] = await uploadDataUrl(target.object[target.key], target.filename, { fetcher });
-  return clone;
 }
 
 function readBlobAsDataUrl(blob) {

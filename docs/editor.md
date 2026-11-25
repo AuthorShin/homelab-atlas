@@ -6,7 +6,7 @@ You enter your devices and services, and Atlas starts with an automatic layout. 
 
 ## Start from a sample or empty project
 
-Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens editable JSON, and **Save project** downloads a JSON backup. Every project change is autosaved as the default on the Atlas server for new devices and fresh browsers. **Move embedded images to Atlas** converts older embedded data URLs into server-backed upload references. See [Dashboard and default project](/dashboard).
+Open **File** and choose **Load example** to replace the current project with the included fictional sample, or **Start empty** for a blank project. Atlas asks before doing either one, and you can undo it until you reload the page. **Import project** opens a Homelab Atlas project ZIP, and **Save project** downloads one ZIP containing the project plus every uploaded image. Legacy JSON exports are accepted only for migration; their embedded images are uploaded to Atlas automatically. Every project change is autosaved as the default on the Atlas server for new devices and fresh browsers. See [Dashboard and default project](/dashboard).
 
 ## Add and organize devices
 
@@ -27,6 +27,8 @@ The duplicate button copies a device and gives the copy new internal IDs. Use th
 ## Add service tiles
 
 Open the device inspector's **Apps** tab and add a service group. The group-level **Apps** button opens the Add services flow, where you can search the logo catalog and select more than one service. Selections stay checked across searches. Click the logo beside an existing service to replace it without changing its name, count, ID, or position.
+
+Each group can have an optional logo and a name. In the diagram the group name appears directly under its logo, so a logo does not hide or crowd the label. Click a group in the inspector to reveal the **Side by side** checkbox; groups marked this way share a row up to the **Columns** setting in **Diagram appearance**. The checkbox is hidden again when you click elsewhere, which keeps the group editor compact.
 
 <GuideFigure name="service-logos" />
 

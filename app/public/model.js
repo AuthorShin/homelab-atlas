@@ -173,8 +173,27 @@ export function parseProject(text) {
     validateProject(migrated);
     return migrated;
   }
-  validateProject(data);
-  return structuredClone(data);
+  const repaired = repairCurrentProject(data);
+  validateProject(repaired);
+  return repaired;
+}
+
+// v0.16.0 briefly created new groups without logo/sideBySide fields, which made
+// the whole project fail validation as soon as a group or service was added.
+// Fill only those two missing fields so existing autosaves keep opening.
+function repairCurrentProject(data) {
+  const clone = structuredClone(data);
+  if (Array.isArray(clone?.devices)) {
+    for (const device of clone.devices) {
+      if (!Array.isArray(device?.groups)) continue;
+      for (const group of device.groups) {
+        if (!group || typeof group !== 'object' || Array.isArray(group)) continue;
+        if (!Object.prototype.hasOwnProperty.call(group, 'logo')) group.logo = '';
+        if (!Object.prototype.hasOwnProperty.call(group, 'sideBySide')) group.sideBySide = false;
+      }
+    }
+  }
+  return clone;
 }
 
 export function validateProject(project) {
@@ -383,12 +402,12 @@ function hardwareGeometry(device, fact, index, width, compact) {
 function groupGeometry(group, width, compact, secondary, index, { inset = index > 0 } = {}) {
   const padding = inset ? 10 : 0;
   const contentWidth = width - padding * 2;
-  const logoSize = group.logo ? (compact ? 16 : 18) : 0;
-  const logoGap = logoSize ? 6 : 0;
-  const nameWidth = Math.max(40, contentWidth - logoSize - logoGap);
-  const nameChars = Math.max(8, Math.floor(nameWidth / 7));
+  const logoSize = group.logo ? (compact ? 18 : 20) : 0;
+  const logoGap = logoSize ? 5 : 0;
+  const nameChars = Math.max(8, Math.floor(contentWidth / 7));
   const nameLines = wrapText(group.name.toUpperCase(), nameChars, 2);
-  const headerHeight = Math.max(logoSize, nameLines.length * (compact ? 15 : 17)) + (compact ? 9 : 11);
+  const lineHeight = compact ? 15 : 17;
+  const headerHeight = (logoSize ? logoSize + logoGap : 0) + nameLines.length * lineHeight + (compact ? 9 : 11);
   let mode = 'grid';
   let columns = width < 380 ? 3 : 4;
   let itemHeight = compact ? 72 : 78;
@@ -721,11 +740,15 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     const groupWidth = geometry.w - geometry.padding * 2;
     const groupTop = groupsTop + geometry.y;
     const inset = geometry.inset ? `<rect x="${groupLeft}" y="${groupTop}" width="${geometry.w}" height="${geometry.height - (box.compact ? 8 : 12)}" rx="8" fill="${theme.tile}" fill-opacity=".38" stroke="${theme.line}"/>` : '';
+    const logoTop = groupTop + geometry.padding + 1;
     const logo = geometry.logoSize
-      ? `<image href="${escapeXml(group.logo)}" x="${groupX}" y="${groupTop + geometry.padding + 1}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>`
+      ? `<image href="${escapeXml(group.logo)}" x="${groupX}" y="${logoTop}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>`
       : '';
-    const nameX = groupX + geometry.logoSize + geometry.logoGap;
-    const groupName = textElement(group.name.toUpperCase(), nameX, groupTop + geometry.padding + (box.compact ? 12 : 14), { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: box.compact ? 15 : 17 });
+    const nameLineHeight = box.compact ? 15 : 17;
+    const nameY = geometry.logoSize
+      ? logoTop + geometry.logoSize + geometry.logoGap + nameLineHeight * 0.8
+      : groupTop + geometry.padding + (box.compact ? 12 : 14);
+    const groupName = textElement(group.name.toUpperCase(), groupX, nameY, { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: nameLineHeight });
     const servicesTop = groupTop + geometry.padding + geometry.headerHeight;
     const tileGap = geometry.gap;
     const tileWidth = (groupWidth - tileGap * (geometry.columns - 1)) / geometry.columns;

@@ -2,6 +2,29 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Added
+
+- **File → Save project** now downloads one ZIP containing `project.json`, a manifest, and every uploaded image; **File → Import project** restores that archive and uploads its images to the destination Atlas server. Legacy JSON exports from schema versions 1 through 9 remain accepted only as a migration path.
+- Added a browser-native ZIP reader and writer so save and import do not depend on a library or network request.
+
+### Changed
+
+- Group names now render directly under the group logo, and the group logo remove button sits beside the logo instead of overlapping it.
+- The **Side by side with other marked groups** checkbox appears only while its group is selected, keeping the group editor compact. The wording now describes the behavior instead of implying a per-device toggle.
+- The File menu no longer offers a JSON export.
+
+### Fixed
+
+- Fixed new groups and services failing validation with `Group logo must be empty or a valid image upload reference` because newly created groups omitted `logo` and `sideBySide`. Current-schema projects with those two fields missing are repaired when they load.
+- Fixed the group **Apps** button not opening the Add services picker.
+- Fixed the misplaced close icon after a group logo was added.
+
+### Removed
+
+- Removed **File → Move embedded images to Atlas**. New uploads are always stored in the Atlas upload directory; legacy embedded images are migrated automatically when an old project is imported.
+
 ## [0.16.0] - 2026-11-24
 
 ### Added

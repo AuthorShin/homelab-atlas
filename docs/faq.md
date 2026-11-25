@@ -14,7 +14,7 @@ No. Atlas only shows what you add manually or load from a project file. There is
 
 ### Why is my project empty after changing the URL or updating Atlas?
 
-Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a JSON backup. Atlas does not synchronize autosaved edits; the autosaved default project is the only project data stored in the container volume. App branding is part of the project JSON. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
+Autosave belongs to the browser origin: protocol, hostname, and port. Use the same browser profile and origin, or import a saved project ZIP. Atlas does not synchronize autosaved edits; the autosaved default project is the only project data stored in the container volume. App branding is part of the project. See [trusted LAN access](/getting-started#trusted-lan-access) and [sharing and backup](/sharing).
 
 ### Why can’t I find or upload a custom logo?
 
@@ -22,7 +22,7 @@ Search filters the current catalog; clear it to see every tile. Uploads must be 
 
 ### Why was my project import rejected?
 
-The whole file must pass schema and reference validation before Atlas replaces the open project. Check its size, schema version, IDs, logos, connections, service links, and favicon. Version-8 files cannot contain a `discovery` field. The current project stays unchanged after rejection. See [Import validation details](/troubleshooting#import-validation-details).
+The whole archive must pass validation and every referenced image must upload before Atlas replaces the open project. Check the ZIP size, `project.json`, IDs, logos, connections, service links, and favicon. Current-schema files cannot contain a `discovery` field. The current project stays unchanged after rejection. See [Import validation details](/troubleshooting#import-validation-details).
 
 ## Dashboard and service links
 
@@ -36,7 +36,7 @@ A tile becomes a link only when its service has a valid `http://` or `https://` 
 
 ### Do service links appear in SVG or PNG exports?
 
-No. Links are dashboard-only. SVG and PNG exports contain the diagram and never embed the URLs. Saved JSON and browser storage do contain them. See [Exporting](/exporting).
+No. Links are dashboard-only. SVG and PNG exports contain the diagram and never embed the URLs. The project ZIP and browser storage do contain them. See [Exporting](/exporting).
 
 ### Does Atlas check whether a link is online?
 
@@ -52,11 +52,11 @@ The editor automatically saves the current project as the default on the Atlas s
 
 ### Can I change the app name, browser-tab title, and logo?
 
-Yes. Open **Diagram settings → App branding** in the editor. The name replaces **Homelab Atlas** beside the header logo, the optional tab title replaces the browser-tab title, and an uploaded logo becomes the header mark and tab icon. Branding is stored in the project, so it travels with saved JSON and the autosaved default. The app logo is used first, then the project tab icon, then the default Atlas mark. See [App branding](/editor#app-branding).
+Yes. Open **Diagram settings → App branding** in the editor. The name replaces **Homelab Atlas** beside the header logo, the optional tab title replaces the browser-tab title, and an uploaded logo becomes the header mark and tab icon. Branding is stored in the project, so it travels with the project ZIP and the autosaved default. The app logo is used first, then the project tab icon, then the default Atlas mark. See [App branding](/editor#app-branding).
 
-### Does app branding travel with my project JSON?
+### Does app branding travel with my project?
 
-Yes. App branding is part of the project schema (version 10) and is included in JSON backups and the autosaved default. Saving or importing a project carries the name, tab title, and logo reference with it.
+Yes. App branding is part of the project schema (version 10) and is included in project ZIPs and the autosaved default. Saving or importing a project carries the name, tab title, and logo reference with it.
 
 ### Does the dashboard work on my phone or another computer?
 
@@ -64,14 +64,14 @@ Yes. A new device or fresh browser profile opens the default project saved on th
 
 ### Can I safely share a project that has service links?
 
-Treat it as private when the links contain internal hostnames or admin paths. Links never enter image exports, but they remain in saved JSON and browser storage. Use the Export privacy filter for diagram text, and review JSON before sharing it.
+Treat it as private when the links contain internal hostnames or admin paths. Links never enter image exports, but they remain in the project ZIP and browser storage. Use the Export privacy filter for diagram text, and review a project backup before sharing it.
 
 ## Layout and saving
 
 ### Why did Undo stop working after a reload?
 
-Undo history lasts only for the current page session. Save project JSON for durable editing and backup. Reloading clears the history.
+Undo history lasts only for the current page session. Save a project ZIP for durable editing and backup. Reloading clears the history.
 
 ### Does private export remove every secret? {#private-export-limits}
 
-No. Image filtering hides recognized addresses, URLs, emails, and literal custom terms. Add private hostnames explicitly. Text baked into uploaded logos is unchanged, service links are not part of images, and editable JSON always retains the full facts. Inspect the preview and keep JSON private; see [Exporting](/exporting).
+No. Image filtering hides recognized addresses, URLs, emails, and literal custom terms. Add private hostnames explicitly. Text baked into uploaded logos is unchanged, service links are not part of images, and an editable project ZIP always retains the full facts. Inspect the preview and keep backups private; see [Exporting](/exporting).

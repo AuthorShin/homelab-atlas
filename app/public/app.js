@@ -8,14 +8,12 @@ import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions,
 import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
-import { inlineUploadReferences, migrateEmbeddedImages, uploadDataUrl, uploadImageFile } from './uploads.js';
+import { inlineUploadReferences, uploadDataUrl, uploadImageFile } from './uploads.js';
+import { createProjectArchive, importProjectFile } from './project-zip.js';
 import {
   DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, normalizeBranding,
 } from './branding.js';
-import {
-  DEFAULT_PROJECT_STORAGE_KEY, clearServerDefaultProject, fetchServerDefaultAvailable,
-  resolveStoredProject, saveServerDefaultProject,
-} from './project-storage.js';
+import { DEFAULT_PROJECT_STORAGE_KEY, resolveStoredProject } from './project-storage.js';
 
 const $ = selector => document.querySelector(selector);
 const STORAGE_KEY = 'homelab-atlas.project';
@@ -54,6 +52,7 @@ let lastStored = '';
 let conflictRaw = '';
 let logoDialogState = null;
 let logoSelection = new Set();
+let activeGroupId = null;
 let brandingStatus = { message: '', error: false };
 
 function escapeHtml(value) {
@@ -286,67 +285,6 @@ function saveProject(force = false) {
   }
 }
 
-let serverDefaultAvailable = false;
-let browserDefaultAvailable = false;
-
-function hasStoredBrowserDefault() {
-  try {
-    return Boolean(localStorage.getItem(DEFAULT_PROJECT_STORAGE_KEY));
-  } catch {
-    return false;
-  }
-}
-
-function updateDefaultProjectActions() {
-  const available = serverDefaultAvailable || browserDefaultAvailable;
-  const clear = $('#clear-default');
-  if (clear) clear.hidden = !available;
-  const save = $('#save-default');
-  if (save) save.title = available
-    ? 'Replace the default project that new devices and browsers open'
-    : 'Open this project on new devices and in fresh browsers';
-}
-
-async function refreshDefaultAvailability() {
-  browserDefaultAvailable = hasStoredBrowserDefault();
-  try {
-    serverDefaultAvailable = await fetchServerDefaultAvailable();
-  } catch {
-    serverDefaultAvailable = false;
-  }
-  updateDefaultProjectActions();
-}
-
-async function saveDefaultProject() {
-  try {
-    await saveServerDefaultProject(project);
-    try { localStorage.removeItem(DEFAULT_PROJECT_STORAGE_KEY); } catch { /* The server copy is authoritative. */ }
-    serverDefaultAvailable = true;
-    browserDefaultAvailable = false;
-    updateDefaultProjectActions();
-    toast('Saved as the default project. New devices and browsers will open it.');
-    return true;
-  } catch (error) {
-    toast(`The default project could not be saved: ${error.message}`, true);
-    return false;
-  }
-}
-
-async function clearDefaultProject() {
-  try {
-    await clearServerDefaultProject();
-    try { localStorage.removeItem(DEFAULT_PROJECT_STORAGE_KEY); } catch { /* Nothing else to clear. */ }
-    serverDefaultAvailable = false;
-    browserDefaultAvailable = false;
-    updateDefaultProjectActions();
-    toast('Default project cleared. New devices and browsers will open the example.');
-    return true;
-  } catch (error) {
-    toast(`The default project could not be cleared: ${error.message}`, true);
-    return false;
-  }
-}
-
 async function loadProject() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -363,8 +301,6 @@ async function loadProject() {
     project = decoded.project;
     lastStored = raw || '';
     render();
-    updateDefaultProjectActions();
-    void refreshDefaultAvailability();
     if (decoded.source === 'server-default') setSaveStatus('Using default project');
     else if (decoded.source === 'default') setSaveStatus('Using browser default');
     else if (decoded.source === 'default-error') {
@@ -376,7 +312,6 @@ async function loadProject() {
       toast(`The server default could not be loaded: ${decoded.serverError}`, true);
     }
   } catch (error) {
-    void refreshDefaultAvailability();
     project = sampleProject();
     setSaveStatus('Not saved — storage unavailable', true);
     toast(`Local project could not be loaded: ${error.message}`);
@@ -692,12 +627,12 @@ function renderInspector() {
 
 function groupElement(group, index, count) {
   const element = document.createElement('section');
-  element.className = 'group';
+  element.className = `group${activeGroupId === group.id ? ' group-active' : ''}`;
   element.dataset.group = group.id;
   const logo = group.logo
-    ? `<button type="button" class="group-logo-button" data-group-logo aria-label="Replace group logo"><img src="${escapeHtml(group.logo)}" alt=""></button><button type="button" class="group-logo-clear danger" data-group-logo-clear aria-label="Remove group logo">${icon('close')}</button>`
+    ? `<button type="button" class="group-logo-button" data-group-logo aria-label="Replace group logo"><img src="${escapeHtml(group.logo)}" alt=""></button><button type="button" class="group-logo-clear danger" data-group-logo-clear title="Remove group logo" aria-label="Remove group logo">${icon('close')}</button>`
     : `<button type="button" class="group-logo-button empty" data-group-logo aria-label="Upload group logo">${icon('add')}</button>`;
-  element.innerHTML = `<div class="group-head"><span class="group-logo-wrap">${logo}</span><input data-group-name maxlength="120" aria-label="Group name"><label class="group-side-toggle" title="Place side by side with other ticked groups"><input type="checkbox" data-group-side-by-side ${group.sideBySide ? 'checked' : ''} aria-label="Place group side by side"></label><span class="group-actions"><button data-group-up class="mini" aria-label="Move group up" ${index === 0 ? 'disabled' : ''}>${icon('up')}</button><button data-group-down class="mini" aria-label="Move group down" ${index === count - 1 ? 'disabled' : ''}>${icon('down')}</button><button data-add-services>${icon('add')}Apps</button><button data-remove-group class="danger" aria-label="Remove group">${icon('close')}</button></span></div><div class="service-list"></div>`;
+  element.innerHTML = `<div class="group-head"><span class="group-logo-wrap">${logo}</span><input data-group-name maxlength="120" aria-label="Group name"><label class="group-side-toggle" title="Put this group in the same row as other groups marked side by side"><input type="checkbox" data-group-side-by-side ${group.sideBySide ? 'checked' : ''} aria-label="Put this group side by side with other marked groups"><span>Side by side with other marked groups</span></label><span class="group-actions"><button type="button" data-group-up class="mini" aria-label="Move group up" ${index === 0 ? 'disabled' : ''}>${icon('up')}</button><button type="button" data-group-down class="mini" aria-label="Move group down" ${index === count - 1 ? 'disabled' : ''}>${icon('down')}</button><button type="button" data-add-services>${icon('add')}Apps</button><button type="button" data-remove-group class="danger" aria-label="Remove group">${icon('close')}</button></span></div><div class="service-list"></div>`;
   element.querySelector('[data-group-name]').value = group.name;
   element.querySelector('.service-list').replaceChildren(...group.services.map(service => {
     const row = document.createElement('div');
@@ -845,7 +780,7 @@ $('#inspector-content').addEventListener('click', event => {
     });
   } else if (button.matches('[data-add-group]') && deviceId) {
     if (countGroups() >= LIMITS.groups) return toast('Group limit reached.');
-    change(candidate => { candidate.devices.find(device => device.id === deviceId).groups.push({ id: uid('grp'), name: 'Services', services: [] }); });
+    change(candidate => { candidate.devices.find(device => device.id === deviceId).groups.push({ id: uid('grp'), name: 'Services', logo: '', sideBySide: false, services: [] }); });
   } else if (button.matches('[data-add-vlan]')) {
     if (project.vlans.length >= LIMITS.networks) return toast('VLAN limit reached.');
     change(candidate => { candidate.vlans.push({ id: uid('vlan'), name: 'New VLAN', color: '#34d399' }); });
@@ -891,6 +826,16 @@ $('#inspector-content').addEventListener('click', event => {
   }
 });
 
+document.addEventListener('pointerdown', event => {
+  const group = event.target.closest('#inspector-content [data-group]');
+  const next = group?.dataset.group || null;
+  if (next === activeGroupId) return;
+  activeGroupId = next;
+  for (const element of document.querySelectorAll('#inspector-content .group')) {
+    element.classList.toggle('group-active', element.dataset.group === next);
+  }
+});
+
 $('#inspector-content').addEventListener('keydown', event => {
   const tab = event.target.closest('[role="tab"]');
   if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -929,7 +874,7 @@ $('#template-grid').addEventListener('click', event => {
     change(candidate => {
       candidate.devices.push({
         id, name: template.name, role: template.name, icon: template.icon, accent: template.accent, network: 'Main', hardware: [],
-        groups: [{ id: uid('grp'), name: 'Services', services: template.services.map(([logo, name]) => ({ id: uid('svc'), logo, name, count: 1, link: '' })) }],
+        groups: [{ id: uid('grp'), name: 'Services', logo: '', sideBySide: false, services: template.services.map(([logo, name]) => ({ id: uid('svc'), logo, name, count: 1, link: '' })) }],
       });
     }, { select: id });
     inspectorOpen = true;
@@ -1223,17 +1168,6 @@ document.addEventListener('click', event => {
 $('#file-menu a').addEventListener('click', () => closeFileMenu());
 $('#sample').addEventListener('click', () => { closeFileMenu(); if (confirm('Replace this project with the example? You can undo afterward.')) replaceProject(sampleProject()); });
 $('#empty').addEventListener('click', () => { closeFileMenu(); if (confirm('Start empty? You can undo afterward.')) replaceProject(emptyProject()); });
-$('#migrate-images').addEventListener('click', async () => {
-  closeFileMenu();
-  try {
-    const migrated = await migrateEmbeddedImages(project);
-    if (JSON.stringify(migrated) === JSON.stringify(project)) return toast('No embedded images to move.');
-    replaceProject(migrated);
-    toast('Embedded images were uploaded to Atlas and replaced with server references.');
-  } catch (error) {
-    toast(`Could not move embedded images: ${error.message}`, true);
-  }
-});
 function undo() {
   if (!history.length) return;
   future.push(structuredClone(project));
@@ -1296,12 +1230,12 @@ $('#file-input').addEventListener('change', async event => {
   if (!file) return;
   const current = project;
   try {
-    if (file.size > LIMITS.bytes) throw new Error('File is larger than 2 MB.');
-    const next = parseProject(await file.text());
-    await verifyCustomLogoDecodes(next.customLogos);
+    const imported = await importProjectFile(file);
     if (project !== current) throw new Error('The project changed while the file was loading. Import it again.');
-    replaceProject(next);
-    toast('Project imported.');
+    replaceProject(imported.project);
+    toast(imported.legacy
+      ? `Legacy JSON project migrated${imported.images ? ` with ${quantity(imported.images, 'image')}` : ''}.`
+      : `Project imported${imported.images ? ` with ${quantity(imported.images, 'image')}` : ''}.`);
   } catch (error) {
     toast(`Import failed: ${error.message}`);
   } finally {
@@ -1318,7 +1252,20 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
-$('#save-json').addEventListener('click', () => { closeFileMenu(); download(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), filename('.json')); });
+async function saveProjectArchive() {
+  const blob = await createProjectArchive(project);
+  download(blob, filename('.zip'));
+}
+$('#save-zip').addEventListener('click', async () => {
+  closeFileMenu();
+  try {
+    toast('Packaging the project and its images…', true);
+    await saveProjectArchive();
+    toast('Project ZIP saved with all uploaded images.');
+  } catch (error) {
+    toast(`Save failed: ${error.message}`, true);
+  }
+});
 const exportOptions = () => ({ hideNetworkDetails: $('#export-hide-network').checked, customTerms: $('#export-custom-terms').value });
 let exportPreviewFrame;
 let exportPreviewToken = 0;
@@ -1561,10 +1508,6 @@ $('#inventory-search').addEventListener('input', event => {
 
 addEventListener('storage', event => {
   if (event.key === STORAGE_KEY && hasStorageConflict(event.newValue, lastStored, TAB_ID)) showConflict(event.newValue);
-  if (event.key === DEFAULT_PROJECT_STORAGE_KEY || event.key === null) {
-    browserDefaultAvailable = hasStoredBrowserDefault();
-    updateDefaultProjectActions();
-  }
 });
 $('#conflict-keep').addEventListener('click', () => saveProject(true));
 $('#conflict-load').addEventListener('click', async () => {
@@ -1583,7 +1526,14 @@ $('#conflict-load').addEventListener('click', async () => {
     render();
   } catch (error) { toast(`Could not load saved version: ${error.message}`); }
 });
-$('#conflict-download').addEventListener('click', () => download(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), filename('.json')));
+$('#conflict-download').addEventListener('click', async () => {
+  try {
+    await saveProjectArchive();
+    toast('Project ZIP saved.');
+  } catch (error) {
+    toast(`Save failed: ${error.message}`, true);
+  }
+});
 
 buildTemplates();
 loadProject();
