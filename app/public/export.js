@@ -1,4 +1,4 @@
-import { renderProject } from './model.js';
+import { renderProject, validateProject } from './model.js';
 
 export const HIDDEN_TEXT = '[hidden]';
 export const EXPORT_LIMITS = { terms: 30, termLength: 120, inputLength: 3660 };
@@ -156,12 +156,13 @@ function exportFilename(title, extension) {
   return `${stem}${extension}`;
 }
 
-export function createExportSnapshot(project, options = {}, extension = '.svg') {
+export function createExportSnapshot(project, options = {}, extension = '.svg', { validate = true } = {}) {
+  if (validate) validateProject(project);
   const normalized = normalizeExportOptions(options);
   const displayProject = sanitizedProject(project, normalized);
   const snapshotOptions = Object.freeze({ hideNetworkDetails: normalized.hideNetworkDetails, terms: Object.freeze([...normalized.terms]) });
   return Object.freeze({
-    svg: renderProject(project, { displayProject, interactive: false }),
+    svg: renderProject(project, { displayProject, interactive: false, validate: false }),
     filename: exportFilename(displayProject.title, extension),
     options: snapshotOptions,
   });

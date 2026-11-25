@@ -5,7 +5,7 @@ import {
   createExportSnapshot, HIDDEN_TEXT, parseExportTerms, redactExportText, sanitizeExportProject,
 } from '../../app/public/export.js';
 import { logoDataUri } from '../../app/public/catalog.js';
-import { layoutProject, renderProject, sampleProject, snapshotManualLayout } from '../../app/public/model.js';
+import { LIMITS, layoutProject, renderProject, sampleProject, snapshotManualLayout, validateProject } from '../../app/public/model.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
@@ -98,6 +98,19 @@ test('every rendered user text field is sanitized without changing the project',
   assert.doesNotMatch(snapshot.svg, /data-(?:device|network)=|role="button"|tabindex=/u);
   assert.equal(snapshot.filename, 'lab-hidden.svg');
   assert.equal(JSON.stringify(project), before);
+});
+
+test('export renders inlined upload data larger than the stored-reference limit', () => {
+  const project = sampleProject();
+  project.background = `/api/uploads/${'a'.repeat(64)}.png`;
+  assert.equal(validateProject(project), true);
+
+  const inlined = structuredClone(project);
+  inlined.background = `data:image/png;base64,${'A'.repeat(LIMITS.imageReference + 1)}`;
+  assert.throws(() => validateProject(inlined), /Background must be empty or a valid image upload reference/u);
+
+  const snapshot = createExportSnapshot(inlined, {}, '.svg', { validate: false });
+  assert.match(snapshot.svg, /<image href="data:image\/png;base64,A+/u);
 });
 
 test('export rendering keeps auto and manual card geometry', () => {

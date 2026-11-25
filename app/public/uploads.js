@@ -6,7 +6,7 @@ export const UPLOAD_LIMITS = Object.freeze({
 });
 
 const UPLOAD_PATH_RE = /^\/api\/uploads\/[0-9a-f]{64}\.(?:png|jpg|webp|svg|ico)$/u;
-const IMAGE_DATA_RE = /^data:image\/(?:png|jpeg|webp|svg\+xml|gif);base64,[A-Za-z0-9+/]+={0,2}$/u;
+const IMAGE_DATA_RE = /^data:image\/(?:png|jpeg|webp|svg\+xml|gif|x-icon|vnd\.microsoft\.icon);base64,[A-Za-z0-9+/]+={0,2}$/u;
 const DATA_URL_RE = /^data:([^;,]+);base64,([A-Za-z0-9+/]+={0,2})$/u;
 const EXTENSION_MIME = {
   png: 'image/png',

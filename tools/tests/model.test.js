@@ -46,6 +46,28 @@ test('sample validates and renders deterministically in dark and light themes', 
   assert.match(renderProject(project), /fill="#edf1f4"/);
 });
 
+test('side-by-side groups hide service labels but keep their titles', () => {
+  for (const sideBySide of [false, true]) {
+    const project = sampleProject();
+    const group = project.devices[0].groups[0];
+    group.sideBySide = sideBySide;
+    group.services[0].name = 'Unique Service Label';
+    const svg = renderProject(project);
+    const occurrences = (svg.match(/Unique Service Label/gu) || []).length;
+    assert.equal(occurrences, sideBySide ? 1 : 2, `sideBySide=${sideBySide}`);
+    assert.match(svg, /<title>Unique Service Label<\/title>/u);
+  }
+});
+
+test('background and group logos accept ICO data URLs', () => {
+  for (const mime of ['image/x-icon', 'image/vnd.microsoft.icon']) {
+    const project = sampleProject();
+    project.background = `data:${mime};base64,AAAA`;
+    project.devices[0].groups[0].logo = `data:${mime};base64,AAAA`;
+    assert.equal(validateProject(project), true, mime);
+  }
+});
+
 test('renderer is CSP-safe and escapes malicious text', () => {
   const project = sampleProject();
   project.title = '<script>alert(1)</script>&"';

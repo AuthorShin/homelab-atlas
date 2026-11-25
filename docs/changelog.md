@@ -2,6 +2,17 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Changed
+
+- Groups marked **Side by side** hide the app labels inside their tiles and show only the app logos, which keeps narrow side-by-side rows readable. Hovering a tile still shows its app name.
+
+### Fixed
+
+- Fixed **File → Export** failing with `Background must be empty or a valid image upload reference` when the project uses a large uploaded background. Export now validates the stored project before it inlines uploaded images, so the size limit for stored references no longer rejects a valid export.
+- ICO images (`data:image/x-icon` and `data:image/vnd.microsoft.icon`) are accepted as background and group logo data URLs, matching the ICO upload support.
+
 ## [0.16.1] - 2026-11-25
 
 ### Added

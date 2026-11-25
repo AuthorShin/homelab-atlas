@@ -1270,8 +1270,9 @@ const exportOptions = () => ({ hideNetworkDetails: $('#export-hide-network').che
 let exportPreviewFrame;
 let exportPreviewToken = 0;
 async function exportSnapshot(extension = '.svg') {
+  validateProject(project);
   const source = await inlineUploadReferences(project);
-  return createExportSnapshot(source, exportOptions(), extension);
+  return createExportSnapshot(source, exportOptions(), extension, { validate: false });
 }
 async function updateExportPreview() {
   exportPreviewFrame = 0;

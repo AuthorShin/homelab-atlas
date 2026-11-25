@@ -679,25 +679,29 @@ function renderNetwork(network, logo, box, theme, themeName, customLogos, intera
   return `<g${editor}><title>${escapeXml(network.name)}</title><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="10" fill="${theme.card}" stroke="${theme.line}" stroke-opacity=".78"/>${iconBackground}${marks}${name}${kind}</g>`;
 }
 
-function renderService(service, x, y, width, height, theme, themeName, secondary, customLogos) {
+function renderService(service, x, y, width, height, theme, themeName, secondary, customLogos, showName = true) {
   const center = x + width / 2;
   const geometry = serviceTileGeometry(service.name, width, height, secondary);
   const plate = logoPlate(service.logo, themeName, customLogos);
-  const plateRect = plate ? `<rect x="${center - geometry.plateSize / 2}" y="${y + geometry.plateY}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="5" fill="${plate}"/>` : '';
-  const name = textElement(service.name, center, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, anchor: 'middle', maxChars: Math.max(5, Math.floor(width / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight });
+  const plateTop = showName ? geometry.plateY : (height - geometry.plateSize) / 2;
+  const logoTop = showName ? geometry.logoY : (height - geometry.logoSize) / 2;
+  const plateRect = plate ? `<rect x="${center - geometry.plateSize / 2}" y="${y + plateTop}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="5" fill="${plate}"/>` : '';
+  const name = showName ? textElement(service.name, center, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, anchor: 'middle', maxChars: Math.max(5, Math.floor(width / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight }) : '';
   const badge = service.count > 1 ? textElement(`×${service.count}`, x + width - 6, y + 11, { fill: theme.muted, size: 9, weight: 600, anchor: 'end', maxChars: 3 }) : '';
-  return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="6" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${center - geometry.logoSize / 2}" y="${y + geometry.logoY}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
+  return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="6" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${center - geometry.logoSize / 2}" y="${y + logoTop}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
 }
 
-function renderServiceRow(service, x, y, width, height, theme, themeName, compact, customLogos) {
+function renderServiceRow(service, x, y, width, height, theme, themeName, compact, customLogos, showName = true) {
   const geometry = serviceRowGeometry(service.name, width, height, compact, service.count > 1);
   const plate = logoPlate(service.logo, themeName, customLogos);
   const iconY = y + (height - geometry.logoSize) / 2;
   const plateY = y + (height - geometry.plateSize) / 2;
-  const plateRect = plate ? `<rect x="${x + 10}" y="${plateY}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="6" fill="${plate}"/>` : '';
-  const name = textElement(service.name, x + geometry.textX + 10, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, maxChars: Math.max(6, Math.floor((width - geometry.textX - geometry.countWidth - 22) / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight });
+  const plateX = showName ? x + 10 : x + (width - geometry.plateSize) / 2;
+  const iconX = showName ? x + 13 : x + (width - geometry.logoSize) / 2;
+  const plateRect = plate ? `<rect x="${plateX}" y="${plateY}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="6" fill="${plate}"/>` : '';
+  const name = showName ? textElement(service.name, x + geometry.textX + 10, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, maxChars: Math.max(6, Math.floor((width - geometry.textX - geometry.countWidth - 22) / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight }) : '';
   const badge = service.count > 1 ? textElement(`×${service.count}`, x + width - 12, y + height / 2 + 4, { fill: theme.muted, size: 11, weight: 600, anchor: 'end', maxChars: 3 }) : '';
-  return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${x + 13}" y="${iconY}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
+  return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${iconX}" y="${iconY}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
 }
 
 function renderCard(device, box, theme, themeName, customLogos, interactive) {
@@ -752,10 +756,13 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     const servicesTop = groupTop + geometry.padding + geometry.headerHeight;
     const tileGap = geometry.gap;
     const tileWidth = (groupWidth - tileGap * (geometry.columns - 1)) / geometry.columns;
+    const showServiceNames = !group.sideBySide;
     const services = group.services.map((service, index) => {
       const x = groupX + (index % geometry.columns) * (tileWidth + tileGap);
       const serviceY = servicesTop + Math.floor(index / geometry.columns) * (geometry.itemHeight + tileGap);
-      return geometry.mode === 'rows' ? renderServiceRow(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.compact, customLogos) : renderService(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.secondary, customLogos);
+      return geometry.mode === 'rows'
+        ? renderServiceRow(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.compact, customLogos, showServiceNames)
+        : renderService(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.secondary, customLogos, showServiceNames);
     }).join('');
     return `<g>${inset}${logo}${groupName}${services}</g>`;
   }).join('');
@@ -789,8 +796,8 @@ function connectionLines(project, layout, theme) {
   }).join('');
 }
 
-export function renderProject(project, { displayProject = project, interactive = true } = {}) {
-  validateProject(project);
+export function renderProject(project, { displayProject = project, interactive = true, validate = true } = {}) {
+  if (validate) validateProject(project);
   const layout = layoutProject(project);
   const theme = palettes[project.theme];
   const serviceCount = project.devices.reduce((sum, device) => sum + device.groups.reduce((groupSum, group) => groupSum + group.services.length, 0), 0);
