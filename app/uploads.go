@@ -18,16 +18,19 @@ import (
 )
 
 const (
-	uploadWriteHeader = "X-Atlas-Upload"
-	uploadDirectory   = "uploads"
-	maxUploadBytes    = 2_000_000
+	uploadWriteHeader        = "X-Atlas-Upload"
+	uploadKindHeader         = "X-Atlas-Upload-Kind"
+	uploadDirectory          = "uploads"
+	maxUploadBytes           = 2_000_000
+	maxBackgroundUploadBytes = 10_000_000
 )
 
 var (
-	uploadNamePattern    = regexp.MustCompile(`^[0-9a-f]{64}\.(png|jpg|webp|svg|ico)$`)
-	svgEventAttribute    = regexp.MustCompile(`(?i)\son[a-z]+\s*=`)
-	svgExternalReference = regexp.MustCompile(`(?i)(?:href|xlink:href)\s*=\s*["']\s*(?:https?:|//|data:)`)
-	svgExternalURL       = regexp.MustCompile(`(?i)url\(\s*["']?\s*(?:https?:|//|data:)`)
+	uploadNamePattern  = regexp.MustCompile(`^[0-9a-f]{64}\.(png|jpg|webp|svg|ico)$`)
+	svgEventAttribute  = regexp.MustCompile(`(?i)\son[a-z]+\s*=`)
+	svgHrefAttribute   = regexp.MustCompile(`(?i)(?:href|xlink:href)\s*=\s*["']([^"']*)["']`)
+	svgEmbeddedRaster  = regexp.MustCompile(`(?i)^data:image/(?:png|jpeg|webp|gif);base64,[a-z0-9+/]+={0,2}$`)
+	svgExternalURL     = regexp.MustCompile(`(?i)url\(\s*["']?\s*(?:https?:|//|data:)`)
 )
 
 var uploadContentTypes = map[string]string{
@@ -174,12 +177,18 @@ func (server *atlasServer) createUpload(writer http.ResponseWriter, request *htt
 		writeAPIError(writer, request, http.StatusServiceUnavailable, errStoreUnavailable.Error())
 		return
 	}
-	request.Body = http.MaxBytesReader(writer, request.Body, maxUploadBytes+1)
+	limit := maxUploadBytes
+	limitMessage := "image uploads are limited to 2 MB"
+	if strings.EqualFold(request.Header.Get(uploadKindHeader), "background") {
+		limit = maxBackgroundUploadBytes
+		limitMessage = "background images are limited to 10 MB"
+	}
+	request.Body = http.MaxBytesReader(writer, request.Body, int64(limit)+1)
 	data, err := io.ReadAll(request.Body)
 	if err != nil {
 		var tooLarge *http.MaxBytesError
-		if errors.As(err, &tooLarge) || len(data) > maxUploadBytes {
-			writeAPIError(writer, request, http.StatusRequestEntityTooLarge, "image uploads are limited to 2 MB")
+		if errors.As(err, &tooLarge) || len(data) > limit {
+			writeAPIError(writer, request, http.StatusRequestEntityTooLarge, limitMessage)
 			return
 		}
 		writeAPIError(writer, request, http.StatusBadRequest, "image upload could not be read")
@@ -189,8 +198,8 @@ func (server *atlasServer) createUpload(writer http.ResponseWriter, request *htt
 		writeAPIError(writer, request, http.StatusBadRequest, "image upload is empty")
 		return
 	}
-	if len(data) > maxUploadBytes {
-		writeAPIError(writer, request, http.StatusRequestEntityTooLarge, "image uploads are limited to 2 MB")
+	if len(data) > limit {
+		writeAPIError(writer, request, http.StatusRequestEntityTooLarge, limitMessage)
 		return
 	}
 	if err := validateUploadedImage(mediaType, data); err != nil {
@@ -280,12 +289,19 @@ func validateUploadedSVG(data []byte) error {
 	if !strings.Contains(lower, "<svg") {
 		return errors.New("uploaded SVG is not valid")
 	}
-	for _, forbidden := range []string{"<!doctype", "<!entity", "<script", "<foreignobject", "<?xml-stylesheet", "@import"} {
+	for _, forbidden := range []string{"<!doctype", "<!entity", "<script", "<foreignobject", "<animate", "<set", "<?xml-stylesheet", "@import"} {
 		if strings.Contains(lower, forbidden) {
 			return errors.New("uploaded SVG contains unsupported or unsafe content")
 		}
 	}
-	if svgEventAttribute.MatchString(text) || svgExternalReference.MatchString(text) || svgExternalURL.MatchString(text) {
+	if svgEventAttribute.MatchString(text) || svgExternalURL.MatchString(text) {
+		return errors.New("uploaded SVG contains unsupported or unsafe content")
+	}
+	for _, match := range svgHrefAttribute.FindAllStringSubmatch(text, -1) {
+		target := strings.TrimSpace(match[1])
+		if target == "" || strings.HasPrefix(target, "#") || svgEmbeddedRaster.MatchString(target) {
+			continue
+		}
 		return errors.New("uploaded SVG contains unsupported or unsafe content")
 	}
 	return nil

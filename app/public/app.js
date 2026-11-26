@@ -8,7 +8,7 @@ import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions,
 import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
-import { inlineUploadReferences, uploadDataUrl, uploadImageFile } from './uploads.js';
+import { UPLOAD_LIMITS, inlineUploadReferences, uploadDataUrl, uploadImageFile } from './uploads.js';
 import { createProjectArchive, importProjectFile } from './project-zip.js';
 import {
   DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, normalizeBranding,
@@ -87,13 +87,13 @@ async function uploadFavicon(file) {
 
 async function uploadCustomLogo(file, details) {
   const logo = await normalizeLogoUpload(file, details);
-  const dataUrl = await uploadDataUrl(logo.dataUrl, `${logo.id}.png`);
+  const dataUrl = await uploadDataUrl(logo.dataUrl, `${logo.id}.svg`);
   return { ...logo, dataUrl };
 }
 
 async function uploadGroupLogo(file) {
   const logo = await normalizeLogoUpload(file, { id: uid('custom'), label: 'Group logo', background: 'none' });
-  return uploadDataUrl(logo.dataUrl, `${logo.id}.png`);
+  return uploadDataUrl(logo.dataUrl, `${logo.id}.svg`);
 }
 
 const IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon';
@@ -469,7 +469,7 @@ function projectForm() {
       <input data-favicon-file type="file" accept="${IMAGE_ACCEPT}" hidden>
       <div class="favicon-setting">
         <span class="favicon-preview background-preview"><img data-background-preview alt="" hidden><span data-background-empty>None</span></span>
-        <div class="favicon-copy"><strong>Background image</strong><span>Used behind the editor and dashboard. Stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-background-upload>Upload background</button><button type="button" class="danger" data-background-clear hidden>Remove</button></div></div>
+        <div class="favicon-copy"><strong>Background image</strong><span>Used behind the editor and dashboard. PNG, JPG, WebP, SVG, or ICO up to 10 MB; stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-background-upload>Upload background</button><button type="button" class="danger" data-background-clear hidden>Remove</button></div></div>
       </div>
       <input data-background-file type="file" accept="${IMAGE_ACCEPT}" hidden>
     </section>
@@ -560,7 +560,7 @@ function bindProjectForm(root) {
     if (!file) return;
     const current = project;
     try {
-      const background = await uploadImageFile(file);
+      const background = await uploadImageFile(file, { maxBytes: UPLOAD_LIMITS.backgroundBytes, kind: 'background' });
       if (project !== current) throw new Error('The project changed while the background was uploading. Try again.');
       if (change(candidate => { candidate.background = background; })) toast('Project background updated.');
     } catch (error) {

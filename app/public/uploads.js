@@ -1,7 +1,9 @@
 export const UPLOAD_ENDPOINT = '/api/uploads';
 export const UPLOAD_WRITE_HEADER = 'X-Atlas-Upload';
+export const UPLOAD_KIND_HEADER = 'X-Atlas-Upload-Kind';
 export const UPLOAD_LIMITS = Object.freeze({
   bytes: 2_000_000,
+  backgroundBytes: 10_000_000,
   referenceChars: 1_200_000,
 });
 
@@ -44,17 +46,19 @@ async function responseDetail(response) {
   }
 }
 
-export async function uploadBlob(blob, { mime, fetcher = globalThis.fetch } = {}) {
+export async function uploadBlob(blob, { mime, maxBytes = UPLOAD_LIMITS.bytes, kind = '', fetcher = globalThis.fetch } = {}) {
   if (!blob || !blob.size) throw new Error('Choose an image file.');
-  if (blob.size > UPLOAD_LIMITS.bytes) throw new Error('Image files must be 2 MB or smaller.');
+  if (blob.size > maxBytes) throw new Error(`Image files must be ${Math.round(maxBytes / 1_000_000)} MB or smaller.`);
   if (!mime) throw new Error('Choose a PNG, JPG, WebP, SVG, or ICO file.');
   if (typeof fetcher !== 'function') throw new Error('Image uploads are unavailable.');
+  const headers = {
+    'Content-Type': mime,
+    [UPLOAD_WRITE_HEADER]: '1',
+  };
+  if (kind) headers[UPLOAD_KIND_HEADER] = kind;
   const response = await fetcher(UPLOAD_ENDPOINT, {
     method: 'POST',
-    headers: {
-      'Content-Type': mime,
-      [UPLOAD_WRITE_HEADER]: '1',
-    },
+    headers,
     body: blob,
   });
   const text = await responseDetail(response);
@@ -69,14 +73,14 @@ export async function uploadBlob(blob, { mime, fetcher = globalThis.fetch } = {}
   return payload.url;
 }
 
-export async function uploadImageFile(file, { fetcher = globalThis.fetch } = {}) {
+export async function uploadImageFile(file, { maxBytes = UPLOAD_LIMITS.bytes, kind = '', fetcher = globalThis.fetch } = {}) {
   if (!file || typeof file.size !== 'number' || !file.size) throw new Error('Choose an image file.');
-  if (file.size > UPLOAD_LIMITS.bytes) throw new Error('Image files must be 2 MB or smaller.');
+  if (file.size > maxBytes) throw new Error(`Image files must be ${Math.round(maxBytes / 1_000_000)} MB or smaller.`);
   const mime = normalizeMime(file.type, file.name);
-  return uploadBlob(file, { mime, fetcher });
+  return uploadBlob(file, { mime, maxBytes, kind, fetcher });
 }
 
-export async function uploadDataUrl(dataUrl, filename = 'image.png', { fetcher = globalThis.fetch } = {}) {
+export async function uploadDataUrl(dataUrl, filename = 'image.png', { maxBytes = UPLOAD_LIMITS.bytes, kind = '', fetcher = globalThis.fetch } = {}) {
   const match = DATA_URL_RE.exec(typeof dataUrl === 'string' ? dataUrl : '');
   if (!match) throw new Error('Image data could not be uploaded.');
   const mime = normalizeMime(match[1], filename);
@@ -89,7 +93,7 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { fetcher =
   }
   const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
   const blob = new Blob([bytes], { type: mime });
-  return uploadBlob(blob, { mime, fetcher });
+  return uploadBlob(blob, { mime, maxBytes, kind, fetcher });
 }
 
 function readBlobAsDataUrl(blob) {

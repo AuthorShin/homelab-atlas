@@ -2,11 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
 import { LOGOS, logoById, logoDataUri, logoPlate } from '../../app/public/catalog.js';
-import { CUSTOM_LOGO_LIMITS, hasExternalSvgUrl, PNG_INFLATED_LIMIT, pngInfo, svgTextHasUnsafeContent, validateCustomLogo, validateCustomLogos, verifyCustomLogoDecodes, verifyPngImageData } from '../../app/public/custom-logos.js';
+import { CUSTOM_LOGO_LIMITS, hasExternalSvgUrl, PNG_INFLATED_LIMIT, pngInfo, svgLogoDataUrlIsSafe, svgTextHasUnsafeContent, validateCustomLogo, validateCustomLogos, verifyCustomLogoDecodes, verifyPngImageData } from '../../app/public/custom-logos.js';
 import { parseProject, renderProject, sampleProject, validateProject } from '../../app/public/model.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 const custom = (id = 'custom-test', overrides = {}) => ({ id, label: 'Test logo', dataUrl: PNG, background: 'none', ...overrides });
+const svgDataUrl = text => `data:image/svg+xml;base64,${Buffer.from(text).toString('base64')}`;
+const SVG = svgDataUrl('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>');
+const SVG_WITH_RASTER = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"><image width="1" height="1" href="${PNG}"/></svg>`);
 
 function generatedPng({ size = 1, width = 1, height = 1, idat = new Uint8Array(size) } = {}) {
   const signature = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -37,9 +40,14 @@ const editPng = (dataUrl, edit) => {
 test('custom logo entries and PNG structure validate strictly', () => {
   assert.deepEqual(pngInfo(PNG), { width: 1, height: 1, bytes: 68 });
   assert.equal(validateCustomLogo(custom()), true);
+  assert.equal(validateCustomLogo(custom('custom-test', { dataUrl: SVG })), true);
+  assert.equal(validateCustomLogo(custom('custom-test', { dataUrl: SVG_WITH_RASTER })), true);
   for (const logo of [
     custom('bad'), custom('custom-test', { label: ' ' }), custom('custom-test', { label: ' padded ' }),
-    custom('custom-test', { background: 'blue' }), custom('custom-test', { dataUrl: 'data:image/svg+xml;base64,PHN2Zz4=' }),
+    custom('custom-test', { background: 'blue' }),
+    custom('custom-test', { dataUrl: svgDataUrl('<svg onload="alert(1)"/>') }),
+    custom('custom-test', { dataUrl: svgDataUrl('<svg><image href="https://example.test/a.png"/></svg>') }),
+    custom('custom-test', { dataUrl: svgDataUrl('<svg><script>alert(1)</script></svg>') }),
     { ...custom(), extra: true },
   ]) assert.throws(() => validateCustomLogo(logo));
   assert.throws(() => pngInfo(`${PNG}AAAA`), /canonical|terminator/);
@@ -71,6 +79,17 @@ test('custom assets require native decompression support but empty projects do n
     if (descriptor) Object.defineProperty(globalThis, 'DecompressionStream', descriptor);
     else delete globalThis.DecompressionStream;
   }
+});
+
+test('stored SVG logos allow only self-contained and embedded raster references', () => {
+  assert.equal(svgLogoDataUrlIsSafe(SVG), true);
+  assert.equal(svgLogoDataUrlIsSafe(SVG_WITH_RASTER), true);
+  assert.equal(svgLogoDataUrlIsSafe(svgDataUrl('<svg><use href="#shape"/></svg>')), true);
+  assert.equal(svgLogoDataUrlIsSafe(svgDataUrl('<svg><image href="https://example.test/a.png"/></svg>')), false);
+  assert.equal(svgLogoDataUrlIsSafe(svgDataUrl('<svg><image href="data:image/svg+xml;base64,PHN2Zz4="/></svg>')), false);
+  assert.equal(svgLogoDataUrlIsSafe(svgDataUrl('<svg><style>@import "https://example.test/a.css"</style></svg>')), false);
+  assert.equal(svgLogoDataUrlIsSafe(PNG), false);
+  assert.equal(svgLogoDataUrlIsSafe(`data:image/svg+xml;base64,${'A'.repeat(CUSTOM_LOGO_LIMITS.svgDataUrlChars)}`), false);
 });
 
 test('SVG upload screening rejects active and external content', () => {

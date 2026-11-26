@@ -1,6 +1,6 @@
 import { parseProject } from './model.js';
 import { verifyCustomLogoDecodes } from './custom-logos.js';
-import { isImageReference, isUploadReference, uploadBlob, uploadDataUrl } from './uploads.js';
+import { UPLOAD_LIMITS, isImageReference, isUploadReference, uploadBlob, uploadDataUrl } from './uploads.js';
 
 export const PROJECT_ZIP_ENTRY = 'project.json';
 export const PROJECT_ZIP_MANIFEST = 'manifest.json';
@@ -9,7 +9,7 @@ export const PROJECT_ZIP_FORMAT = 'homelab-atlas-project';
 export const PROJECT_ZIP_LIMITS = Object.freeze({
   bytes: 32_000_000,
   entries: 256,
-  entryBytes: 8_000_000,
+  entryBytes: 12_000_000,
   totalBytes: 32_000_000,
   projectBytes: 2_000_000,
 });
@@ -259,18 +259,21 @@ async function uploadExists(reference, fetcher) {
 async function restoreProjectImages(project, entries, fetcher) {
   const replacements = new Map();
   for (const reference of projectImageReferences(project)) {
+    const uploadOptions = reference === project.background
+      ? { maxBytes: UPLOAD_LIMITS.backgroundBytes, kind: 'background' }
+      : {};
     if (isUploadReference(reference)) {
       const name = filenameFromReference(reference);
       const data = entries.get(`${PROJECT_ZIP_UPLOADS}${name}`);
       if (data) {
         const mime = mimeForName(name);
         if (!mime) throw new Error(`The project ZIP contains an unsupported image: ${name}.`);
-        replacements.set(reference, await uploadBlob(new Blob([data], { type: mime }), { mime, fetcher }));
+        replacements.set(reference, await uploadBlob(new Blob([data], { type: mime }), { mime, fetcher, ...uploadOptions }));
       } else {
         await uploadExists(reference, fetcher);
       }
     } else if (reference.startsWith('data:')) {
-      replacements.set(reference, await uploadDataUrl(reference, 'legacy-image.png', { fetcher }));
+      replacements.set(reference, await uploadDataUrl(reference, 'legacy-image.png', { fetcher, ...uploadOptions }));
     }
   }
   return rewriteProjectImages(project, replacements);

@@ -53,7 +53,7 @@ export const guideFigures = {
     marks: [
       { rect: { x: 311, y: 169.515625, width: 419.3984375, height: 31.9453125 }, circle: [266, 185.5], target: [311, 185.5], caption: 'Search bundled and uploaded logos.' },
       { rect: { x: 311, y: 237.171875, width: 658, height: 336 }, circle: [266, 405], target: [311, 405], caption: 'Jellyfin and Plex are manually selected here. Selections persist across searches.' },
-      { rect: { x: 871.9609375, y: 167.4609375, width: 97.0390625, height: 34 }, circle: [1014, 184.5], target: [969, 184.5], caption: 'Upload PNG, JPG, WebP, or SVG up to 2 MB. Atlas stores it as PNG at up to 512px.' },
+      { rect: { x: 871.9609375, y: 167.4609375, width: 97.0390625, height: 34 }, circle: [1014, 184.5], target: [969, 184.5], caption: 'Upload PNG, JPG, WebP, or SVG up to 2 MB. Atlas stores it as SVG at up to 512px.' },
       { rect: { x: 860.359375, y: 606.171875, width: 108.640625, height: 34 }, circle: [1014, 623], target: [969, 623], caption: 'Add the selected services. Cancel leaves the project unchanged.' },
     ],
   },

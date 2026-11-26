@@ -32,7 +32,7 @@ Each group can have an optional logo and a name. In the diagram the group name a
 
 <GuideFigure name="service-logos" />
 
-Choose **Upload logo** in any picker to add a PNG, JPG, WebP, or SVG file up to 2 MB. Check the preview, edit its name, and choose a transparent, light, or dark background. SVG is converted to PNG, and stored images are at most 512px. Uploaded logos appear first under **Uploaded** and can be reused throughout the project. In the multi-service picker, uploaded drafts are only saved when selected services are added. Cancel leaves the project unchanged.
+Choose **Upload logo** in any picker to add a PNG, JPG, WebP, or SVG file up to 2 MB. Check the preview, edit its name, and choose a transparent, light, or dark background. Uploaded logos are stored as SVG at up to 512px; the source image is rendered into the SVG container. Uploaded logos appear first under **Uploaded** and can be reused throughout the project. In the multi-service picker, uploaded drafts are only saved when selected services are added. Cancel leaves the project unchanged.
 
 You can change a service name and set its instance count from 1 through 99. **Add custom service** still adds a named tile with the included generic icon.
 
@@ -66,8 +66,11 @@ Choose **Diagram settings** in the canvas header to change:
 - Navy, Light, or Midnight diagram theme
 - 1–4 columns
 - Comfortable or Compact density
+- background image
 - project tab icon
 - VLAN chip names and colors
+
+The **Background image** under **Diagram appearance** accepts PNG, JPG, WebP, SVG, or ICO up to 10 MB and is stored on the Atlas server. It is drawn behind the editor and dashboard.
 
 The **Project tab icon** under **Diagram appearance** belongs to the project. Use **Upload tab icon** to give this project its own browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px in the project. **Remove** restores the default Atlas mark. The project icon is used when no app logo is saved, appears in the editor and dashboard tabs, and is not drawn into SVG or PNG exports.
 

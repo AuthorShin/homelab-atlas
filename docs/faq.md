@@ -18,7 +18,7 @@ Autosave belongs to the browser origin: protocol, hostname, and port. Use the sa
 
 ### Why can’t I find or upload a custom logo?
 
-Search filters the current catalog; clear it to see every tile. Uploads must be PNG, JPG, WebP, or safe SVG, at most 2 MB, 4096px per side, and 16 million pixels. Atlas converts them to PNG at up to 512px. See [Add service tiles](/editor#add-service-tiles) and [Troubleshooting](/troubleshooting).
+Search filters the current catalog; clear it to see every tile. Uploads must be PNG, JPG, WebP, or safe SVG, at most 2 MB, 4096px per side, and 16 million pixels. Atlas stores them as SVG at up to 512px; the source image is rendered into the SVG container. See [Add service tiles](/editor#add-service-tiles) and [Troubleshooting](/troubleshooting).
 
 ### Why was my project import rejected?
 

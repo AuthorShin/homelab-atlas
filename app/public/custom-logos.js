@@ -7,11 +7,14 @@ export const CUSTOM_LOGO_LIMITS = {
   sourcePixels: 16_000_000,
   storedSide: 512,
   dataUrlChars: 200_000,
+  svgDataUrlChars: 400_000,
   totalDataUrlChars: 1_200_000,
 };
 
 const ID_RE = /^custom-[a-zA-Z0-9][a-zA-Z0-9_-]{0,56}$/;
 const DATA_RE = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/;
+const SVG_DATA_RE = /^data:image\/svg\+xml;base64,([A-Za-z0-9+/]+={0,2})$/;
+const EMBEDDED_RASTER_RE = /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/i;
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 export const PNG_INFLATED_LIMIT = 2_200_000;
 
@@ -71,19 +74,39 @@ export function pngInfo(dataUrl) {
   return parsePng(dataUrl).info;
 }
 
+const isUploadedLogo = value => isUploadReference(value, '.png') || isUploadReference(value, '.svg');
+
+export function svgLogoDataUrlIsSafe(value) {
+  if (typeof value !== 'string' || value.length > CUSTOM_LOGO_LIMITS.svgDataUrlChars) return false;
+  const match = SVG_DATA_RE.exec(value);
+  if (!match) return false;
+  let text;
+  try { text = atob(match[1]); } catch { return false; }
+  if (!/^\s*<svg[\s>]/i.test(text) || svgTextHasUnsafeContent(text)) return false;
+  const href = /(?:href|xlink:href)\s*=\s*["']([^"']*)["']/gi;
+  let attribute;
+  while ((attribute = href.exec(text))) {
+    const target = attribute[1].trim();
+    if (!target || target.startsWith('#') || EMBEDDED_RASTER_RE.test(target)) continue;
+    return false;
+  }
+  return true;
+}
+
 export function validateCustomLogo(logo) {
   if (!logo || typeof logo !== 'object' || Array.isArray(logo) || Object.keys(logo).sort().join(',') !== 'background,dataUrl,id,label') fail('Custom logo has an invalid structure.');
   if (typeof logo.id !== 'string' || !ID_RE.test(logo.id) || logo.id.length > 64) fail('Custom logo has an invalid ID.');
   if (typeof logo.label !== 'string' || !logo.label.trim() || logo.label !== logo.label.trim() || logo.label.length > 120) fail('Custom logo name must be trimmed text under 121 characters.');
   if (!['none', 'light', 'dark'].includes(logo.background)) fail('Custom logo background is invalid.');
-  if (isUploadReference(logo.dataUrl, '.png')) return true;
+  if (isUploadedLogo(logo.dataUrl)) return true;
+  if (svgLogoDataUrlIsSafe(logo.dataUrl)) return true;
   pngInfo(logo.dataUrl);
   return true;
 }
 
 export function validateCustomLogos(logos, usedIds = new Set()) {
   if (!Array.isArray(logos) || logos.length > CUSTOM_LOGO_LIMITS.count) fail('Project contains too many custom logos.');
-  if (logos.reduce((total, logo) => total + (typeof logo?.dataUrl === 'string' && !isUploadReference(logo.dataUrl, '.png') ? logo.dataUrl.length : 0), 0) > CUSTOM_LOGO_LIMITS.totalDataUrlChars) fail('Custom logo data exceeds the project limit.');
+  if (logos.reduce((total, logo) => total + (typeof logo?.dataUrl === 'string' && !isUploadedLogo(logo.dataUrl) ? logo.dataUrl.length : 0), 0) > CUSTOM_LOGO_LIMITS.totalDataUrlChars) fail('Custom logo data exceeds the project limit.');
   const ids = new Set(usedIds);
   const customIds = new Set();
   for (const logo of logos) {
@@ -140,7 +163,11 @@ async function verifyNativeImageDecode(logo) {
 }
 
 export async function verifyCustomLogoDecodes(logos) {
-  await Promise.all(logos.filter(logo => !isUploadReference(logo.dataUrl, '.png')).map(async logo => {
+  await Promise.all(logos.filter(logo => !isUploadedLogo(logo.dataUrl)).map(async logo => {
+    if (typeof logo.dataUrl === 'string' && logo.dataUrl.startsWith('data:image/svg+xml;base64,')) {
+      await verifyNativeImageDecode(logo);
+      return;
+    }
     await verifyPngImageData(logo.dataUrl);
     await verifyNativeImageDecode(logo);
   }));
@@ -187,6 +214,11 @@ const decodeImage = source => new Promise((resolve, reject) => {
   image.src = source;
 });
 
+function rasterToSvgDataUrl(raster, width, height) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><image width="${width}" height="${height}" href="${raster}"/></svg>`;
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
 export async function normalizeLogoUpload(file, { id, label, background }) {
   if (!(file instanceof File) || !file.size) fail('Choose a logo file.');
   if (file.size > CUSTOM_LOGO_LIMITS.uploadBytes) fail('Logo files must be 2 MB or smaller.');
@@ -214,12 +246,12 @@ export async function normalizeLogoUpload(file, { id, label, background }) {
     canvas.width = width;
     canvas.height = height;
     canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-    dataUrl = canvas.toDataURL('image/png');
-    if (dataUrl.length <= CUSTOM_LOGO_LIMITS.dataUrlChars) break;
+    dataUrl = rasterToSvgDataUrl(canvas.toDataURL('image/png'), width, height);
+    if (dataUrl.length <= CUSTOM_LOGO_LIMITS.svgDataUrlChars) break;
     width = Math.floor(width * .8);
     height = Math.floor(height * .8);
   } while (width >= 16 && height >= 16);
-  if (dataUrl.length > CUSTOM_LOGO_LIMITS.dataUrlChars) fail('This logo cannot be stored under the project size limit.');
+  if (dataUrl.length > CUSTOM_LOGO_LIMITS.svgDataUrlChars) fail('This logo cannot be stored under the project size limit.');
   const logo = { id, label: label.trim(), dataUrl, background };
   validateCustomLogo(logo);
   return logo;

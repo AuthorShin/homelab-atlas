@@ -64,7 +64,7 @@ Colors use six-digit hexadecimal values such as `#55d6c9`. A device `icon`, serv
 
 ## Images and upload references
 
-An image reference is either an empty string, a server upload path, or a legacy base64 image data URL. Upload paths look like `/api/uploads/<sha256>.<ext>` and are content-addressed under `<ATLAS_DATA_DIR>/uploads`. Images uploaded through the editor are always stored this way; new uploads are never embedded in `project.json`. The PNG-only `favicon` and custom-logo fields remain narrower than general image fields.
+An image reference is either an empty string, a server upload path, or a legacy base64 image data URL. Upload paths look like `/api/uploads/<sha256>.<ext>` and are content-addressed under `<ATLAS_DATA_DIR>/uploads`. Images uploaded through the editor are always stored this way; new uploads are never embedded in `project.json`. The PNG-only `favicon` field remains narrower than general image fields. Background images can be up to 10 MB; other image uploads are limited to 2 MB.
 
 Legacy data URLs are accepted so older projects still open. They are converted to upload references when a legacy JSON project is imported, or when a ZIP's `project.json` still contains them.
 
@@ -93,13 +93,13 @@ Schema-5 projects came in two variants: upstream projects with discovery data an
 
 ## Custom logos
 
-Custom logo IDs start with `custom-` and use the same safe ASCII ID characters, with a total limit of 64 characters. Labels are trimmed, nonempty text up to 120 characters. `background` is `none`, `light`, or `dark`. `dataUrl` is a PNG upload reference or a canonical `data:image/png;base64,...` value. Raw SVG, remote URLs, blob URLs, extra fields, duplicates, and IDs colliding with catalog or project records are rejected.
+Custom logo IDs start with `custom-` and use the same safe ASCII ID characters, with a total limit of 64 characters. Labels are trimmed, nonempty text up to 120 characters. `background` is `none`, `light`, or `dark`. `dataUrl` is a PNG or SVG upload reference, a canonical `data:image/png;base64,...` value, or a self-contained `data:image/svg+xml;base64,...` value. Uploaded logos are stored as SVG. Remote URLs, blob URLs, nested SVG data URLs, extra fields, duplicates, and IDs colliding with catalog or project records are rejected.
 
 ## Favicon
 
 The optional project favicon is uploaded from **Diagram settings → Diagram appearance → Project tab icon → Upload tab icon**. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB, 4096px per side, and 16 million pixels. It converts the image to a square PNG with a maximum side of 128px and uploads it. Leave the field empty to use the default Atlas mark. The project favicon is shown in the editor and dashboard browser tabs when no app logo is saved, is part of the project ZIP, and is never rendered into SVG or PNG diagrams.
 
-App branding is part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the project's `branding` object. It travels with project ZIPs, project imports, and the autosaved default. Service links, favicons, branding, custom CSS, and the background image are excluded from SVG and PNG exports.
+App branding is part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the project's `branding` object. It travels with project ZIPs, project imports, and the autosaved default. Service links, favicons, branding, and custom CSS are excluded from SVG and PNG exports; the background image is drawn into the exported SVG.
 
 ## IDs and references
 

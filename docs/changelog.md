@@ -4,8 +4,13 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ## [Unreleased]
 
+### Added
+
+- Background images can be up to 10 MB. Other image uploads keep their 2 MB limit.
+
 ### Changed
 
+- Uploaded custom logos and group logos are now stored as SVG instead of PNG. The source image is rendered at up to 512px and embedded in a self-contained SVG container, so JPG, PNG, WebP, and SVG uploads all become SVG files.
 - Groups marked **Side by side** hide the app labels inside their tiles and show only the app logos, which keeps narrow side-by-side rows readable. Hovering a tile still shows its app name.
 
 ### Fixed
