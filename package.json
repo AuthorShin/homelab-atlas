@@ -1,6 +1,6 @@
 {
   "name": "homelab-atlas",
-  "version": "0.16.2",
+  "version": "0.16.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,6 @@
     "test": "npm run check:icons && node --test tools/tests/*.test.js && mkdir -p .agent/go-tmp .agent/go-cache && GOTMPDIR=\"$PWD/.agent/go-tmp\" GOCACHE=\"$PWD/.agent/go-cache\" go test ./... && python3 -m unittest discover -s tools/tests -p 'test_*.py'"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   }
 }
