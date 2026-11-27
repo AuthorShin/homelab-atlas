@@ -120,7 +120,7 @@ test('long service names render one ellipsized line with a full-name tooltip', (
   project.devices[0].groups[0].services[0].name = 'Nginx Proxy Manager';
   const svg = renderProject(project);
   assert.match(svg, /<title>Nginx Proxy Manager<\/title>/u);
-  assert.doesNotMatch(svg, />Nginx Proxy Manager</u);
+  assert.doesNotMatch(svg, /<tspan[^>]*>Nginx Proxy Manager<\/tspan>/u);
   assert.match(svg, /Nginx Proxy…/u);
 });
 
