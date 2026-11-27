@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 11,
+  "schemaVersion": 12,
   "revision": 1,
   "title": "Home Lab",
   "subtitle": "Private infrastructure · Local services · Built to last",
@@ -12,9 +12,11 @@
     "tabTitle": "",
     "favicon": ""
   },
-  "css": "",
-  "background": "",
-  "backgroundScope": "both",
+  "themes": [
+    { "id": "theme-default", "label": "Default", "css": "", "background": "", "backgroundScope": "both" }
+  ],
+  "activeTheme": "theme-default",
+  "dailyBackground": false,
   "networkRow": "top",
   "vlanRow": "top",
   "layout": {
@@ -105,6 +107,8 @@
               "logo": "nginx-proxy-manager",
               "name": "Proxy Manager",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -112,6 +116,8 @@
               "logo": "adguard-home",
               "name": "AdGuard",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -119,6 +125,8 @@
               "logo": "syncthing",
               "name": "DNS Sync",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -126,6 +134,8 @@
               "logo": "portainer",
               "name": "Portainer",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -133,6 +143,8 @@
               "logo": "dockge",
               "name": "Dockge",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -140,6 +152,8 @@
               "logo": "homepage",
               "name": "Homepage",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -147,6 +161,8 @@
               "logo": "gitea",
               "name": "Gitea",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -154,6 +170,8 @@
               "logo": "uptime-kuma",
               "name": "Uptime Kuma",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -161,6 +179,8 @@
               "logo": "searxng",
               "name": "SearXNG",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -168,6 +188,8 @@
               "logo": "xwiki",
               "name": "XWiki",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -175,6 +197,8 @@
               "logo": "docmost",
               "name": "Docmost",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -182,6 +206,8 @@
               "logo": "prometheus",
               "name": "Metrics",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -189,6 +215,8 @@
               "logo": "freshrss",
               "name": "FreshRSS",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -196,6 +224,8 @@
               "logo": "paperless-ngx",
               "name": "Paperless",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -203,6 +233,8 @@
               "logo": "immich",
               "name": "Immich",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -210,6 +242,8 @@
               "logo": "nextcloud",
               "name": "Nextcloud",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -217,6 +251,8 @@
               "logo": "vaultwarden",
               "name": "Vaultwarden",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -224,6 +260,8 @@
               "logo": "tailscale",
               "name": "Tailscale",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -231,6 +269,8 @@
               "logo": "nginx",
               "name": "Admin ingress",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -238,6 +278,8 @@
               "logo": "wireguard",
               "name": "Net guards",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -253,6 +295,8 @@
               "logo": "postgresql",
               "name": "Postgres",
               "count": 2,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -260,6 +304,8 @@
               "logo": "redis",
               "name": "Redis",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -267,6 +313,8 @@
               "logo": "minio",
               "name": "MinIO",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -274,6 +322,8 @@
               "logo": "restic",
               "name": "Backups",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -304,6 +354,8 @@
               "logo": "jellyfin",
               "name": "Jellyfin",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -311,6 +363,8 @@
               "logo": "sonarr",
               "name": "Sonarr",
               "count": 3,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -318,6 +372,8 @@
               "logo": "radarr",
               "name": "Radarr",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -325,6 +381,8 @@
               "logo": "prowlarr",
               "name": "Prowlarr",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -332,6 +390,8 @@
               "logo": "bazarr",
               "name": "Bazarr",
               "count": 3,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -339,6 +399,8 @@
               "logo": "seerr",
               "name": "Seerr",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -346,6 +408,8 @@
               "logo": "sabnzbd",
               "name": "SABnzbd",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -353,6 +417,8 @@
               "logo": "qbittorrent",
               "name": "qBittorrent",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -360,6 +426,8 @@
               "logo": "tdarr",
               "name": "Tdarr",
               "count": 3,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -367,6 +435,8 @@
               "logo": "open-webui",
               "name": "Open WebUI",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -374,6 +444,8 @@
               "logo": "adguard-home",
               "name": "AdGuard",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -381,6 +453,8 @@
               "logo": "grafana",
               "name": "Grafana",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -388,6 +462,8 @@
               "logo": "postgresql",
               "name": "Postgres",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -395,6 +471,8 @@
               "logo": "home-assistant",
               "name": "HA helper",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -402,6 +480,8 @@
               "logo": "generic",
               "name": "llama.cpp",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -409,6 +489,8 @@
               "logo": "music-assistant",
               "name": "Music Assistant",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -416,6 +498,8 @@
               "logo": "mosquitto",
               "name": "Mosquitto",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -423,6 +507,8 @@
               "logo": "node-red",
               "name": "Node-RED",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -438,6 +524,8 @@
               "logo": "home-assistant",
               "name": "Home Assistant",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -445,6 +533,8 @@
               "logo": "node-red",
               "name": "Node-RED",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -452,6 +542,8 @@
               "logo": "music-assistant",
               "name": "Music",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -459,6 +551,8 @@
               "logo": "mosquitto",
               "name": "MQTT",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -489,6 +583,8 @@
               "logo": "ollama",
               "name": "Ollama",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -496,6 +592,8 @@
               "logo": "open-webui",
               "name": "Open WebUI",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -503,6 +601,8 @@
               "logo": "qwen",
               "name": "Qwen",
               "count": 3,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -510,6 +610,8 @@
               "logo": "n8n",
               "name": "n8n",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -517,6 +619,8 @@
               "logo": "podman",
               "name": "Podman",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -545,6 +649,8 @@
               "logo": "nginx",
               "name": "nginx",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -552,6 +658,8 @@
               "logo": "cloudflare",
               "name": "Cloudflare",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -559,6 +667,8 @@
               "logo": "tailscale",
               "name": "Tailscale",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]
@@ -587,6 +697,8 @@
               "logo": "docmost",
               "name": "Docmost",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -594,6 +706,8 @@
               "logo": "nextcloud",
               "name": "Files",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -601,6 +715,8 @@
               "logo": "postgresql",
               "name": "Postgres",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             },
             {
@@ -608,6 +724,8 @@
               "logo": "redis",
               "name": "Redis",
               "count": 1,
+              "iconSize": 28,
+              "showName": true,
               "link": ""
             }
           ]

@@ -1,6 +1,6 @@
 # Releases and packages
 
-**v0.17.0** is the latest release. You can read the [release notes](/releases/v0.17.0) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.17.0). The [v0.16.1 release notes](/releases/v0.16.1) and [v0.16.0 release notes](/releases/v0.16.0) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
+**v0.18.0** is the latest release. You can read the [release notes](/releases/v0.18.0) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.18.0). The [v0.17.0 release notes](/releases/v0.17.0) and [v0.16.1 release notes](/releases/v0.16.1) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
 
 Release notes for earlier versions are kept for reference. They describe the upstream releases they were written for, and not every feature mentioned there is part of the current build.
 
@@ -8,8 +8,8 @@ Release notes for earlier versions are kept for reference. They describe the ups
 
 | Asset | Platforms | Purpose |
 |---|---|---|
-| `ghcr.io/authorshin/homelab-atlas:0.17.0` | Linux AMD64, ARM64 | Published editor and dashboard image |
-| `homelab-atlas-0.17.0.zip` | Go 1.26+ and a current browser | App source, deployment files, README, and notices |
+| `ghcr.io/authorshin/homelab-atlas:0.18.0` | Linux AMD64, ARM64 | Published editor and dashboard image |
+| `homelab-atlas-0.18.0.zip` | Go 1.26+ and a current browser | App source, deployment files, README, and notices |
 | `compose.release.yaml` | Docker Compose v2 | Runs the released image with the standard safety settings |
 | `SHA256SUMS` | Linux/macOS | Integrity checks for the ZIP and Compose file |
 
@@ -37,12 +37,12 @@ Both covered files must report `OK`.
 
 | Tag | Behavior |
 |---|---|
-| `0.17.0` | Exact stable release |
-| `v0.17.0` | Exact stable release, matching the Git tag |
-| `0.17` | Newest stable patch in the 0.17 line |
+| `0.18.0` | Exact stable release |
+| `v0.18.0` | Exact stable release, matching the Git tag |
+| `0.18` | Newest stable patch in the 0.18 line |
 | `latest` | Newest stable release |
 
-The exact version tags keep pointing to the same release. The `0.17` and `latest` tags move when a newer matching release is published. If you need an image reference that cannot move, get the verified manifest digest from the registry or successful release workflow. Replace the colon and tag after the image name with `@` followed by that `sha256:` digest.
+The exact version tags keep pointing to the same release. The `0.18` and `latest` tags move when a newer matching release is published. If you need an image reference that cannot move, get the verified manifest digest from the registry or successful release workflow. Replace the colon and tag after the image name with `@` followed by that `sha256:` digest.
 
 ## Maintainer checklist
 

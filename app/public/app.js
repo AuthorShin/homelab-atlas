@@ -1,6 +1,6 @@
 import { LOGOS, customLogoEntries, logoById, logoDataUri, logoPlate, networkLogoId, searchLogos } from './catalog.js';
 import {
-  LIMITS, emptyProject, isValidLink, layoutProject, parseProject, removeDevice, removeGroup, removeNetwork, removeService, resetAutoLayout,
+  LIMITS, effectiveAppearance, emptyProject, isValidLink, layoutProject, parseProject, removeDevice, removeGroup, removeNetwork, removeService, resetAutoLayout,
   renderProject, sampleProject, setManualCard, uid, validateProject,
 } from './model.js';
 import { createExportSnapshot } from './export.js';
@@ -467,18 +467,8 @@ function projectForm() {
         <div class="favicon-copy"><strong>Project tab icon</strong><span>Used when no app logo is saved. PNG, JPG, WebP, SVG, or ICO; stored as a PNG up to 128px on this Atlas server.</span><div class="favicon-actions"><button type="button" data-favicon-upload>Upload tab icon</button><button type="button" class="danger" data-favicon-clear hidden>Remove</button></div></div>
       </div>
       <input data-favicon-file type="file" accept="${IMAGE_ACCEPT}" hidden>
-      <div class="favicon-setting">
-        <span class="favicon-preview background-preview"><img data-background-preview alt="" hidden><span data-background-empty>None</span></span>
-        <div class="favicon-copy"><strong>Background image</strong><span>PNG, JPG, WebP, SVG, or ICO up to 10 MB; stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-background-upload>Upload background</button><button type="button" class="danger" data-background-clear hidden>Remove</button></div></div>
-      </div>
-      <label>Background placement<select data-project="backgroundScope"><option value="both">Stage and diagram</option><option value="stage">Stage only</option><option value="diagram">Diagram only</option></select></label>
-      <p class="help">The stage is the canvas around the diagram. The diagram background sits behind devices and cards and is included in SVG and PNG exports.</p>
-      <input data-background-file type="file" accept="${IMAGE_ACCEPT}" hidden>
-    </section>
-    <section class="inspector-section">
-      <h3>Custom CSS</h3>
-      <p class="help">Applies to this project in the editor and dashboard. Stored in project JSON only.</p>
-      <textarea data-project="css" maxlength="${LIMITS.css}" spellcheck="false" placeholder=".stage { ... }"></textarea>
+      <button type="button" data-open-themes>Manage themes</button>
+      <p class="help">Each theme carries its own custom CSS and background image. The active theme sets the look of this project; daily random picks a gallery background by date.</p>
     </section>
     <section class="inspector-section"><div class="section-head"><h3>VLANs</h3><button type="button" data-add-vlan>${icon('add')}VLAN</button></div><div id="vlan-list" class="vlan-list"></div></section>
     <section class="inspector-section"><h3>Links</h3><button type="button" data-edit-connections>Edit connections</button></section>
@@ -486,7 +476,8 @@ function projectForm() {
 }
 
 function bindProjectForm(root) {
-  for (const key of ['subtitle', 'theme', 'columns', 'density', 'backgroundScope', 'networkRow', 'vlanRow', 'css']) root.querySelector(`[data-project=${key}]`).value = project[key];
+  for (const key of ['subtitle', 'theme', 'columns', 'density', 'networkRow', 'vlanRow']) root.querySelector(`[data-project=${key}]`).value = project[key];
+  root.querySelector('[data-open-themes]').addEventListener('click', openThemesDialog);
   updateBrandingForm(root);
   const nameInput = root.querySelector('[data-branding="name"]');
   const titleInput = root.querySelector('[data-branding="tabTitle"]');
@@ -546,31 +537,6 @@ function bindProjectForm(root) {
   });
   root.querySelector('[data-favicon-clear]').addEventListener('click', () => {
     if (change(candidate => { candidate.favicon = ''; })) toast('Project tab icon reset to default.');
-  });
-  const backgroundPreview = root.querySelector('[data-background-preview]');
-  if (project.background) backgroundPreview.src = project.background;
-  else backgroundPreview.removeAttribute('src');
-  backgroundPreview.alt = project.background ? 'Custom project background' : '';
-  backgroundPreview.hidden = !project.background;
-  root.querySelector('[data-background-empty]').hidden = Boolean(project.background);
-  root.querySelector('[data-background-clear]').hidden = !project.background;
-  const backgroundInput = root.querySelector('[data-background-file]');
-  root.querySelector('[data-background-upload]').addEventListener('click', () => backgroundInput.click());
-  backgroundInput.addEventListener('change', async event => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    const current = project;
-    try {
-      const background = await uploadImageFile(file, { maxBytes: UPLOAD_LIMITS.backgroundBytes, kind: 'background' });
-      if (project !== current) throw new Error('The project changed while the background was uploading. Try again.');
-      if (change(candidate => { candidate.background = background; })) toast('Project background updated.');
-    } catch (error) {
-      toast(error.message);
-    }
-  });
-  root.querySelector('[data-background-clear]').addEventListener('click', () => {
-    if (change(candidate => { candidate.background = ''; })) toast('Project background removed.');
   });
   root.querySelector('#vlan-list').replaceChildren(...project.vlans.map(vlan => {
     const row = document.createElement('div');
@@ -640,10 +606,14 @@ function groupElement(group, index, count) {
     const row = document.createElement('div');
     row.className = 'service-row';
     row.dataset.service = service.id;
-    row.innerHTML = `<button type="button" data-service-logo class="service-logo" aria-haspopup="dialog" aria-label="Change logo for ${escapeHtml(service.name)}"><img class="${logoPlateClass(service.logo)}" alt="" src="${logoSource(service.logo)}"></button><input data-service-name maxlength="120" aria-label="Service name"><div class="service-controls"><input data-service-count type="number" min="1" max="99" step="1" aria-label="Instance count"><button data-service-up class="mini" aria-label="Move up">${icon('up')}</button><button data-service-down class="mini" aria-label="Move down">${icon('down')}</button><button data-remove-service class="mini danger" aria-label="Remove service">${icon('close')}</button></div><label class="service-link"><span>Link</span><input data-service-link type="url" inputmode="url" autocomplete="off" spellcheck="false" maxlength="${LIMITS.link}" placeholder="https://service.example.com" aria-label="Link for ${escapeHtml(service.name)}"></label>`;
+    row.innerHTML = `<button type="button" data-service-logo class="service-logo" aria-haspopup="dialog" aria-label="Change logo for ${escapeHtml(service.name)}"><img class="${logoPlateClass(service.logo)}" alt="" src="${logoSource(service.logo)}"></button><input data-service-name maxlength="120" aria-label="Service name"><div class="service-controls"><input data-service-count type="number" min="1" max="99" step="1" aria-label="Instance count"><button data-service-up class="mini" aria-label="Move up">${icon('up')}</button><button data-service-down class="mini" aria-label="Move down">${icon('down')}</button><button data-remove-service class="mini danger" aria-label="Remove service">${icon('close')}</button></div><label class="service-link"><span>Link</span><input data-service-link type="url" inputmode="url" autocomplete="off" spellcheck="false" maxlength="${LIMITS.link}" placeholder="https://service.example.com" aria-label="Link for ${escapeHtml(service.name)}"></label><label class="service-icon-size"><span>Icon size</span><input data-service-icon-size type="number" min="16" max="64" step="1" aria-label="Service icon size"></label><label class="service-show-name"><input type="checkbox" data-service-show-name aria-label="Show service name"><span>Show name${group.sideBySide ? ' (side-by-side groups always hide it)' : ' (full name on hover)'}</span></label>`;
     row.querySelector('[data-service-name]').value = service.name;
     row.querySelector('[data-service-count]').value = service.count;
     row.querySelector('[data-service-link]').value = service.link;
+    row.querySelector('[data-service-icon-size]').value = service.iconSize;
+    const showNameInput = row.querySelector('[data-service-show-name]');
+    showNameInput.checked = service.showName;
+    showNameInput.disabled = Boolean(group.sideBySide);
     return row;
   }));
   return element;
@@ -712,13 +682,18 @@ $('#inspector-content').addEventListener('change', event => {
   } else if (event.target.matches('[data-group-name]') && deviceId) {
     const groupId = event.target.closest('[data-group]').dataset.group;
     change(candidate => { candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).name = event.target.value; });
-  } else if (event.target.matches('[data-service-name], [data-service-count], [data-service-link]') && deviceId) {
+  } else if (event.target.matches('[data-service-name], [data-service-count], [data-service-link], [data-service-icon-size], [data-service-show-name]') && deviceId) {
     const groupId = event.target.closest('[data-group]').dataset.group;
     const serviceId = event.target.closest('[data-service]').dataset.service;
     const count = Number(event.target.value);
     if (event.target.matches('[data-service-count]') && (!Number.isInteger(count) || count < 1 || count > 99)) {
       render();
       return toast('Instance count must be a whole number from 1 to 99.');
+    }
+    const iconSize = Number(event.target.value);
+    if (event.target.matches('[data-service-icon-size]') && (!Number.isInteger(iconSize) || iconSize < LIMITS.iconSizeMin || iconSize > LIMITS.iconSizeMax)) {
+      render();
+      return toast(`Icon size must be a whole number from ${LIMITS.iconSizeMin} to ${LIMITS.iconSizeMax}.`);
     }
     const link = event.target.matches('[data-service-link]') ? event.target.value.trim() : '';
     if (event.target.matches('[data-service-link]') && link && !isValidLink(link)) {
@@ -729,6 +704,8 @@ $('#inspector-content').addEventListener('change', event => {
       const service = candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).services.find(item => item.id === serviceId);
       if (event.target.matches('[data-service-count]')) service.count = count;
       else if (event.target.matches('[data-service-link]')) service.link = link;
+      else if (event.target.matches('[data-service-icon-size]')) service.iconSize = iconSize;
+      else if (event.target.matches('[data-service-show-name]')) service.showName = event.target.checked;
       else service.name = event.target.value;
     });
   } else if (event.target.matches('[data-vlan-name], [data-vlan-color]')) {
@@ -876,7 +853,7 @@ $('#template-grid').addEventListener('click', event => {
     change(candidate => {
       candidate.devices.push({
         id, name: template.name, role: template.name, icon: template.icon, accent: template.accent, network: 'Main', hardware: [],
-        groups: [{ id: uid('grp'), name: 'Services', logo: '', sideBySide: false, services: template.services.map(([logo, name]) => ({ id: uid('svc'), logo, name, count: 1, link: '' })) }],
+        groups: [{ id: uid('grp'), name: 'Services', logo: '', sideBySide: false, services: template.services.map(([logo, name]) => ({ id: uid('svc'), logo, name, count: 1, link: '', iconSize: 28, showName: true })) }],
       });
     }, { select: id });
     inspectorOpen = true;
@@ -993,7 +970,7 @@ $('#add-selected').addEventListener('click', event => {
   if (change(candidate => {
     candidate.customLogos.push(...ids.filter(id => state.drafts.has(id)).map(id => state.drafts.get(id)));
     const group = candidate.devices.find(device => device.id === deviceId).groups.find(item => item.id === groupId);
-    group.services.push(...ids.map(id => ({ id: uid('svc'), logo: id, name: state.drafts.get(id)?.label || logoFor(id).label, count: 1, link: '' })));
+    group.services.push(...ids.map(id => ({ id: uid('svc'), logo: id, name: state.drafts.get(id)?.label || logoFor(id).label, count: 1, link: '', iconSize: 28, showName: true })));
   })) $('#logo-dialog').close();
 });
 $('#add-custom').addEventListener('click', () => {
@@ -1004,7 +981,7 @@ $('#add-custom').addEventListener('click', () => {
   if (countServices() >= LIMITS.services) return toast('Service limit reached.');
   const { deviceId, groupId } = logoDialogState;
   if (change(candidate => {
-    candidate.devices.find(device => device.id === deviceId).groups.find(group => group.id === groupId).services.push({ id: uid('svc'), logo: 'generic', name, count: 1, link: '' });
+    candidate.devices.find(device => device.id === deviceId).groups.find(group => group.id === groupId).services.push({ id: uid('svc'), logo: 'generic', name, count: 1, link: '', iconSize: 28, showName: true });
   })) $('#logo-dialog').close();
 });
 
@@ -1052,6 +1029,114 @@ $('#logo-file').addEventListener('change', async event => {
       $('#upload-logo').disabled = false;
       $('#add-selected').disabled = false;
     }
+  }
+});
+
+let themeDialogState = null;
+
+function showThemeGallery() {
+  themeDialogState = null;
+  $('#theme-gallery').hidden = false;
+  $('#theme-editor').hidden = true;
+  $('#theme-add').hidden = false;
+  $('#daily-background').checked = Boolean(project.dailyBackground);
+  const active = effectiveAppearance(project);
+  const today = project.themes.find(theme => theme.background && theme.background === active.background);
+  $('#theme-gallery').innerHTML = `<p class="help">Today's background: ${today ? escapeHtml(today.label) : 'none'}${project.dailyBackground ? ' (daily random is on)' : ''}</p>${project.themes.map(theme => `<article class="theme-card${theme.id === project.activeTheme ? ' active' : ''}" data-theme="${theme.id}"><div class="theme-preview"${theme.background ? ` style="background-image:linear-gradient(#0d1119aa,#0d1119aa),url('${theme.background}')"` : ''}></div><strong>${escapeHtml(theme.label)}</strong><span class="muted">${theme.background ? 'Background set' : 'No background'}${theme.css ? ' · CSS' : ''}</span><div class="theme-card-actions"><button type="button" data-theme-activate${theme.id === project.activeTheme ? ' disabled' : ''}>${theme.id === project.activeTheme ? 'Active' : 'Use'}</button><button type="button" data-theme-edit>Edit</button><button type="button" data-theme-duplicate>Duplicate</button><button type="button" class="danger" data-theme-delete${project.themes.length <= 1 ? ' disabled' : ''}>Delete</button></div></article>`).join('')}`;
+}
+
+function openThemesDialog() {
+  showThemeGallery();
+  $('#themes-dialog').showModal();
+}
+
+function updateThemeBackgroundPreview() {
+  const background = themeDialogState?.draft.background || '';
+  const preview = $('#theme-background-preview');
+  preview.hidden = !background;
+  if (background) preview.src = background;
+  else preview.removeAttribute('src');
+  $('#theme-background-empty').hidden = Boolean(background);
+  $('#theme-background-clear').hidden = !background;
+}
+
+function openThemeEditor(id) {
+  const theme = id ? project.themes.find(item => item.id === id) : { label: '', css: '', background: '', backgroundScope: 'both' };
+  if (!theme) return;
+  themeDialogState = { editing: id || null, draft: { ...theme } };
+  $('#theme-name').value = theme.label;
+  $('#theme-css').value = theme.css;
+  $('#theme-scope').value = theme.backgroundScope;
+  $('#theme-error').textContent = '';
+  updateThemeBackgroundPreview();
+  $('#theme-gallery').hidden = true;
+  $('#theme-editor').hidden = false;
+  $('#theme-add').hidden = true;
+  $('#theme-name').focus();
+}
+
+$('#theme-gallery').addEventListener('click', event => {
+  const card = event.target.closest('[data-theme]');
+  if (!card) return;
+  const id = card.dataset.theme;
+  if (event.target.closest('[data-theme-activate]')) {
+    if (change(candidate => { candidate.activeTheme = id; })) { showThemeGallery(); toast('Theme activated.'); }
+  } else if (event.target.closest('[data-theme-edit]')) openThemeEditor(id);
+  else if (event.target.closest('[data-theme-duplicate]')) {
+    if (change(candidate => {
+      const index = candidate.themes.findIndex(theme => theme.id === id);
+      candidate.themes.splice(index + 1, 0, { ...candidate.themes[index], id: uid('theme'), label: `${candidate.themes[index].label} copy` });
+    })) { showThemeGallery(); toast('Theme duplicated.'); }
+  } else if (event.target.closest('[data-theme-delete]')) {
+    if (project.themes.length <= 1) return toast('Keep at least one theme.');
+    if (change(candidate => {
+      candidate.themes = candidate.themes.filter(theme => theme.id !== id);
+      if (candidate.activeTheme === id) candidate.activeTheme = candidate.themes[0].id;
+    })) { showThemeGallery(); toast('Theme deleted.'); }
+  }
+});
+
+$('#theme-add').addEventListener('click', () => openThemeEditor(null));
+$('#theme-back').addEventListener('click', showThemeGallery);
+$('#theme-name').addEventListener('keydown', event => { if (event.key === 'Enter') event.preventDefault(); });
+$('#theme-background-upload').addEventListener('click', () => $('#theme-background-file').click());
+$('#theme-background-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file || !themeDialogState) return;
+  try {
+    const background = await uploadImageFile(file, { maxBytes: UPLOAD_LIMITS.backgroundBytes, kind: 'background' });
+    themeDialogState.draft.background = background;
+    updateThemeBackgroundPreview();
+  } catch (error) {
+    $('#theme-error').textContent = error.message;
+  }
+});
+$('#theme-background-clear').addEventListener('click', () => {
+  if (!themeDialogState) return;
+  themeDialogState.draft.background = '';
+  updateThemeBackgroundPreview();
+});
+$('#theme-apply').addEventListener('click', () => {
+  const state = themeDialogState;
+  if (!state) return;
+  const label = $('#theme-name').value.trim();
+  const css = $('#theme-css').value;
+  if (!label) { $('#theme-error').textContent = 'Enter a theme name.'; return; }
+  if (css.length > LIMITS.css) { $('#theme-error').textContent = `Theme CSS must be under ${LIMITS.css + 1} characters.`; return; }
+  const id = state.editing || uid('theme');
+  const theme = { id, label, css, background: state.draft.background, backgroundScope: $('#theme-scope').value };
+  if (change(candidate => {
+    if (state.editing) {
+      const index = candidate.themes.findIndex(item => item.id === state.editing);
+      candidate.themes[index] = theme;
+    } else candidate.themes.push(theme);
+  })) { showThemeGallery(); toast('Theme saved.'); }
+});
+$('#daily-background').addEventListener('change', event => {
+  if (change(candidate => { candidate.dailyBackground = event.target.checked; })) {
+    showThemeGallery();
+    toast(event.target.checked ? 'Daily background enabled.' : 'Daily background disabled.');
   }
 });
 

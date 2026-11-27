@@ -28,13 +28,13 @@ The duplicate button copies a device and gives the copy new internal IDs. Use th
 
 Open the device inspector's **Apps** tab and add a service group. The group-level **Apps** button opens the Add services flow, where you can search the logo catalog and select more than one service. Selections stay checked across searches. Click the logo beside an existing service to replace it without changing its name, count, ID, or position.
 
-Each group can have an optional logo and a name. In the diagram the group name appears directly under its logo, so a logo does not hide or crowd the label. Click a group in the inspector to reveal the **Side by side** checkbox; groups marked this way share a row up to the **Columns** setting in **Diagram appearance**. Side-by-side groups hide the app labels inside their tiles and show only the app logos, so narrow rows stay readable; hover a tile to see its app name. The checkbox is hidden again when you click elsewhere, which keeps the group editor compact.
+Each group can have an optional logo and a name. In the diagram the group name appears to the right of its 32px logo, vertically centered, so the label stays readable. Click a group in the inspector to reveal the **Side by side** checkbox; groups marked this way share a row up to the **Columns** setting in **Diagram appearance**. Side-by-side groups hide the app labels inside their tiles and show only the app logos, so narrow rows stay readable; hover a tile to see its app name. The checkbox is hidden again when you click elsewhere, which keeps the group editor compact.
 
 <GuideFigure name="service-logos" />
 
 Choose **Upload logo** in any picker to add a PNG, JPG, WebP, or SVG file up to 2 MB. Check the preview, edit its name, and choose a transparent, light, or dark background. Uploaded logos are stored as SVG at up to 512px; the source image is rendered into the SVG container. Uploaded logos appear first under **Uploaded** and can be reused throughout the project. In the multi-service picker, uploaded drafts are only saved when selected services are added. Cancel leaves the project unchanged.
 
-You can change a service name and set its instance count from 1 through 99. **Add custom service** still adds a named tile with the included generic icon.
+You can change a service name and set its instance count from 1 through 99. **Icon size** sets that service's icon from 16 to 64 diagram units in both grid tiles and service rows; very large values are limited by the tile height. **Show name** hides the label and turns the full name into a hover tooltip. Long names are always shown on one line with an ellipsis, and the native tooltip keeps the complete text. **Add custom service** still adds a named tile with the included generic icon.
 
 Groups with one or two services use readable horizontal rows. Groups with three or four services use a compact icon grid, and larger groups use a denser grid. Atlas keeps the service order you set.
 
@@ -66,11 +66,11 @@ Choose **Diagram settings** in the canvas header to change:
 - Navy, Light, or Midnight diagram theme
 - 1–4 columns
 - Comfortable or Compact density
-- background image and placement
+- themes (background images, custom CSS, and placement)
 - project tab icon
 - VLAN chip names and colors
 
-The **Background image** under **Diagram appearance** accepts PNG, JPG, WebP, SVG, or ICO up to 10 MB and is stored on the Atlas server. **Background placement** controls where it appears: **Stage and diagram** (the default) shows it around the diagram and behind its content, **Stage only** keeps it to the canvas around the diagram, and **Diagram only** draws it behind devices and cards and into SVG and PNG exports.
+Choose **Manage themes** to open the theme gallery. Each theme has its own name, background image, custom CSS, and **Background placement**: **Stage and diagram** (the default) shows the image around the diagram and behind its content, **Stage only** keeps it to the canvas, and **Diagram only** draws it behind devices and cards and into SVG and PNG exports. Background images accept PNG, JPG, WebP, SVG, or ICO up to 10 MB and are stored on the Atlas server. Use **Use** to activate a theme, and **Add**, **Duplicate**, **Edit**, or **Delete** to manage the gallery. **Random background each day** picks one gallery background by date, so the editor and dashboard agree; the active theme still supplies the CSS and placement.
 
 The **Project tab icon** under **Diagram appearance** belongs to the project. Use **Upload tab icon** to give this project its own browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px in the project. **Remove** restores the default Atlas mark. The project icon is used when no app logo is saved, appears in the editor and dashboard tabs, and is not drawn into SVG or PNG exports.
 

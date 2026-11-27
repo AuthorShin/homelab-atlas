@@ -1,6 +1,6 @@
 # Project format
 
-**File → Save project** downloads a ZIP archive. It contains `project.json` (schema version 11), a small `manifest.json`, and every uploaded image the project references, under `uploads/`. **File → Import project** accepts that ZIP after strict validation. It also accepts legacy JSON exports from schema versions 1 through 10 as a migration path; embedded images in those files are uploaded to Atlas and replaced with upload references.
+**File → Save project** downloads a ZIP archive. It contains `project.json` (schema version 12), a small `manifest.json`, and every uploaded image the project references, under `uploads/`. **File → Import project** accepts that ZIP after strict validation. It also accepts legacy JSON exports from schema versions 1 through 11 as a migration path; embedded images in those files are uploaded to Atlas and replaced with upload references.
 
 The current project stays open if any validation or upload step fails. Atlas never writes a project back to disk in JSON form: the editable backup is the ZIP.
 
@@ -9,20 +9,20 @@ The current project stays open if any validation or upload step fails. Atlas nev
 | Entry | Required | Meaning |
 |---|---|---|
 | `project.json` | Yes | The project, at most 2 MB, matching the schema below |
-| `manifest.json` | No | `{ "format": "homelab-atlas-project", "formatVersion": 1, "schemaVersion": 11 }` |
+| `manifest.json` | No | `{ "format": "homelab-atlas-project", "formatVersion": 1, "schemaVersion": 12 }` |
 | `uploads/<sha256>.<ext>` | For each upload reference | The exact image bytes served by `/api/uploads` |
 
 `<ext>` is `png`, `jpg`, `webp`, `svg`, or `ico`. On import, Atlas uploads each included image to the destination server and rewrites the project to the returned `/api/uploads/...` reference. A referenced upload that is neither included in the ZIP nor already present on the server rejects the import. Files with unsafe names, duplicate names, encryption, unsupported compression, or a failed CRC are rejected.
 
 ## Migrating an older JSON backup
 
-A legacy JSON export is still accepted by **File → Import project**. Atlas validates it in its original schema, applies the migrations below, uploads any embedded `data:` images, and validates the result as schema version 11. There is no JSON export in the File menu, and a ZIP is the only format that preserves uploaded images without embedding them in the project text.
+A legacy JSON export is still accepted by **File → Import project**. Atlas validates it in its original schema, applies the migrations below, uploads any embedded `data:` images, and validates the result as schema version 12. There is no JSON export in the File menu, and a ZIP is the only format that preserves uploaded images without embedding them in the project text.
 
 ## Top-level fields
 
 | Field | Type | Meaning |
 |---|---|---|
-| `schemaVersion` | integer | Must be `11` |
+| `schemaVersion` | integer | Must be `12` |
 | `revision` | integer | Browser conflict/change revision, from 0 through 1,000,000,000 |
 | `title`, `subtitle` | string | Diagram heading text, at most 120 characters each |
 | `theme` | string | `navy`, `light`, or `midnight` |
@@ -30,9 +30,9 @@ A legacy JSON export is still accepted by **File → Import project**. Atlas val
 | `density` | string | `comfortable` or `compact` |
 | `favicon` | string | Empty, or a PNG upload reference; legacy PNG data URLs are still accepted |
 | `branding` | object | App name, optional tab title, and optional app logo |
-| `css` | string | Project custom CSS, at most 20,000 characters |
-| `background` | string | Empty, or an image upload reference |
-| `backgroundScope` | string | `stage`, `diagram`, or `both`; where the background image appears |
+| `themes` | array | 1–24 themes; each has `id`, `label`, `css`, `background`, `backgroundScope` |
+| `activeTheme` | string | ID of the theme currently applied |
+| `dailyBackground` | boolean | Pick a gallery background by date instead of using the active theme's image |
 | `networkRow`, `vlanRow` | string | `top` or `bottom` placement for each header row |
 | `layout` | object | Device-card layout mode and saved rectangles |
 | `customLogos` | array | Reusable uploaded logos |
@@ -45,7 +45,7 @@ A legacy JSON export is still accepted by **File → Import project**. Atlas val
 
 Schema version 11 has no `discovery` field. A current file containing one is rejected as an unknown key.
 
-`backgroundScope` defaults to `both` when an older project is migrated. `stage` shows the image on the canvas around the diagram, `diagram` draws it behind the diagram content and into SVG/PNG exports, and `both` does both.
+Each theme's `backgroundScope` is `stage`, `diagram`, or `both`. `stage` shows the image on the canvas around the diagram, `diagram` draws it behind the diagram content and into SVG/PNG exports, and `both` does both. When `dailyBackground` is on, the date selects one theme background for everyone; the active theme still supplies the CSS and scope. CSS is limited to 20,000 characters per theme and 120,000 in total. Older projects migrate their single CSS/background pair into one starting theme.
 
 ## Record fields
 
@@ -55,7 +55,7 @@ Schema version 11 has no `discovery` field. A current file containing one is rej
 | VLAN | `id`, `name`, `color` |
 | Device | `id`, `name`, `role`, `icon`, `accent`, `network`, `hardware`, `groups` |
 | Group | `id`, `name`, `logo`, `sideBySide`, `services` |
-| Service | `id`, `logo`, `name`, `count`, `link` |
+| Service | `id`, `logo`, `name`, `count`, `link`, `iconSize`, `showName` |
 | Connection | `id`, `from`, `to`, `label` |
 | Layout | `mode`, `cards` |
 | Layout card | `id`, `x`, `y`, `w`, `h` |
@@ -63,7 +63,7 @@ Schema version 11 has no `discovery` field. A current file containing one is rej
 
 `sideBySide` is a boolean. Groups marked this way share one row, up to the project's `columns` setting. The group `logo` is empty or an image reference. A custom logo `dataUrl` is a PNG or SVG upload reference, or a safe legacy image data URL.
 
-Colors use six-digit hexadecimal values such as `#55d6c9`. A device `icon`, service `logo`, or nonempty network logo field must exist in the bundled catalog or `customLogos`. An empty network `icon` selects the automatic kind-based mark; an empty `secondaryIcon` means no secondary mark. A service `count` must be an integer from 1 through 99.
+Colors use six-digit hexadecimal values such as `#55d6c9`. A device `icon`, service `logo`, or nonempty network logo field must exist in the bundled catalog or `customLogos`. An empty network `icon` selects the automatic kind-based mark; an empty `secondaryIcon` means no secondary mark. A service `count` must be an integer from 1 through 99. `iconSize` is an integer from 16 through 64 diagram units and applies to both grid tiles and service rows; the renderer clamps very large values to the available tile height. `showName` is a boolean; when false the label becomes a native SVG tooltip with the full name. Side-by-side groups always hide service names.
 
 ## Images and upload references
 
@@ -79,7 +79,7 @@ Links appear only on the [dashboard](/dashboard). They are not rendered into SVG
 
 ## Migration
 
-Imports are validated in their original schema before migration, then validated again as schema version 11. The current project stays open if any step fails.
+Imports are validated in their original schema before migration, then validated again as schema version 12. The current project stays open if any step fails.
 
 | Old schema | Migration |
 |---|---|
@@ -91,7 +91,8 @@ Imports are validated in their original schema before migration, then validated 
 | 1–8 | Add the default `branding` block and `sideBySide: false` to every group |
 | 9 | Add a default `branding` block; convert the per-device `groupLayout` toggle into each group's `sideBySide` flag |
 | 9–10 | Add `backgroundScope: "both"` |
-| 1–10 | Add empty service links where needed, then replace every remaining legacy image data URL with an upload reference |
+| 11 | Move `css`/`background`/`backgroundScope` into one theme; add `activeTheme`, `dailyBackground`, and per-service `iconSize`/`showName` |
+| 1–11 | Add empty service links where needed, then replace every remaining legacy image data URL with an upload reference |
 
 Schema-5 projects came in two variants: upstream projects with discovery data and fork projects with service links. Both are accepted. Discovery bindings are validated before they are discarded, so malformed legacy data does not silently pass. Raw discovery snapshots were never stored in the project.
 
@@ -103,7 +104,7 @@ Custom logo IDs start with `custom-` and use the same safe ASCII ID characters, 
 
 The optional project favicon is uploaded from **Diagram settings → Diagram appearance → Project tab icon → Upload tab icon**. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB, 4096px per side, and 16 million pixels. It converts the image to a square PNG with a maximum side of 128px and uploads it. Leave the field empty to use the default Atlas mark. The project favicon is shown in the editor and dashboard browser tabs when no app logo is saved, is part of the project ZIP, and is never rendered into SVG or PNG diagrams.
 
-App branding is part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the project's `branding` object. It travels with project ZIPs, project imports, and the autosaved default. Service links, favicons, branding, and custom CSS are excluded from SVG and PNG exports; the background image is drawn into the exported SVG.
+App branding is part of this schema. **Diagram settings → App branding** stores the app name, optional tab title, and app logo reference in the project's `branding` object. It travels with project ZIPs, project imports, and the autosaved default. Service links, favicons, branding, and theme CSS are excluded from SVG and PNG exports; the active theme's background (or today's random pick) is drawn into the exported SVG.
 
 ## IDs and references
 
@@ -156,7 +157,7 @@ The group limit applies to each device array and to the whole project. Each obje
 
 ```json
 {
-  "schemaVersion": 11,
+  "schemaVersion": 12,
   "revision": 1,
   "title": "Small Lab",
   "subtitle": "Fictional example",
@@ -169,9 +170,11 @@ The group limit applies to each device array and to the whole project. Each obje
     "tabTitle": "",
     "favicon": ""
   },
-  "css": "",
-  "background": "",
-  "backgroundScope": "both",
+  "themes": [
+    { "id": "theme-default", "label": "Default", "css": "", "background": "", "backgroundScope": "both" }
+  ],
+  "activeTheme": "theme-default",
+  "dailyBackground": false,
   "networkRow": "top",
   "vlanRow": "top",
   "layout": {

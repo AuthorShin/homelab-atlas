@@ -199,7 +199,7 @@ function addImageReference(references, value) {
 export function projectImageReferences(project) {
   const references = new Set();
   addImageReference(references, project?.favicon);
-  addImageReference(references, project?.background);
+  for (const theme of project?.themes || []) addImageReference(references, theme?.background);
   addImageReference(references, project?.branding?.favicon);
   for (const logo of project?.customLogos || []) addImageReference(references, logo?.dataUrl);
   for (const device of project?.devices || []) {
@@ -213,7 +213,7 @@ function rewriteProjectImages(project, replacements) {
   const clone = structuredClone(project);
   const rewrite = value => replacements.get(value) || value;
   clone.favicon = rewrite(clone.favicon);
-  clone.background = rewrite(clone.background);
+  for (const theme of clone.themes || []) theme.background = rewrite(theme.background);
   if (clone.branding) clone.branding.favicon = rewrite(clone.branding.favicon);
   for (const logo of clone.customLogos || []) logo.dataUrl = rewrite(logo.dataUrl);
   for (const device of clone.devices || []) {
@@ -259,7 +259,7 @@ async function uploadExists(reference, fetcher) {
 async function restoreProjectImages(project, entries, fetcher) {
   const replacements = new Map();
   for (const reference of projectImageReferences(project)) {
-    const uploadOptions = reference === project.background
+    const uploadOptions = (project.themes || []).some(theme => theme.background === reference)
       ? { maxBytes: UPLOAD_LIMITS.backgroundBytes, kind: 'background' }
       : {};
     if (isUploadReference(reference)) {

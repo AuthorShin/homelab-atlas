@@ -102,11 +102,11 @@ test('every rendered user text field is sanitized without changing the project',
 
 test('export renders inlined upload data larger than the stored-reference limit', () => {
   const project = sampleProject();
-  project.background = `/api/uploads/${'a'.repeat(64)}.png`;
+  project.themes[0].background = `/api/uploads/${'a'.repeat(64)}.png`;
   assert.equal(validateProject(project), true);
 
   const inlined = structuredClone(project);
-  inlined.background = `data:image/png;base64,${'A'.repeat(LIMITS.imageReference + 1)}`;
+  inlined.themes[0].background = `data:image/png;base64,${'A'.repeat(LIMITS.imageReference + 1)}`;
   assert.throws(() => validateProject(inlined), /Background must be empty or a valid image upload reference/u);
 
   const snapshot = createExportSnapshot(inlined, {}, '.svg', { validate: false });

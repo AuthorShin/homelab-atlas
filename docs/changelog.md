@@ -2,6 +2,24 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.18.0] - 2026-11-27
+
+### Added
+
+- Added a **Themes** gallery under **Diagram settings → Manage themes**. Each theme carries its own CSS, background image, and background placement. **Use** activates a theme; **Add**, **Duplicate**, **Edit**, and **Delete** manage the gallery. **Random background each day** picks a gallery background by date, so the editor and dashboard always agree.
+- Added per-service **Icon size** (16–64 diagram units) and **Show name** controls. Hidden and truncated names keep the full text in a native tooltip.
+- Long service labels now render on one line with an ellipsis instead of wrapping to two lines.
+
+### Changed
+
+- The diagram group logo is now 32px with the group name beside it instead of underneath.
+- Project schema is now version 12. The old project CSS and background fields migrate into a starting theme; services gain `iconSize` and `showName`. Schema 1–11 projects migrate automatically.
+
+### Removed
+
+- Removed the standalone project **Custom CSS** box and the project-level **Background image** / **Background placement** controls. CSS and backgrounds now live in themes.
+- Removed the `--line` and `--line-soft` CSS variables and the borders that used them, including the top-bar divider.
+
 ## [0.17.0] - 2026-11-27
 
 ### Added
@@ -285,3 +303,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.16.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.0
 [0.16.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.1
 [0.17.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.17.0
+[0.18.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.18.0

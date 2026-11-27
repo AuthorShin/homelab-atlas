@@ -2,7 +2,7 @@
 
 A project ZIP is your editable project file. SVG and PNG are images of it. The dashboard is a read-only browser view of the same project.
 
-Atlas saves schema version 11. A project ZIP contains `project.json` and every uploaded image used by the project. Imports from schema versions 1 through 10 preserve inventory, custom logos, connections, manual layout, service links, branding, and per-group settings. Discovery data from older projects is discarded. Valid schema-5 service links are kept; other older services gain an empty link. Older Atlas versions cannot open schema version 11. Legacy JSON exports are accepted only as a migration path; their embedded images are uploaded to Atlas.
+Atlas saves schema version 12. A project ZIP contains `project.json` and every uploaded image used by the project, including theme backgrounds. Imports from schema versions 1 through 11 preserve inventory, custom logos, connections, manual layout, service links, branding, and per-group settings; the old CSS/background pair becomes a starting theme. Discovery data from older projects is discarded. Valid schema-5 service links are kept; other older services gain an empty link. Older Atlas versions cannot open schema version 12. Legacy JSON exports are accepted only as a migration path; their embedded images are uploaded to Atlas.
 
 ## Browser autosave
 

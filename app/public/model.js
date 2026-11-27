@@ -3,7 +3,7 @@ import { validateCustomLogos } from './custom-logos.js';
 import { validateFaviconDataUrl } from './favicon.js';
 import { isImageReference } from './uploads.js';
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 export const THEMES = ['navy', 'light', 'midnight'];
 export const DENSITIES = ['comfortable', 'compact'];
 export const LIMITS = {
@@ -20,11 +20,17 @@ export const LIMITS = {
   imageReference: 1_200_000,
   brandName: 60,
   brandTitle: 80,
+  themes: 24,
+  themeLabel: 60,
+  themeCssTotal: 120_000,
+  iconSizeMin: 16,
+  iconSizeMax: 64,
 };
-const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const LEGACY_BINDING_LIMIT = 1600;
 
 const ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
+const THEME_ID_RE = /^theme-[a-zA-Z0-9][a-zA-Z0-9_-]{0,55}$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const FONT = "'Avenir Next','Segoe UI',Arial,sans-serif";
 const palettes = {
@@ -32,6 +38,25 @@ const palettes = {
   light: { bg: '#edf1f4', panel: '#f7f9fa', card: '#ffffff', tile: '#f2f5f7', line: '#bac6cf', text: '#17212b', muted: '#607282', teal: '#087f79' },
   midnight: { bg: '#0c0b12', panel: '#14131c', card: '#191823', tile: '#111019', line: '#343143', text: '#f2f0f7', muted: '#aaa5b8', teal: '#63d7ca' },
 };
+
+export function effectiveAppearance(project, date = new Date()) {
+  const themes = Array.isArray(project?.themes) ? project.themes : [];
+  const active = themes.find(theme => theme.id === project?.activeTheme) || themes[0] || { css: '', background: '', backgroundScope: 'both' };
+  let background = active.background || '';
+  if (project?.dailyBackground && themes.length) {
+    const candidates = [...themes].filter(theme => theme.background).sort((left, right) => left.id.localeCompare(right.id));
+    if (candidates.length) {
+      const stamp = date instanceof Date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : String(date).slice(0, 10);
+      let hash = 2166136261;
+      for (const character of stamp) {
+        hash ^= character.charCodeAt(0);
+        hash = Math.imul(hash, 16777619);
+      }
+      background = candidates[(hash >>> 0) % candidates.length].background;
+    }
+  }
+  return { css: active.css || '', background, scope: active.backgroundScope || 'both' };
+}
 
 export function uid(prefix) {
   const bytes = crypto.getRandomValues(new Uint8Array(12));
@@ -52,7 +77,7 @@ export function isValidLink(value) {
 }
 
 function services(prefix, items) {
-  return items.map(([logo, name, count = 1], index) => ({ id: `svc-${prefix}-${index}`, logo, name, count, link: '' }));
+  return items.map(([logo, name, count = 1], index) => ({ id: `svc-${prefix}-${index}`, logo, name, count, link: '', iconSize: 28, showName: true }));
 }
 
 export function sampleProject() {
@@ -66,9 +91,9 @@ export function sampleProject() {
     density: 'comfortable',
     favicon: '',
     branding: { name: 'Homelab Atlas', tabTitle: '', favicon: '' },
-    css: '',
-    background: '',
-    backgroundScope: 'both',
+    themes: [{ id: 'theme-default', label: 'Default', css: '', background: '', backgroundScope: 'both' }],
+    activeTheme: 'theme-default',
+    dailyBackground: false,
     networkRow: 'top',
     vlanRow: 'top',
     layout: { mode: 'auto', cards: [] },
@@ -158,6 +183,20 @@ export function parseProject(text) {
       migrated.branding = { name: 'Homelab Atlas', tabTitle: '', favicon: '' };
     }
     if (version < 11) migrated.backgroundScope = 'both';
+    if (version < 12) {
+      migrated.themes = [{
+        id: 'theme-default',
+        label: 'Default',
+        css: typeof migrated.css === 'string' ? migrated.css : '',
+        background: typeof migrated.background === 'string' ? migrated.background : '',
+        backgroundScope: migrated.backgroundScope || 'both',
+      }];
+      migrated.activeTheme = 'theme-default';
+      migrated.dailyBackground = false;
+      delete migrated.css;
+      delete migrated.background;
+      delete migrated.backgroundScope;
+    }
     if (version >= 5) delete migrated.discovery;
     for (const device of migrated.devices) {
       const deviceSideBySide = device.groupLayout === 'sideBySide';
@@ -167,6 +206,10 @@ export function parseProject(text) {
         if (version < 9) group.logo = '';
         if (version < 10) group.sideBySide = version >= 9 && deviceSideBySide;
         for (const service of group.services) {
+          if (version < 12) {
+            service.iconSize = 28;
+            service.showName = true;
+          }
           if (version === 7 || version === 8 || version === 9 || (version === 5 && typeof service.link === 'string')) continue;
           service.link = '';
         }
@@ -211,7 +254,7 @@ function validateProjectVersion(project, version) {
     if (!object || typeof object !== 'object' || Array.isArray(object) || Object.keys(object).some(key => !allowed.includes(key))) fail(`${label} has an invalid structure.`);
   };
   if (!project || typeof project !== 'object' || Array.isArray(project)) fail('Project must be an object.');
-  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 9 ? ['css', 'background', 'networkRow', 'vlanRow'] : []), ...(version >= 10 ? ['branding'] : []), ...(version >= 11 ? ['backgroundScope'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
+  const keys = ['schemaVersion', 'revision', 'title', 'subtitle', 'theme', 'columns', 'density', ...(version >= 8 ? ['favicon'] : []), ...(version >= 9 && version < 12 ? ['css', 'background'] : []), ...(version >= 9 ? ['networkRow', 'vlanRow'] : []), ...(version >= 10 ? ['branding'] : []), ...(version >= 11 && version < 12 ? ['backgroundScope'] : []), ...(version >= 12 ? ['themes', 'activeTheme', 'dailyBackground'] : []), ...(version >= 2 ? ['layout'] : []), ...(version >= 4 ? ['customLogos'] : []), ...(version >= 5 && version < 7 ? ['discovery'] : []), 'networks', 'vlans', 'devices', 'connections'];
   exact(project, keys, 'Project');
   if (project.schemaVersion !== version) fail(`Unsupported schema version: ${project.schemaVersion ?? 'missing'}.`);
   string(project.title, 'Title');
@@ -221,9 +264,11 @@ function validateProjectVersion(project, version) {
   if (!DENSITIES.includes(project.density)) fail('Unknown density.');
   if (!Number.isInteger(project.columns) || project.columns < 1 || project.columns > 4) fail('Columns must be 1–4.');
   if (version >= 8) validateFaviconDataUrl(project.favicon);
-  if (version >= 9) {
+  if (version >= 9 && version < 12) {
     if (typeof project.css !== 'string' || project.css.length > LIMITS.css) fail(`Custom CSS must be text under ${LIMITS.css + 1} characters.`);
     if (!isImageReference(project.background, LIMITS.imageReference)) fail('Background must be empty or a valid image upload reference.');
+  }
+  if (version >= 9) {
     if (!['top', 'bottom'].includes(project.networkRow)) fail('Network row must be top or bottom.');
     if (!['top', 'bottom'].includes(project.vlanRow)) fail('VLAN row must be top or bottom.');
   }
@@ -234,7 +279,25 @@ function validateProjectVersion(project, version) {
     if (typeof branding.tabTitle !== 'string' || branding.tabTitle !== branding.tabTitle.trim() || [...branding.tabTitle].length > LIMITS.brandTitle) fail('Branding tab title is invalid.');
     if (!isImageReference(branding.favicon, LIMITS.imageReference)) fail('Branding logo must be empty or a valid image reference.');
   }
-  if (version >= 11 && !['stage', 'diagram', 'both'].includes(project.backgroundScope)) fail('Background placement must be stage, diagram, or both.');
+  if (version >= 11 && version < 12 && !['stage', 'diagram', 'both'].includes(project.backgroundScope)) fail('Background placement must be stage, diagram, or both.');
+  if (version >= 12) {
+    if (!Array.isArray(project.themes) || !project.themes.length || project.themes.length > LIMITS.themes) fail('Invalid theme gallery.');
+    const themeIds = new Set();
+    let totalCss = 0;
+    for (const theme of project.themes) {
+      exact(theme, ['id', 'label', 'css', 'background', 'backgroundScope'], 'Theme');
+      if (typeof theme.id !== 'string' || !THEME_ID_RE.test(theme.id) || themeIds.has(theme.id)) fail('Theme has an invalid or duplicate ID.');
+      themeIds.add(theme.id);
+      if (typeof theme.label !== 'string' || !theme.label.trim() || theme.label !== theme.label.trim() || [...theme.label].length > LIMITS.themeLabel) fail('Theme name must be trimmed text.');
+      if (typeof theme.css !== 'string' || theme.css.length > LIMITS.css) fail(`Theme CSS must be text under ${LIMITS.css + 1} characters.`);
+      totalCss += theme.css.length;
+      if (!isImageReference(theme.background, LIMITS.imageReference)) fail('Theme background must be empty or a valid image upload reference.');
+      if (!['stage', 'diagram', 'both'].includes(theme.backgroundScope)) fail('Theme background placement must be stage, diagram, or both.');
+    }
+    if (totalCss > LIMITS.themeCssTotal) fail('Theme CSS exceeds the project limit.');
+    if (typeof project.activeTheme !== 'string' || !themeIds.has(project.activeTheme)) fail('Active theme is invalid.');
+    if (typeof project.dailyBackground !== 'boolean') fail('Daily background must be a boolean.');
+  }
   for (const [key, maximum] of [['devices', LIMITS.devices], ['networks', LIMITS.networks], ['vlans', LIMITS.networks], ['connections', LIMITS.connections]]) {
     if (!Array.isArray(project[key]) || project[key].length > maximum) fail(`Invalid or excessive ${key}.`);
   }
@@ -276,10 +339,15 @@ function validateProjectVersion(project, version) {
       if (version >= 10 && typeof group.sideBySide !== 'boolean') fail('Group side-by-side flag must be a boolean.');
       if (!Array.isArray(group.services)) fail('Invalid services.');
       for (const service of group.services) {
-        exact(service, version >= 7 ? ['id', 'logo', 'name', 'count', 'link'] : version === 5 ? ['id', 'logo', 'name', 'count', 'link'] : ['id', 'logo', 'name', 'count'], 'Service');
+        const serviceKeys = version >= 7 ? ['id', 'logo', 'name', 'count', 'link'] : version === 5 ? ['id', 'logo', 'name', 'count', 'link'] : ['id', 'logo', 'name', 'count'];
+        exact(service, version >= 12 ? [...serviceKeys, 'iconSize', 'showName'] : serviceKeys, 'Service');
         addId(service.id, 'Service'); string(service.name); serviceCount += 1;
         if (!validLogo(service.logo)) fail(`Unknown logo: ${service.logo}.`);
         if (!Number.isInteger(service.count) || service.count < 1 || service.count > 99) fail('Service count must be 1–99.');
+        if (version >= 12) {
+          if (!Number.isInteger(service.iconSize) || service.iconSize < LIMITS.iconSizeMin || service.iconSize > LIMITS.iconSizeMax) fail(`Service icon size must be ${LIMITS.iconSizeMin}–${LIMITS.iconSizeMax}.`);
+          if (typeof service.showName !== 'boolean') fail('Service show-name flag must be a boolean.');
+        }
         if (version >= 7 && (typeof service.link !== 'string' || (service.link !== '' && !isValidLink(service.link)))) fail('Service link must be empty or a full http:// or https:// URL.');
         if (version === 5 && 'link' in service && !(service.link === '' || isValidLink(service.link))) fail('Service link must be empty or a full http:// or https:// URL.');
       }
@@ -353,6 +421,13 @@ export function removeNetwork(project, id) {
   project.connections = project.connections.filter(connection => connection.from !== id && connection.to !== id);
 }
 
+export function ellipsize(value, maxChars) {
+  const text = String(value).trim();
+  if (!text || !Number.isFinite(maxChars) || maxChars < 2) return text;
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars - 1).trimEnd()}…`;
+}
+
 export function wrapText(value, maxChars, maxLines = 2) {
   const text = String(value).trim();
   if (!text) return [''];
@@ -405,12 +480,12 @@ function hardwareGeometry(device, fact, index, width, compact) {
 function groupGeometry(group, width, compact, secondary, index, { inset = index > 0 } = {}) {
   const padding = inset ? 10 : 0;
   const contentWidth = width - padding * 2;
-  const logoSize = group.logo ? (compact ? 18 : 20) : 0;
-  const logoGap = logoSize ? 5 : 0;
-  const nameChars = Math.max(8, Math.floor(contentWidth / 7));
+  const logoSize = group.logo ? 32 : 0;
+  const logoGap = logoSize ? 8 : 0;
+  const nameChars = Math.max(8, Math.floor((contentWidth - logoSize - logoGap) / 7));
   const nameLines = wrapText(group.name.toUpperCase(), nameChars, 2);
   const lineHeight = compact ? 15 : 17;
-  const headerHeight = (logoSize ? logoSize + logoGap : 0) + nameLines.length * lineHeight + (compact ? 9 : 11);
+  const headerHeight = Math.max(logoSize, nameLines.length * lineHeight) + (compact ? 9 : 11);
   let mode = 'grid';
   let columns = width < 380 ? 3 : 4;
   let itemHeight = compact ? 72 : 78;
@@ -461,30 +536,34 @@ function cardMetrics(device, width, compact, secondary, groupColumns = 1) {
   return { secondary, compact, name, hardwareFacts, headerHeight, hardwareHeight, groups, groupsHeight, contentHeight, height: Math.max(compact ? 190 : 212, contentHeight + (compact ? 12 : 18)) };
 }
 
-export function serviceTileGeometry(name, width, height, secondary = false) {
+export function serviceTileGeometry(name, width, height, secondary = false, iconSize = 0) {
   const compact = height <= 72;
   const fontSize = compact ? (width < 90 ? 11 : 12) : (width < 90 ? 11 : 13);
   const lineHeight = fontSize + 1;
-  const lines = wrapText(name, Math.max(5, Math.floor(width / (fontSize * .55))), 2);
-  const logoSize = compact ? 24 : (width < 90 ? 24 : 28);
+  const maxChars = Math.max(5, Math.floor(width / (fontSize * .55)));
+  const lines = [ellipsize(name, maxChars)];
+  const fallbackLogoSize = compact ? 24 : (width < 90 ? 24 : 28);
+  const logoSize = Math.max(16, Math.min(iconSize || fallbackLogoSize, Math.max(16, height - 42)));
   const plateSize = logoSize + 6;
   const plateY = 10;
-  const logoY = 13;
-  const textTop = plateY + plateSize + 2;
+  const logoY = 10 + (plateSize - logoSize) / 2 + 3;
+  const textTop = plateY + plateSize + 8;
   const firstBaseline = textTop + fontSize * .8;
-  return { fontSize, lineHeight, lines, firstBaseline, logoY, logoSize, plateY, plateSize, textTop };
+  return { fontSize, lineHeight, lines, firstBaseline, logoY, logoSize, plateY, plateSize, textTop, maxChars };
 }
 
-export function serviceRowGeometry(name, width, height, compact = false, hasCount = false) {
-  const logoSize = compact ? 28 : 32;
+export function serviceRowGeometry(name, width, height, compact = false, hasCount = false, iconSize = 0) {
+  const fallbackLogoSize = compact ? 28 : 32;
+  const logoSize = Math.max(16, Math.min(iconSize || fallbackLogoSize, Math.max(16, height - 10)));
   const plateSize = logoSize + 6;
   const textX = plateSize + 14;
   const countWidth = hasCount ? 32 : 0;
   const fontSize = width < 140 ? 12 : 14;
-  const lines = wrapText(name, Math.max(6, Math.floor((width - textX - countWidth - 22) / (fontSize * .55))), 2);
+  const maxChars = Math.max(6, Math.floor((width - textX - countWidth - 22) / (fontSize * .55)));
+  const lines = [ellipsize(name, maxChars)];
   const lineHeight = fontSize + 2;
-  const firstBaseline = height / 2 - ((lines.length - 1) * lineHeight) / 2 + fontSize * .35;
-  return { logoSize, plateSize, textX, countWidth, fontSize, lines, lineHeight, firstBaseline };
+  const firstBaseline = height / 2 + fontSize * .35;
+  return { logoSize, plateSize, textX, countWidth, fontSize, lines, lineHeight, firstBaseline, maxChars };
 }
 
 export function layoutProject(project) {
@@ -657,8 +736,8 @@ export function resetAutoLayout(project) {
 }
 
 function textElement(text, x, y, options) {
-  const { fill, size, weight = 400, anchor = 'start', maxChars = 100, maxLines = 1, lineHeight = Math.round(size * 1.2), opacity = 1 } = options;
-  const lines = wrapText(text, maxChars, maxLines);
+  const { fill, size, weight = 400, anchor = 'start', maxChars = 100, maxLines = 1, lineHeight = Math.round(size * 1.2), opacity = 1, displayText } = options;
+  const lines = wrapText(displayText === undefined ? text : displayText, maxChars, maxLines);
   const title = `<title>${escapeXml(text)}</title>`;
   const spans = lines.map((line, index) => `<tspan x="${x}" dy="${index ? lineHeight : 0}">${escapeXml(line)}</tspan>`).join('');
   return `<text x="${x}" y="${y}" fill="${fill}" font-family="${FONT}" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" opacity="${opacity}">${title}${spans}</text>`;
@@ -684,25 +763,25 @@ function renderNetwork(network, logo, box, theme, themeName, customLogos, intera
 
 function renderService(service, x, y, width, height, theme, themeName, secondary, customLogos, showName = true) {
   const center = x + width / 2;
-  const geometry = serviceTileGeometry(service.name, width, height, secondary);
+  const geometry = serviceTileGeometry(service.name, width, height, secondary, service.iconSize || 0);
   const plate = logoPlate(service.logo, themeName, customLogos);
   const plateTop = showName ? geometry.plateY : (height - geometry.plateSize) / 2;
   const logoTop = showName ? geometry.logoY : (height - geometry.logoSize) / 2;
   const plateRect = plate ? `<rect x="${center - geometry.plateSize / 2}" y="${y + plateTop}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="5" fill="${plate}"/>` : '';
-  const name = showName ? textElement(service.name, center, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, anchor: 'middle', maxChars: Math.max(5, Math.floor(width / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight }) : '';
+  const name = showName ? textElement(service.name, center, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, anchor: 'middle', maxChars: geometry.maxChars, maxLines: 1, lineHeight: geometry.lineHeight, displayText: geometry.lines[0] }) : '';
   const badge = service.count > 1 ? textElement(`×${service.count}`, x + width - 6, y + 11, { fill: theme.muted, size: 9, weight: 600, anchor: 'end', maxChars: 3 }) : '';
   return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="6" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${center - geometry.logoSize / 2}" y="${y + logoTop}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
 }
 
 function renderServiceRow(service, x, y, width, height, theme, themeName, compact, customLogos, showName = true) {
-  const geometry = serviceRowGeometry(service.name, width, height, compact, service.count > 1);
+  const geometry = serviceRowGeometry(service.name, width, height, compact, service.count > 1, service.iconSize || 0);
   const plate = logoPlate(service.logo, themeName, customLogos);
   const iconY = y + (height - geometry.logoSize) / 2;
   const plateY = y + (height - geometry.plateSize) / 2;
   const plateX = showName ? x + 10 : x + (width - geometry.plateSize) / 2;
   const iconX = showName ? x + 13 : x + (width - geometry.logoSize) / 2;
   const plateRect = plate ? `<rect x="${plateX}" y="${plateY}" width="${geometry.plateSize}" height="${geometry.plateSize}" rx="6" fill="${plate}"/>` : '';
-  const name = showName ? textElement(service.name, x + geometry.textX + 10, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, maxChars: Math.max(6, Math.floor((width - geometry.textX - geometry.countWidth - 22) / (geometry.fontSize * .55))), maxLines: 2, lineHeight: geometry.lineHeight }) : '';
+  const name = showName ? textElement(service.name, x + geometry.textX + 10, y + geometry.firstBaseline, { fill: theme.text, size: geometry.fontSize, weight: 400, maxChars: geometry.maxChars, maxLines: 1, lineHeight: geometry.lineHeight, displayText: geometry.lines[0] }) : '';
   const badge = service.count > 1 ? textElement(`×${service.count}`, x + width - 12, y + height / 2 + 4, { fill: theme.muted, size: 11, weight: 600, anchor: 'end', maxChars: 3 }) : '';
   return `<g data-service="${service.id}"><title>${escapeXml(service.name)}${service.count > 1 ? ` ×${service.count}` : ''}</title><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${theme.tile}" stroke="${theme.line}"/>${plateRect}<image href="${logoDataUri(service.logo, customLogos)}" x="${iconX}" y="${iconY}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>${name}${badge}</g>`;
 }
@@ -747,25 +826,25 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     const groupWidth = geometry.w - geometry.padding * 2;
     const groupTop = groupsTop + geometry.y;
     const inset = geometry.inset ? `<rect x="${groupLeft}" y="${groupTop}" width="${geometry.w}" height="${geometry.height - (box.compact ? 8 : 12)}" rx="8" fill="${theme.tile}" fill-opacity=".38" stroke="${theme.line}"/>` : '';
-    const logoTop = groupTop + geometry.padding + 1;
+    const logoTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.logoSize) / 2;
     const logo = geometry.logoSize
       ? `<image href="${escapeXml(group.logo)}" x="${groupX}" y="${logoTop}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>`
       : '';
     const nameLineHeight = box.compact ? 15 : 17;
-    const nameY = geometry.logoSize
-      ? logoTop + geometry.logoSize + geometry.logoGap + nameLineHeight * 0.8
-      : groupTop + geometry.padding + (box.compact ? 12 : 14);
-    const groupName = textElement(group.name.toUpperCase(), groupX, nameY, { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: nameLineHeight });
+    const nameX = groupX + geometry.logoSize + geometry.logoGap;
+    const nameTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.nameLines.length * nameLineHeight) / 2;
+    const nameY = nameTop + nameLineHeight * 0.8;
+    const groupName = textElement(group.name.toUpperCase(), nameX, nameY, { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: nameLineHeight });
     const servicesTop = groupTop + geometry.padding + geometry.headerHeight;
     const tileGap = geometry.gap;
     const tileWidth = (groupWidth - tileGap * (geometry.columns - 1)) / geometry.columns;
-    const showServiceNames = !group.sideBySide;
     const services = group.services.map((service, index) => {
+      const showName = !group.sideBySide && service.showName !== false;
       const x = groupX + (index % geometry.columns) * (tileWidth + tileGap);
       const serviceY = servicesTop + Math.floor(index / geometry.columns) * (geometry.itemHeight + tileGap);
       return geometry.mode === 'rows'
-        ? renderServiceRow(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.compact, customLogos, showServiceNames)
-        : renderService(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.secondary, customLogos, showServiceNames);
+        ? renderServiceRow(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.compact, customLogos, showName)
+        : renderService(service, x, serviceY, tileWidth, geometry.itemHeight, theme, themeName, box.secondary, customLogos, showName);
     }).join('');
     return `<g>${inset}${logo}${groupName}${services}</g>`;
   }).join('');
@@ -801,6 +880,7 @@ function connectionLines(project, layout, theme) {
 
 export function renderProject(project, { displayProject = project, interactive = true, validate = true } = {}) {
   if (validate) validateProject(project);
+  const appearance = effectiveAppearance(project);
   const layout = layoutProject(project);
   const theme = palettes[project.theme];
   const serviceCount = project.devices.reduce((sum, device) => sum + device.groups.reduce((groupSum, group) => groupSum + group.services.length, 0), 0);
@@ -834,5 +914,5 @@ export function renderProject(project, { displayProject = project, interactive =
   }).join('');
   const relationshipTitle = layout.relationships.length ? `<text x="${layout.margin}" y="${layout.relationshipsY - 14}" fill="${theme.muted}" font-family="${FONT}" font-size="10" font-weight="700" letter-spacing="1.5">RELATIONSHIPS</text>` : '';
   const footer = `<line x1="${layout.margin}" y1="${layout.footerY}" x2="${layout.width - layout.margin}" y2="${layout.footerY}" stroke="${theme.line}"/><text x="${layout.margin}" y="${layout.footerY + 28}" fill="${theme.muted}" font-family="${FONT}" font-size="10" font-weight="700" letter-spacing="1.5">HOMELAB ATLAS</text><text x="${layout.width - layout.margin}" y="${layout.footerY + 28}" fill="${theme.muted}" font-family="${FONT}" font-size="10" text-anchor="end">Logical links · Service groups</text>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${escapeXml(displayProject.title)}"><defs><pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="${theme.line}" opacity="0.22"/></pattern><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="${theme.muted}" stroke-width="1.2"/></marker></defs><rect width="100%" height="100%" fill="${theme.bg}"/>${project.background && project.backgroundScope !== 'stage' ? `<image href="${escapeXml(project.background)}" x="0" y="0" width="${layout.width}" height="${layout.height}" preserveAspectRatio="xMidYMid slice"/>` : ''}<rect width="100%" height="100%" fill="url(#dots)"/><line x1="${layout.margin}" y1="42" x2="${layout.margin + 38}" y2="42" stroke="${theme.teal}" stroke-width="4" stroke-linecap="round"/><text x="${layout.margin + 52}" y="46" fill="${theme.muted}" font-family="${FONT}" font-size="11" font-weight="700" letter-spacing="2">BUILT AT HOME</text>${title}${subtitle}${stats}${connectionLines(project, layout, theme)}${networks}${vlans}${cards}${relationshipTitle}${relationships}${footer}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${escapeXml(displayProject.title)}"><defs><pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="${theme.line}" opacity="0.22"/></pattern><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="${theme.muted}" stroke-width="1.2"/></marker></defs><rect width="100%" height="100%" fill="${theme.bg}"/>${appearance.background && appearance.scope !== 'stage' ? `<image href="${escapeXml(appearance.background)}" x="0" y="0" width="${layout.width}" height="${layout.height}" preserveAspectRatio="xMidYMid slice"/>` : ''}<rect width="100%" height="100%" fill="url(#dots)"/><line x1="${layout.margin}" y1="42" x2="${layout.margin + 38}" y2="42" stroke="${theme.teal}" stroke-width="4" stroke-linecap="round"/><text x="${layout.margin + 52}" y="46" fill="${theme.muted}" font-family="${FONT}" font-size="11" font-weight="700" letter-spacing="2">BUILT AT HOME</text>${title}${subtitle}${stats}${connectionLines(project, layout, theme)}${networks}${vlans}${cards}${relationshipTitle}${relationships}${footer}</svg>`;
 }

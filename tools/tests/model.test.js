@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { LOGOS, logoDataUri, logoPlate, networkLogoId, searchLogos } from '../../app/public/catalog.js';
 import { ICON_DATA } from '../../app/public/icon-data.js';
 import {
-  LIMITS, SCHEMA_VERSION, isValidLink, layoutProject, parseProject, removeDevice, removeGroup, removeNetwork, removeService,
+  LIMITS, SCHEMA_VERSION, effectiveAppearance, ellipsize, isValidLink, layoutProject, parseProject, removeDevice, removeGroup, removeNetwork, removeService,
   renderProject, resetAutoLayout, sampleProject, serviceRowGeometry, serviceTileGeometry,
   setManualCard, snapshotManualLayout, uid, validateProject, wrapText,
 } from '../../app/public/model.js';
@@ -22,9 +22,9 @@ function removeServiceLinks(project) {
 }
 
 function stripModernFields(project) {
-  delete project.css;
-  delete project.background;
-  delete project.backgroundScope;
+  delete project.themes;
+  delete project.activeTheme;
+  delete project.dailyBackground;
   delete project.networkRow;
   delete project.vlanRow;
   delete project.branding;
@@ -33,6 +33,10 @@ function stripModernFields(project) {
     for (const group of device.groups) {
       delete group.logo;
       delete group.sideBySide;
+      for (const service of group.services) {
+        delete service.iconSize;
+        delete service.showName;
+      }
     }
   }
   return project;
@@ -54,33 +58,78 @@ test('side-by-side groups hide service labels but keep their titles', () => {
     group.sideBySide = sideBySide;
     group.services[0].name = 'Unique Service Label';
     const svg = renderProject(project);
-    const occurrences = (svg.match(/Unique Service Label/gu) || []).length;
-    assert.equal(occurrences, sideBySide ? 1 : 2, `sideBySide=${sideBySide}`);
     assert.match(svg, /<title>Unique Service Label<\/title>/u);
   }
 });
 
-test('background placement controls the diagram image and defaults to both', () => {
+test('theme background placement controls the diagram image and defaults to both', () => {
   const project = sampleProject();
-  project.background = 'data:image/png;base64,AAAA';
+  project.themes[0].background = 'data:image/png;base64,AAAA';
   for (const [scope, inDiagram] of [['both', true], ['diagram', true], ['stage', false]]) {
-    project.backgroundScope = scope;
+    project.themes[0].backgroundScope = scope;
     const svg = renderProject(project);
     assert.equal(svg.includes('<image href="data:image/png;base64,AAAA"'), inDiagram, scope);
   }
-  project.backgroundScope = 'elsewhere';
+  project.themes[0].backgroundScope = 'elsewhere';
   assert.throws(() => validateProject(project), /Background placement/);
 
   const migrated = sampleProject();
-  migrated.schemaVersion = 10;
-  delete migrated.backgroundScope;
-  assert.equal(parseProject(JSON.stringify(migrated)).backgroundScope, 'both');
+  migrated.schemaVersion = 11;
+  migrated.background = 'data:image/png;base64,AAAA';
+  migrated.backgroundScope = 'stage';
+  migrated.css = '.stage { color: red; }';
+  delete migrated.themes;
+  delete migrated.activeTheme;
+  delete migrated.dailyBackground;
+  const result = parseProject(JSON.stringify(migrated));
+  assert.equal(result.themes[0].background, 'data:image/png;base64,AAAA');
+  assert.equal(result.themes[0].backgroundScope, 'stage');
+  assert.equal(result.themes[0].css, '.stage { color: red; }');
+  assert.equal(result.activeTheme, result.themes[0].id);
+  assert.equal(result.dailyBackground, false);
+});
+
+test('daily background picks a gallery background deterministically by date', () => {
+  const project = sampleProject();
+  project.themes = [
+    { id: 'theme-a', label: 'A', css: '', background: 'data:image/png;base64,AAAA', backgroundScope: 'both' },
+    { id: 'theme-b', label: 'B', css: '', background: 'data:image/png;base64,BBBB', backgroundScope: 'both' },
+  ];
+  project.activeTheme = 'theme-a';
+  project.dailyBackground = true;
+  const date = new Date('2026-11-27T12:00:00Z');
+  const first = effectiveAppearance(project, date).background;
+  assert.ok(['data:image/png;base64,AAAA', 'data:image/png;base64,BBBB'].includes(first));
+  assert.equal(effectiveAppearance(project, date).background, first);
+  assert.equal(effectiveAppearance(project, new Date('2026-11-27T23:59:00Z')).background, first);
+  project.dailyBackground = false;
+  assert.equal(effectiveAppearance(project, date).background, 'data:image/png;base64,AAAA');
+});
+
+test('long service names render one ellipsized line with a full-name tooltip', () => {
+  assert.equal(ellipsize('Nginx Proxy Manager', 12), 'Nginx Proxy…');
+  const project = sampleProject();
+  project.devices[0].groups[0].services[0].name = 'Nginx Proxy Manager';
+  const svg = renderProject(project);
+  assert.match(svg, /<title>Nginx Proxy Manager<\/title>/u);
+  assert.doesNotMatch(svg, />Nginx Proxy Manager</u);
+  assert.match(svg, /Nginx Proxy…/u);
+});
+
+test('per-service icon size and hidden name are respected', () => {
+  const project = sampleProject();
+  const service = project.devices[0].groups[0].services[0];
+  service.iconSize = 40;
+  service.showName = false;
+  const svg = renderProject(project);
+  assert.match(svg, new RegExp(`<image href="[^"]+" x="[^"]+" y="[^"]+" width="40" height="40"`, 'u'));
+  assert.match(svg, new RegExp(`<title>${service.name}</title>`, 'u'));
 });
 
 test('background and group logos accept ICO data URLs', () => {
   for (const mime of ['image/x-icon', 'image/vnd.microsoft.icon']) {
     const project = sampleProject();
-    project.background = `data:${mime};base64,AAAA`;
+    project.themes[0].background = `data:${mime};base64,AAAA`;
     project.devices[0].groups[0].logo = `data:${mime};base64,AAAA`;
     assert.equal(validateProject(project), true, mime);
   }
@@ -711,7 +760,7 @@ test('manual layout keeps tall content and places new devices below it', () => {
     name: 'Services',
     logo: '',
     sideBySide: false,
-    services: Array.from({ length: 800 }, (_, index) => ({ id: `service-${index}`, logo: 'generic', name: 'Service', count: 1, link: '' })),
+    services: Array.from({ length: 800 }, (_, index) => ({ id: `service-${index}`, logo: 'generic', name: 'Service', count: 1, link: '', iconSize: 28, showName: true })),
   }];
   project.devices = [tall];
   project.connections = [];

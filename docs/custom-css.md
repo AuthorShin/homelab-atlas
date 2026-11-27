@@ -1,10 +1,10 @@
 # Custom CSS guide
 
-Project CSS is plain CSS stored in the project under **Diagram settings → Custom CSS**. It applies to the editor and the dashboard, and is not written into exported SVG or PNG files. The page allows inline styles so your rules can take effect.
+Theme CSS is plain CSS stored with each theme in the project under **Diagram settings → Manage themes → Edit**. Only the active theme's CSS is applied. It affects the editor and the dashboard, and is not written into exported SVG or PNG files. The page allows inline styles so your rules can take effect.
 
 ## How it is applied
 
-Atlas injects your text into a `<style id="project-css">` element in the page head. It is rebuilt whenever the project changes, so edits appear immediately. Because it is project data, it is saved with browser autosave, included in the saved project ZIP, and sent to Atlas by the server autosave.
+Atlas injects the active theme's text into a `<style id="project-css">` element in the page head. It is rebuilt whenever the project changes or a different theme is activated, so edits appear immediately. Because it is project data, themes are saved with browser autosave, included in the saved project ZIP, and sent to Atlas by the server autosave.
 
 Use stable selectors from the editor and dashboard markup:
 
@@ -68,9 +68,9 @@ The same rule works in the editor and the dashboard because both render the diag
 
 ## Safety and limits
 
-- CSS is limited to 20,000 characters.
+- CSS is limited to 20,000 characters per theme and 120,000 across all themes.
 - Only CSS text is injected; scripts and HTML are not accepted.
 - Content-Security-Policy still blocks remote scripts, frames, and external stylesheets. Use inline rules and same-origin or `data:` images only.
-- Custom CSS cannot reach into exported SVG/PNG files. Those exports contain only the diagram markup, without links, favicons, app branding, or CSS. The project background image is drawn into the exported SVG when **Background placement** includes the diagram, but custom CSS is not.
+- Custom CSS cannot reach into exported SVG/PNG files. Those exports contain only the diagram markup, without links, favicons, app branding, or CSS. The active theme's background image (or today's random pick) is drawn into the exported SVG when **Background placement** includes the diagram, but CSS is not.
 
 If a rule appears to do nothing, check the selector in your browser's element inspector and confirm you are editing the project you have open. If a rule breaks the layout, remove it or use undo (`Ctrl/Cmd+Z`) to restore the previous CSS text.

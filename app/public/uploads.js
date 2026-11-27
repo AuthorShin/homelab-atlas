@@ -109,7 +109,7 @@ export async function inlineUploadReferences(project, { fetcher = globalThis.fet
   if (typeof fetcher !== 'function') throw new Error('Uploaded images cannot be loaded.');
   const clone = structuredClone(project);
   const references = new Set();
-  if (isUploadReference(clone.background)) references.add(clone.background);
+  for (const theme of clone.themes || []) if (isUploadReference(theme.background)) references.add(theme.background);
   if (isUploadReference(clone.favicon)) references.add(clone.favicon);
   if (isUploadReference(clone.branding?.favicon)) references.add(clone.branding.favicon);
   for (const logo of clone.customLogos || []) if (isUploadReference(logo.dataUrl)) references.add(logo.dataUrl);
@@ -123,7 +123,7 @@ export async function inlineUploadReferences(project, { fetcher = globalThis.fet
     if (!response.ok) throw new Error(`Uploaded image could not be loaded for export (HTTP ${response.status}).`);
     dataUrls.set(reference, await readBlobAsDataUrl(await response.blob()));
   }));
-  if (dataUrls.has(clone.background)) clone.background = dataUrls.get(clone.background);
+  for (const theme of clone.themes || []) if (dataUrls.has(theme.background)) theme.background = dataUrls.get(theme.background);
   if (dataUrls.has(clone.favicon)) clone.favicon = dataUrls.get(clone.favicon);
   if (dataUrls.has(clone.branding?.favicon)) clone.branding.favicon = dataUrls.get(clone.branding.favicon);
   for (const logo of clone.customLogos || []) if (dataUrls.has(logo.dataUrl)) logo.dataUrl = dataUrls.get(logo.dataUrl);
