@@ -291,8 +291,8 @@ function validateProjectVersion(project, version) {
       if (typeof theme.label !== 'string' || !theme.label.trim() || theme.label !== theme.label.trim() || [...theme.label].length > LIMITS.themeLabel) fail('Theme name must be trimmed text.');
       if (typeof theme.css !== 'string' || theme.css.length > LIMITS.css) fail(`Theme CSS must be text under ${LIMITS.css + 1} characters.`);
       totalCss += theme.css.length;
-      if (!isImageReference(theme.background, LIMITS.imageReference)) fail('Theme background must be empty or a valid image upload reference.');
-      if (!['stage', 'diagram', 'both'].includes(theme.backgroundScope)) fail('Theme background placement must be stage, diagram, or both.');
+      if (!isImageReference(theme.background, LIMITS.imageReference)) fail('Background must be empty or a valid image upload reference.');
+      if (!['stage', 'diagram', 'both'].includes(theme.backgroundScope)) fail('Background placement must be stage, diagram, or both.');
     }
     if (totalCss > LIMITS.themeCssTotal) fail('Theme CSS exceeds the project limit.');
     if (typeof project.activeTheme !== 'string' || !themeIds.has(project.activeTheme)) fail('Active theme is invalid.');

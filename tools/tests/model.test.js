@@ -81,6 +81,14 @@ test('theme background placement controls the diagram image and defaults to both
   delete migrated.themes;
   delete migrated.activeTheme;
   delete migrated.dailyBackground;
+  for (const device of migrated.devices) {
+    for (const group of device.groups) {
+      for (const service of group.services) {
+        delete service.iconSize;
+        delete service.showName;
+      }
+    }
+  }
   const result = parseProject(JSON.stringify(migrated));
   assert.equal(result.themes[0].background, 'data:image/png;base64,AAAA');
   assert.equal(result.themes[0].backgroundScope, 'stage');
@@ -119,10 +127,10 @@ test('long service names render one ellipsized line with a full-name tooltip', (
 test('per-service icon size and hidden name are respected', () => {
   const project = sampleProject();
   const service = project.devices[0].groups[0].services[0];
-  service.iconSize = 40;
+  service.iconSize = 32;
   service.showName = false;
   const svg = renderProject(project);
-  assert.match(svg, new RegExp(`<image href="[^"]+" x="[^"]+" y="[^"]+" width="40" height="40"`, 'u'));
+  assert.match(svg, new RegExp(`<image href="[^"]+" x="[^"]+" y="[^"]+" width="32" height="32"`, 'u'));
   assert.match(svg, new RegExp(`<title>${service.name}</title>`, 'u'));
 });
 
