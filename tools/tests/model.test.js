@@ -121,7 +121,7 @@ test('long service names render one ellipsized line with a full-name tooltip', (
   const svg = renderProject(project);
   assert.match(svg, /<title>Nginx Proxy Manager<\/title>/u);
   assert.doesNotMatch(svg, /<tspan[^>]*>Nginx Proxy Manager<\/tspan>/u);
-  assert.match(svg, /Nginx Proxy…/u);
+  assert.match(svg, /Nginx Proxy M…/u);
 });
 
 test('per-service icon size and hidden name are respected', () => {
