@@ -5,6 +5,8 @@
 app/**/*_test.go
 !deploy/
 !deploy/Dockerfile
+!vectorizer/
+!vectorizer/**
 !docs/
 !docs/THIRD_PARTY_NOTICES.md
 !LICENSE

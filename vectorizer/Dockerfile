@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS build
+FROM node:22.19.0-bookworm-slim AS build
 WORKDIR /app
 COPY vectorizer/package.json ./
 RUN npm install --omit=dev --no-audit --no-fund

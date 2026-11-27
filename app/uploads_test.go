@@ -114,8 +114,8 @@ func TestBrandingFaviconAcceptsUploadReference(t *testing.T) {
 	if err := validateBrandingFavicon(valid); err != nil {
 		t.Fatalf("valid upload reference rejected: %v", err)
 	}
-	if err := validateBrandingFavicon(strings.TrimSuffix(valid, ".png") + ".svg"); err == nil {
-		t.Fatal("SVG upload reference was accepted as an app logo")
+	if err := validateBrandingFavicon(strings.TrimSuffix(valid, ".png") + ".svg"); err != nil {
+		t.Fatalf("SVG upload reference rejected as an app logo: %v", err)
 	}
 	if err := validateBrandingFavicon("/api/uploads/nope.png"); err == nil {
 		t.Fatal("malformed upload reference was accepted")
