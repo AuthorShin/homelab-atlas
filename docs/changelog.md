@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Changed
+
+- Restored the `--line` and `--line-soft` variables and the borders that use them, including input/button/dialog borders and the top-bar divider. The interface keeps its controls framed as before.
+
 ## [0.19.0] - 2026-11-27
 
 ### Added
