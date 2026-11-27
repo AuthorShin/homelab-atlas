@@ -2,16 +2,18 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
+## [0.17.0] - 2026-11-27
 
 ### Added
 
+- Added **Background placement** under **Diagram appearance**, with **Stage and diagram**, **Stage only**, and **Diagram only** options. Older projects default to **Stage and diagram**, which matches the previous behavior.
 - Background images can be up to 10 MB. Other image uploads keep their 2 MB limit.
 
 ### Changed
 
 - Uploaded custom logos and group logos are now stored as SVG instead of PNG. The source image is rendered at up to 512px and embedded in a self-contained SVG container, so JPG, PNG, WebP, and SVG uploads all become SVG files.
 - Groups marked **Side by side** hide the app labels inside their tiles and show only the app logos, which keeps narrow side-by-side rows readable. Hovering a tile still shows its app name.
+- Project schema is now version 11, adding `backgroundScope`. Schema 1–10 projects migrate automatically with `backgroundScope: "both"`.
 
 ### Fixed
 
@@ -282,3 +284,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.15.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.15.0
 [0.16.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.0
 [0.16.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.1
+[0.17.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.17.0

@@ -24,6 +24,7 @@ function removeServiceLinks(project) {
 function stripModernFields(project) {
   delete project.css;
   delete project.background;
+  delete project.backgroundScope;
   delete project.networkRow;
   delete project.vlanRow;
   delete project.branding;
@@ -57,6 +58,23 @@ test('side-by-side groups hide service labels but keep their titles', () => {
     assert.equal(occurrences, sideBySide ? 1 : 2, `sideBySide=${sideBySide}`);
     assert.match(svg, /<title>Unique Service Label<\/title>/u);
   }
+});
+
+test('background placement controls the diagram image and defaults to both', () => {
+  const project = sampleProject();
+  project.background = 'data:image/png;base64,AAAA';
+  for (const [scope, inDiagram] of [['both', true], ['diagram', true], ['stage', false]]) {
+    project.backgroundScope = scope;
+    const svg = renderProject(project);
+    assert.equal(svg.includes('<image href="data:image/png;base64,AAAA"'), inDiagram, scope);
+  }
+  project.backgroundScope = 'elsewhere';
+  assert.throws(() => validateProject(project), /Background placement/);
+
+  const migrated = sampleProject();
+  migrated.schemaVersion = 10;
+  delete migrated.backgroundScope;
+  assert.equal(parseProject(JSON.stringify(migrated)).backgroundScope, 'both');
 });
 
 test('background and group logos accept ICO data URLs', () => {

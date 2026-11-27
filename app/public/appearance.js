@@ -10,8 +10,10 @@ export function applyProjectAppearance(project, { document: documentRef = global
   }
   style.textContent = typeof project?.css === 'string' ? project.css : '';
   const background = typeof project?.background === 'string' ? project.background.trim() : '';
+  const scope = project?.backgroundScope ?? 'both';
+  const stageBackground = Boolean(background) && scope !== 'diagram';
   const root = documentRef.documentElement;
-  if (background) root.style.setProperty('--project-background-image', `url("${background.replace(/["\\\n\r]/gu, '')}")`);
+  if (stageBackground) root.style.setProperty('--project-background-image', `url("${background.replace(/["\\\n\r]/gu, '')}")`);
   else root.style.removeProperty('--project-background-image');
-  documentRef.body?.classList.toggle('has-project-background', Boolean(background));
+  documentRef.body?.classList.toggle('has-project-background', stageBackground);
 }

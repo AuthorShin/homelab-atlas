@@ -66,11 +66,11 @@ Choose **Diagram settings** in the canvas header to change:
 - Navy, Light, or Midnight diagram theme
 - 1–4 columns
 - Comfortable or Compact density
-- background image
+- background image and placement
 - project tab icon
 - VLAN chip names and colors
 
-The **Background image** under **Diagram appearance** accepts PNG, JPG, WebP, SVG, or ICO up to 10 MB and is stored on the Atlas server. It is drawn behind the editor and dashboard.
+The **Background image** under **Diagram appearance** accepts PNG, JPG, WebP, SVG, or ICO up to 10 MB and is stored on the Atlas server. **Background placement** controls where it appears: **Stage and diagram** (the default) shows it around the diagram and behind its content, **Stage only** keeps it to the canvas around the diagram, and **Diagram only** draws it behind devices and cards and into SVG and PNG exports.
 
 The **Project tab icon** under **Diagram appearance** belongs to the project. Use **Upload tab icon** to give this project its own browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px in the project. **Remove** restores the default Atlas mark. The project icon is used when no app logo is saved, appears in the editor and dashboard tabs, and is not drawn into SVG or PNG exports.
 

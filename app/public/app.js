@@ -469,8 +469,10 @@ function projectForm() {
       <input data-favicon-file type="file" accept="${IMAGE_ACCEPT}" hidden>
       <div class="favicon-setting">
         <span class="favicon-preview background-preview"><img data-background-preview alt="" hidden><span data-background-empty>None</span></span>
-        <div class="favicon-copy"><strong>Background image</strong><span>Used behind the editor and dashboard. PNG, JPG, WebP, SVG, or ICO up to 10 MB; stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-background-upload>Upload background</button><button type="button" class="danger" data-background-clear hidden>Remove</button></div></div>
+        <div class="favicon-copy"><strong>Background image</strong><span>PNG, JPG, WebP, SVG, or ICO up to 10 MB; stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-background-upload>Upload background</button><button type="button" class="danger" data-background-clear hidden>Remove</button></div></div>
       </div>
+      <label>Background placement<select data-project="backgroundScope"><option value="both">Stage and diagram</option><option value="stage">Stage only</option><option value="diagram">Diagram only</option></select></label>
+      <p class="help">The stage is the canvas around the diagram. The diagram background sits behind devices and cards and is included in SVG and PNG exports.</p>
       <input data-background-file type="file" accept="${IMAGE_ACCEPT}" hidden>
     </section>
     <section class="inspector-section">
@@ -484,7 +486,7 @@ function projectForm() {
 }
 
 function bindProjectForm(root) {
-  for (const key of ['subtitle', 'theme', 'columns', 'density', 'networkRow', 'vlanRow', 'css']) root.querySelector(`[data-project=${key}]`).value = project[key];
+  for (const key of ['subtitle', 'theme', 'columns', 'density', 'backgroundScope', 'networkRow', 'vlanRow', 'css']) root.querySelector(`[data-project=${key}]`).value = project[key];
   updateBrandingForm(root);
   const nameInput = root.querySelector('[data-branding="name"]');
   const titleInput = root.querySelector('[data-branding="tabTitle"]');

@@ -1,6 +1,6 @@
 # Project format
 
-**File → Save project** downloads a ZIP archive. It contains `project.json` (schema version 10), a small `manifest.json`, and every uploaded image the project references, under `uploads/`. **File → Import project** accepts that ZIP after strict validation. It also accepts legacy JSON exports from schema versions 1 through 9 as a migration path; embedded images in those files are uploaded to Atlas and replaced with upload references.
+**File → Save project** downloads a ZIP archive. It contains `project.json` (schema version 11), a small `manifest.json`, and every uploaded image the project references, under `uploads/`. **File → Import project** accepts that ZIP after strict validation. It also accepts legacy JSON exports from schema versions 1 through 10 as a migration path; embedded images in those files are uploaded to Atlas and replaced with upload references.
 
 The current project stays open if any validation or upload step fails. Atlas never writes a project back to disk in JSON form: the editable backup is the ZIP.
 
@@ -9,20 +9,20 @@ The current project stays open if any validation or upload step fails. Atlas nev
 | Entry | Required | Meaning |
 |---|---|---|
 | `project.json` | Yes | The project, at most 2 MB, matching the schema below |
-| `manifest.json` | No | `{ "format": "homelab-atlas-project", "formatVersion": 1, "schemaVersion": 10 }` |
+| `manifest.json` | No | `{ "format": "homelab-atlas-project", "formatVersion": 1, "schemaVersion": 11 }` |
 | `uploads/<sha256>.<ext>` | For each upload reference | The exact image bytes served by `/api/uploads` |
 
 `<ext>` is `png`, `jpg`, `webp`, `svg`, or `ico`. On import, Atlas uploads each included image to the destination server and rewrites the project to the returned `/api/uploads/...` reference. A referenced upload that is neither included in the ZIP nor already present on the server rejects the import. Files with unsafe names, duplicate names, encryption, unsupported compression, or a failed CRC are rejected.
 
 ## Migrating an older JSON backup
 
-A legacy JSON export is still accepted by **File → Import project**. Atlas validates it in its original schema, applies the migrations below, uploads any embedded `data:` images, and validates the result as schema version 10. There is no JSON export in the File menu, and a ZIP is the only format that preserves uploaded images without embedding them in the project text.
+A legacy JSON export is still accepted by **File → Import project**. Atlas validates it in its original schema, applies the migrations below, uploads any embedded `data:` images, and validates the result as schema version 11. There is no JSON export in the File menu, and a ZIP is the only format that preserves uploaded images without embedding them in the project text.
 
 ## Top-level fields
 
 | Field | Type | Meaning |
 |---|---|---|
-| `schemaVersion` | integer | Must be `10` |
+| `schemaVersion` | integer | Must be `11` |
 | `revision` | integer | Browser conflict/change revision, from 0 through 1,000,000,000 |
 | `title`, `subtitle` | string | Diagram heading text, at most 120 characters each |
 | `theme` | string | `navy`, `light`, or `midnight` |
@@ -32,6 +32,7 @@ A legacy JSON export is still accepted by **File → Import project**. Atlas val
 | `branding` | object | App name, optional tab title, and optional app logo |
 | `css` | string | Project custom CSS, at most 20,000 characters |
 | `background` | string | Empty, or an image upload reference |
+| `backgroundScope` | string | `stage`, `diagram`, or `both`; where the background image appears |
 | `networkRow`, `vlanRow` | string | `top` or `bottom` placement for each header row |
 | `layout` | object | Device-card layout mode and saved rectangles |
 | `customLogos` | array | Reusable uploaded logos |
@@ -42,7 +43,9 @@ A legacy JSON export is still accepted by **File → Import project**. Atlas val
 
 `branding` has exactly `name`, `tabTitle`, and `favicon`. The name is trimmed, nonempty text up to 60 characters. The tab title is trimmed text up to 80 characters and may be empty. The logo is empty, an image upload reference, or a legacy image data URL. Branding is project data; it is not a server-wide setting.
 
-Schema version 10 has no `discovery` field. A current file containing one is rejected as an unknown key.
+Schema version 11 has no `discovery` field. A current file containing one is rejected as an unknown key.
+
+`backgroundScope` defaults to `both` when an older project is migrated. `stage` shows the image on the canvas around the diagram, `diagram` draws it behind the diagram content and into SVG/PNG exports, and `both` does both.
 
 ## Record fields
 
@@ -58,7 +61,7 @@ Schema version 10 has no `discovery` field. A current file containing one is rej
 | Layout card | `id`, `x`, `y`, `w`, `h` |
 | Custom logo | `id`, `label`, `dataUrl`, `background` |
 
-`sideBySide` is a boolean. Groups marked this way share one row, up to the project's `columns` setting. The group `logo` is empty or an image reference. A custom logo `dataUrl` is a PNG upload reference or a legacy canonical PNG data URL.
+`sideBySide` is a boolean. Groups marked this way share one row, up to the project's `columns` setting. The group `logo` is empty or an image reference. A custom logo `dataUrl` is a PNG or SVG upload reference, or a safe legacy image data URL.
 
 Colors use six-digit hexadecimal values such as `#55d6c9`. A device `icon`, service `logo`, or nonempty network logo field must exist in the bundled catalog or `customLogos`. An empty network `icon` selects the automatic kind-based mark; an empty `secondaryIcon` means no secondary mark. A service `count` must be an integer from 1 through 99.
 
@@ -76,7 +79,7 @@ Links appear only on the [dashboard](/dashboard). They are not rendered into SVG
 
 ## Migration
 
-Imports are validated in their original schema before migration, then validated again as schema version 10. The current project stays open if any step fails.
+Imports are validated in their original schema before migration, then validated again as schema version 11. The current project stays open if any step fails.
 
 | Old schema | Migration |
 |---|---|
@@ -87,7 +90,8 @@ Imports are validated in their original schema before migration, then validated 
 | 7–8 | Add empty `css`, `background`, `networkRow`, `vlanRow`, and group `logo` fields |
 | 1–8 | Add the default `branding` block and `sideBySide: false` to every group |
 | 9 | Add a default `branding` block; convert the per-device `groupLayout` toggle into each group's `sideBySide` flag |
-| 1–9 | Add empty service links where needed, then replace every remaining legacy image data URL with an upload reference |
+| 9–10 | Add `backgroundScope: "both"` |
+| 1–10 | Add empty service links where needed, then replace every remaining legacy image data URL with an upload reference |
 
 Schema-5 projects came in two variants: upstream projects with discovery data and fork projects with service links. Both are accepted. Discovery bindings are validated before they are discarded, so malformed legacy data does not silently pass. Raw discovery snapshots were never stored in the project.
 
@@ -123,7 +127,7 @@ Coordinates are integer diagram units relative to the upper-left of the device r
 |---|---:|
 | Project ZIP file | 32,000,000 bytes |
 | ZIP entries | 256 |
-| One ZIP entry, expanded | 8,000,000 bytes |
+| One ZIP entry, expanded | 12,000,000 bytes |
 | All ZIP entries, expanded | 32,000,000 bytes |
 | `project.json` | 2,000,000 bytes |
 | Legacy JSON import file | 2,000,000 bytes |
@@ -140,8 +144,9 @@ Coordinates are integer diagram units relative to the upper-left of the device r
 | Manual card rectangles | No more than the device count |
 | Custom logos | 32 |
 | Image reference | 1,200,000 characters |
-| Original upload | 2,000,000 bytes; 4096px per side; 16,000,000 pixels |
-| Stored custom PNG | 512px per side; 200,000 data-URL characters |
+| Original logo upload | 2,000,000 bytes; 4096px per side; 16,000,000 pixels |
+| Background upload | 10,000,000 bytes |
+| Stored custom logo SVG | 512px per side; 400,000 data-URL characters (legacy PNG 200,000) |
 | Legacy custom data URLs, total | 1,200,000 characters |
 | Stored favicon PNG | 128px per side; 120,000 data-URL characters |
 
@@ -151,7 +156,7 @@ The group limit applies to each device array and to the whole project. Each obje
 
 ```json
 {
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "revision": 1,
   "title": "Small Lab",
   "subtitle": "Fictional example",
@@ -166,6 +171,7 @@ The group limit applies to each device array and to the whole project. Each obje
   },
   "css": "",
   "background": "",
+  "backgroundScope": "both",
   "networkRow": "top",
   "vlanRow": "top",
   "layout": {

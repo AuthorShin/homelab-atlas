@@ -9,7 +9,7 @@ Start with the [FAQ](/faq) for setup, dashboard, storage, layout, and saving exp
 | Project is empty at another URL | Use the same browser profile, hostname, port, and protocol. If you changed the address, import a saved project ZIP. |
 | “Not saved — storage unavailable” | Allow site storage, leave private mode, and check the browser's storage quota or policy. If the project is still open, save a project ZIP right away. |
 | Another-tab conflict banner | Save a project ZIP from the current tab first. Then choose **Keep my edits** or **Load saved version** based on which copy you want. |
-| Import rejected | Make sure it is a Homelab Atlas project ZIP no larger than 32 MB, with schema-version-10 `project.json`, or a legacy JSON export from schema version 1 through 9 for migration, no larger than 2 MB. Unknown keys, duplicate or unsafe IDs, unknown logo IDs, bad references, malformed links, missing images, and invalid favicons are rejected. |
+| Import rejected | Make sure it is a Homelab Atlas project ZIP no larger than 32 MB, with schema-version-11 `project.json`, or a legacy JSON export from schema version 1 through 10 for migration, no larger than 2 MB. Unknown keys, duplicate or unsafe IDs, unknown logo IDs, bad references, malformed links, missing images, and invalid favicons are rejected. |
 | Custom logo upload rejected | Use a PNG, JPG, WebP, or safe SVG no larger than 2 MB, 4096px per side, or 16 million pixels. Atlas stores it as SVG at up to 512px, with the source image rendered into the SVG container. Active or externally loaded SVG content is rejected. |
 | Favicon or app-logo upload rejected | Use a PNG, JPG, WebP, SVG, or ICO no larger than 2 MB, 4096px per side, or 16 million pixels. Atlas resizes it to a square PNG up to 128px. Active or externally loaded SVG content is rejected. |
 | App branding does not change | Check the status line under **Diagram settings → App branding**. Branding is saved with the project, so also check the project save status. If the server copy cannot be written, make sure the container has a writable `atlas-data` volume or that `ATLAS_DATA_DIR` points to a writable directory, then check `docker compose logs atlas`. Refresh another open tab after saving. |
@@ -70,7 +70,7 @@ Atlas checks the entire import before replacing your current project. If the arc
 - a connection to a missing endpoint or to itself
 - collection or text limits described in [project format](/project-format)
 
-Older projects are validated in their original schema before migration. Schema 7 and 8 gain the schema-9 and schema-10 fields. Discovery data from schema 5 and 6 is removed; a malformed legacy binding still causes the import to be rejected. Legacy embedded images are uploaded during the import. If the storage or import problem continues, replace any private details with fictional data before opening a [bug report](https://github.com/AuthorShin/homelab-atlas/issues/new?template=bug_report.yml).
+Older projects are validated in their original schema before migration. Schema 7 and 8 gain the schema-9, schema-10, and schema-11 fields. Discovery data from schema 5 and 6 is removed; a malformed legacy binding still causes the import to be rejected. Legacy embedded images are uploaded during the import. If the storage or import problem continues, replace any private details with fictional data before opening a [bug report](https://github.com/AuthorShin/homelab-atlas/issues/new?template=bug_report.yml).
 
 ## App branding
 
