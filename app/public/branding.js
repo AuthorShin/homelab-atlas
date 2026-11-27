@@ -33,7 +33,7 @@ export function normalizeBranding(value) {
   const favicon = value.favicon === undefined ? '' : value.favicon;
   if (typeof favicon !== 'string') throw new Error('The app logo must be empty, a PNG data URL, or an Atlas PNG upload.');
   try {
-    validateFaviconDataUrl(favicon);
+    validateFaviconDataUrl(favicon, { allowSVG: true });
   } catch (error) {
     throw brandingFaviconError(error);
   }

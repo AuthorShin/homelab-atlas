@@ -49,7 +49,8 @@ func run(arguments []string) error {
 	defaults := newDefaultProjectStore(dataDirectory)
 	branding := newBrandingStore(dataDirectory)
 	uploads := newUploadStore(dataDirectory)
-	return serve(address, public, defaults, branding, uploads)
+	vectorizer := newVectorizeClient(os.Getenv("ATLAS_VECTORIZER_URL"))
+	return serve(address, public, defaults, branding, uploads, vectorizer)
 }
 
 func environmentDefault(name, fallback string) string {

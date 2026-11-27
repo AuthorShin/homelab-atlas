@@ -67,7 +67,7 @@ Colors use six-digit hexadecimal values such as `#55d6c9`. A device `icon`, serv
 
 ## Images and upload references
 
-An image reference is either an empty string, a server upload path, or a legacy base64 image data URL. Upload paths look like `/api/uploads/<sha256>.<ext>` and are content-addressed under `<ATLAS_DATA_DIR>/uploads`. Images uploaded through the editor are always stored this way; new uploads are never embedded in `project.json`. The PNG-only `favicon` field remains narrower than general image fields. Background images can be up to 10 MB; other image uploads are limited to 2 MB.
+An image reference is either an empty string, a server upload path, or a legacy base64 image data URL. Upload paths look like `/api/uploads/<sha256>.<ext>` and are content-addressed under `<ATLAS_DATA_DIR>/uploads`. Images uploaded through the editor are always stored this way; new uploads are never embedded in `project.json`. The PNG-only `favicon` field remains narrower than general image fields. Custom/group logos and `branding.favicon` are created as SVG by the vectorizer; theme backgrounds stay raster and can be up to 10 MB; other image uploads are limited to 2 MB.
 
 Legacy data URLs are accepted so older projects still open. They are converted to upload references when a legacy JSON project is imported, or when a ZIP's `project.json` still contains them.
 

@@ -2,6 +2,23 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.0] - 2026-11-27
+
+### Added
+
+- Uploaded custom logos, group logos, and the app logo are now traced to true SVG with OpenVector. The tracing engine runs in a separate internal `vectorizer` container.
+- Added **File → Convert existing images to vectors**, which converts already-uploaded raster logos and legacy raster data URLs to SVG. Backgrounds, the project tab icon, and existing SVG files are left alone.
+- Both Compose files now include the vectorizer container; the deployment requires both containers.
+
+### Changed
+
+- The app logo SVG is also used as the browser tab icon when no project tab icon is set. The project tab icon stays PNG.
+- Backgrounds remain raster uploads and are not traced.
+
+### Fixed
+
+- Logo and app-logo uploads fail with a clear error when the vectorizer is unavailable instead of silently storing a raster image.
+
 ## [0.18.0] - 2026-11-27
 
 ### Added
@@ -304,3 +321,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.16.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.16.1
 [0.17.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.17.0
 [0.18.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.18.0
+[0.19.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.0

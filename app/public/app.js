@@ -5,10 +5,13 @@ import {
 } from './model.js';
 import { createExportSnapshot } from './export.js';
 import { applyProjectChange, filterInventory, hasStorageConflict, pngDimensions, updateSelection } from './state.js';
-import { CUSTOM_LOGO_LIMITS, normalizeLogoUpload, verifyCustomLogoDecodes } from './custom-logos.js';
+import { CUSTOM_LOGO_LIMITS, svgTextHasUnsafeContent, validateCustomLogo, verifyCustomLogoDecodes } from './custom-logos.js';
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
-import { UPLOAD_LIMITS, inlineUploadReferences, uploadDataUrl, uploadImageFile } from './uploads.js';
+import {
+  UPLOAD_LIMITS, inlineUploadReferences, isUploadReference, uploadBlob, uploadDataUrl, uploadImageFile,
+  vectorizeDataUrl, vectorizeUploadReference,
+} from './uploads.js';
 import { createProjectArchive, importProjectFile } from './project-zip.js';
 import {
   DEFAULT_BRANDING, applyBranding, effectiveBrandLogo, normalizeBranding,
@@ -85,15 +88,69 @@ async function uploadFavicon(file) {
   return uploadDataUrl(dataUrl, 'favicon.png');
 }
 
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('This image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function decodeImage(source) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('This image cannot be decoded by the browser.'));
+    image.src = source;
+  });
+}
+
+async function rasterizeToPng(file) {
+  const image = await decodeImage(await readFileAsDataURL(file));
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  if (!width || !height || width > CUSTOM_LOGO_LIMITS.sourceSide || height > CUSTOM_LOGO_LIMITS.sourceSide || width * height > CUSTOM_LOGO_LIMITS.sourcePixels) {
+    throw new Error('Image dimensions exceed 4096px or 16 million pixels.');
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('This image cannot be drawn by the browser.');
+  context.drawImage(image, 0, 0);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) throw new Error('This image could not be converted to PNG.');
+  return blob;
+}
+
+async function uploadVectorLogo(file, kind) {
+  if (!(file instanceof File) || !file.size) throw new Error('Choose an image file.');
+  if (file.size > CUSTOM_LOGO_LIMITS.uploadBytes) throw new Error('Images must be 2 MB or smaller.');
+  const name = file.name.toLowerCase();
+  if (file.type === 'image/svg+xml' || name.endsWith('.svg')) {
+    const text = await file.text();
+    if (svgTextHasUnsafeContent(text)) throw new Error('This SVG contains unsupported or unsafe content.');
+    return uploadBlob(file, { mime: 'image/svg+xml' });
+  }
+  if (file.type === 'image/png' || file.type === 'image/jpeg') return uploadBlob(file, { mime: file.type, kind });
+  const blob = await rasterizeToPng(file);
+  return uploadBlob(blob, { mime: 'image/png', kind });
+}
+
 async function uploadCustomLogo(file, details) {
-  const logo = await normalizeLogoUpload(file, details);
-  const dataUrl = await uploadDataUrl(logo.dataUrl, `${logo.id}.svg`);
-  return { ...logo, dataUrl };
+  const dataUrl = await uploadVectorLogo(file, 'logo');
+  const logo = { id: details.id, label: details.label.trim(), dataUrl, background: details.background };
+  validateCustomLogo(logo);
+  return logo;
 }
 
 async function uploadGroupLogo(file) {
-  const logo = await normalizeLogoUpload(file, { id: uid('custom'), label: 'Group logo', background: 'none' });
-  return uploadDataUrl(logo.dataUrl, `${logo.id}.svg`);
+  return uploadVectorLogo(file, 'logo');
+}
+
+async function uploadAppLogo(file) {
+  return uploadVectorLogo(file, 'app-logo');
 }
 
 const IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon';
@@ -445,7 +502,7 @@ function projectForm() {
       <label>Browser tab title <span class="muted">Optional</span><input data-branding="tabTitle" maxlength="80" autocomplete="off" placeholder="Uses the app name"></label>
       <div class="favicon-setting">
         <span class="favicon-preview"><img data-branding-preview alt=""></span>
-        <div class="favicon-copy"><strong>App logo</strong><span>Used in the header and browser tab. Falls back to the project tab icon. PNG, JPG, WebP, SVG, or ICO; stored as a PNG up to 128px on this Atlas server.</span><div class="favicon-actions"><button type="button" data-brand-logo-upload>Upload logo</button><button type="button" class="danger" data-brand-logo-clear hidden>Remove</button></div></div>
+        <div class="favicon-copy"><strong>App logo</strong><span>Used in the header and browser tab. Falls back to the project tab icon. PNG, JPG, WebP, SVG, or ICO; raster uploads are converted to SVG and stored on this Atlas server.</span><div class="favicon-actions"><button type="button" data-brand-logo-upload>Upload logo</button><button type="button" class="danger" data-brand-logo-clear hidden>Remove</button></div></div>
       </div>
       <input data-brand-logo-file type="file" accept="${IMAGE_ACCEPT}" hidden>
       <p class="help branding-status" data-branding-status role="status" aria-live="polite"></p>
@@ -506,7 +563,7 @@ function bindProjectForm(root) {
     if (!file) return;
     const current = project;
     try {
-      const favicon = await uploadFavicon(file);
+      const favicon = await uploadAppLogo(file);
       if (project !== current) throw new Error('The project changed while the logo was uploading. Try again.');
       queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), favicon }), { successMessage: 'App logo saved in this project.' });
     } catch (error) {
@@ -1353,6 +1410,45 @@ $('#save-zip').addEventListener('click', async () => {
     toast(`Save failed: ${error.message}`, true);
   }
 });
+$('#vectorize-existing').addEventListener('click', async () => {
+  closeFileMenu();
+  const current = project;
+  const references = new Set();
+  const add = value => {
+    if (!value || typeof value !== 'string') return;
+    const rasterUpload = isUploadReference(value) && !value.endsWith('.svg');
+    const rasterData = value.startsWith('data:image/') && !value.startsWith('data:image/svg+xml');
+    if (rasterUpload || rasterData) references.add(value);
+  };
+  for (const logo of current.customLogos || []) add(logo.dataUrl);
+  for (const device of current.devices || []) {
+    for (const group of device.groups || []) add(group.logo);
+  }
+  add(current.branding?.favicon);
+  if (!references.size) return toast('There are no raster logos to convert.');
+  toast(`Converting ${references.size} image${references.size === 1 ? '' : 's'}…`, true);
+  try {
+    const replacements = new Map();
+    for (const reference of references) {
+      const url = isUploadReference(reference)
+        ? await vectorizeUploadReference(reference)
+        : await vectorizeDataUrl(reference);
+      if (url !== reference) replacements.set(reference, url);
+    }
+    if (!replacements.size) return toast('All images are already vectors.');
+    if (project !== current) throw new Error('The project changed while converting. Try again.');
+    if (change(candidate => {
+      for (const logo of candidate.customLogos || []) if (replacements.has(logo.dataUrl)) logo.dataUrl = replacements.get(logo.dataUrl);
+      for (const device of candidate.devices || []) {
+        for (const group of device.groups || []) if (replacements.has(group.logo)) group.logo = replacements.get(group.logo);
+      }
+      if (candidate.branding && replacements.has(candidate.branding.favicon)) candidate.branding.favicon = replacements.get(candidate.branding.favicon);
+    })) toast(`Converted ${replacements.size} image${replacements.size === 1 ? '' : 's'} to SVG.`);
+  } catch (error) {
+    toast(`Conversion failed: ${error.message}`, true);
+  }
+});
+
 const exportOptions = () => ({ hideNetworkDetails: $('#export-hide-network').checked, customTerms: $('#export-custom-terms').value });
 let exportPreviewFrame;
 let exportPreviewToken = 0;

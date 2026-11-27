@@ -32,7 +32,7 @@ Each group can have an optional logo and a name. In the diagram the group name a
 
 <GuideFigure name="service-logos" />
 
-Choose **Upload logo** in any picker to add a PNG, JPG, WebP, or SVG file up to 2 MB. Check the preview, edit its name, and choose a transparent, light, or dark background. Uploaded logos are stored as SVG at up to 512px; the source image is rendered into the SVG container. Uploaded logos appear first under **Uploaded** and can be reused throughout the project. In the multi-service picker, uploaded drafts are only saved when selected services are added. Cancel leaves the project unchanged.
+Choose **Upload logo** in any picker to add a PNG, JPG, WebP, or SVG file up to 2 MB. Raster images are traced to real SVG by the vectorizer; SVG uploads are already vectors and are stored as-is after a safety check. Check the preview, edit its name, and choose a transparent, light, or dark background. Uploaded logos appear first under **Uploaded** and can be reused throughout the project. In the multi-service picker, uploaded drafts are only saved when selected services are added. Cancel leaves the project unchanged.
 
 You can change a service name and set its instance count from 1 through 99. **Icon size** sets that service's icon from 16 to 64 diagram units in both grid tiles and service rows; very large values are limited by the tile height. **Show name** hides the label and turns the full name into a hover tooltip. Long names are always shown on one line with an ellipsis, and the native tooltip keeps the complete text. **Add custom service** still adds a named tile with the included generic icon.
 
@@ -52,7 +52,7 @@ The editor automatically saves the current project as the default on the Atlas s
 
 ## App branding
 
-Choose **Diagram settings → App branding** to change the name shown beside the header logo, an optional browser-tab title, and an uploaded app logo. The logo is also used as the browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB and stores a square PNG up to 128px. **Remove** clears the saved app logo.
+Choose **Diagram settings → App branding** to change the name shown beside the header logo, an optional browser-tab title, and an uploaded app logo. The logo is also used as the browser-tab icon. Atlas accepts PNG, JPG, WebP, SVG, or ICO files up to 2 MB. Raster uploads are traced to SVG; SVG uploads are stored as-is. This SVG logo is also used as the browser-tab icon when no project tab icon is saved. **Remove** clears the saved app logo.
 
 Branding is stored in the project JSON (`branding` object), so it travels with the project and its autosaved default. Changing branding edits the open project and creates an autosave, just like any other project change.
 

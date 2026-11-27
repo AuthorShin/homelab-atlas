@@ -1,6 +1,6 @@
 services:
   atlas:
-    image: ghcr.io/authorshin/homelab-atlas:${ATLAS_VERSION:-0.18.0}
+    image: ghcr.io/authorshin/homelab-atlas:${ATLAS_VERSION:-0.19.0}
     ports:
       - "${ATLAS_BIND:-127.0.0.1}:8080:8080"
     read_only: true
@@ -8,6 +8,20 @@ services:
       - /tmp:size=16m,mode=1777
     volumes:
       - atlas-data:/data
+    environment:
+      - ATLAS_VECTORIZER_URL=http://vectorizer:8081
+    depends_on:
+      - vectorizer
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+  vectorizer:
+    image: ghcr.io/authorshin/homelab-atlas-vectorizer:${ATLAS_VERSION:-0.19.0}
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
     security_opt:
       - no-new-privileges:true
     cap_drop:

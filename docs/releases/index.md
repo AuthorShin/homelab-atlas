@@ -1,6 +1,6 @@
 # Releases and packages
 
-**v0.18.0** is the latest release. You can read the [release notes](/releases/v0.18.0) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.18.0). The [v0.17.0 release notes](/releases/v0.17.0) and [v0.16.1 release notes](/releases/v0.16.1) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
+**v0.19.0** is the latest release. You can read the [release notes](/releases/v0.19.0) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.0). The [v0.18.0 release notes](/releases/v0.18.0) and [v0.17.0 release notes](/releases/v0.17.0) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
 
 Release notes for earlier versions are kept for reference. They describe the upstream releases they were written for, and not every feature mentioned there is part of the current build.
 
@@ -8,8 +8,9 @@ Release notes for earlier versions are kept for reference. They describe the ups
 
 | Asset | Platforms | Purpose |
 |---|---|---|
-| `ghcr.io/authorshin/homelab-atlas:0.18.0` | Linux AMD64, ARM64 | Published editor and dashboard image |
-| `homelab-atlas-0.18.0.zip` | Go 1.26+ and a current browser | App source, deployment files, README, and notices |
+| `ghcr.io/authorshin/homelab-atlas:0.19.0` | Linux AMD64, ARM64 | Published editor and dashboard image |
+| `ghcr.io/authorshin/homelab-atlas-vectorizer:0.19.0` | Linux AMD64, ARM64 | Raster-to-SVG tracing service |
+| `homelab-atlas-0.19.0.zip` | Go 1.26+, Node 22.19+ and a current browser | App source, vectorizer source, deployment files, README, and notices |
 | `compose.release.yaml` | Docker Compose v2 | Runs the released image with the standard safety settings |
 | `SHA256SUMS` | Linux/macOS | Integrity checks for the ZIP and Compose file |
 
@@ -37,12 +38,12 @@ Both covered files must report `OK`.
 
 | Tag | Behavior |
 |---|---|
-| `0.18.0` | Exact stable release |
-| `v0.18.0` | Exact stable release, matching the Git tag |
-| `0.18` | Newest stable patch in the 0.18 line |
+| `0.19.0` | Exact stable release |
+| `v0.19.0` | Exact stable release, matching the Git tag |
+| `0.19` | Newest stable patch in the 0.19 line |
 | `latest` | Newest stable release |
 
-The exact version tags keep pointing to the same release. The `0.18` and `latest` tags move when a newer matching release is published. If you need an image reference that cannot move, get the verified manifest digest from the registry or successful release workflow. Replace the colon and tag after the image name with `@` followed by that `sha256:` digest.
+Both published images use the same version tags. The exact version tags keep pointing to the same release. The `0.19` and `latest` tags move when a newer matching release is published. If you need an image reference that cannot move, get the verified manifest digest from the registry or successful release workflow. Replace the colon and tag after the image name with `@` followed by that `sha256:` digest.
 
 ## Maintainer checklist
 
@@ -52,4 +53,4 @@ The exact version tags keep pointing to the same release. The `0.18` and `latest
 4. Commit on `main`, create a strict stable tag in the form `vMAJOR.MINOR.PATCH`, and push it.
 5. Watch the whole release workflow: validation, multi-architecture image publishing, anonymous image verification, and GitHub release creation.
 
-The first time the image is published to GHCR, GitHub may make the package private. Change it to public, then rerun only the failed **Publish GitHub release** job. The workflow will not create the release until anyone can pull the versioned image, both architectures are present, and the digest matches the image it built.
+The first time each image is published to GHCR, GitHub may make its package private. Make both `homelab-atlas` and `homelab-atlas-vectorizer` public, then rerun only the failed **Publish GitHub release** job. The workflow will not create the release until anyone can pull the versioned image, both architectures are present, and the digest matches the image it built.

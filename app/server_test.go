@@ -20,7 +20,7 @@ func testAtlasServer(t *testing.T) *atlasServer {
 		t.Fatal(err)
 	}
 	directory := t.TempDir()
-	server, err := newAtlasServer(public, newDefaultProjectStore(directory), newBrandingStore(directory), newUploadStore(directory))
+	server, err := newAtlasServer(public, newDefaultProjectStore(directory), newBrandingStore(directory), newUploadStore(directory), newVectorizeClient(""))
 	if err != nil {
 		t.Fatal(err)
 	}

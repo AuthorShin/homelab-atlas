@@ -206,6 +206,25 @@ func (server *atlasServer) createUpload(writer http.ResponseWriter, request *htt
 		writeAPIError(writer, request, http.StatusBadRequest, err.Error())
 		return
 	}
+	kind := strings.ToLower(request.Header.Get(uploadKindHeader))
+	if kind == "logo" || kind == "app-logo" {
+		if !server.vectorizer.available() {
+			writeAPIError(writer, request, http.StatusServiceUnavailable, errVectorizerUnavailable.Error())
+			return
+		}
+		svg, err := server.vectorizer.vectorize(data, mediaType)
+		if err != nil {
+			status := http.StatusBadGateway
+			if errors.Is(err, errVectorizerUnavailable) {
+				status = http.StatusServiceUnavailable
+			}
+			writeAPIError(writer, request, status, err.Error())
+			return
+		}
+		data = svg
+		extension = ".svg"
+		mediaType = "image/svg+xml"
+	}
 	digest := sha256.Sum256(data)
 	name := hex.EncodeToString(digest[:]) + extension
 	if err := server.uploads.put(name, data); err != nil {

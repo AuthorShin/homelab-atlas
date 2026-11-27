@@ -204,13 +204,13 @@ func validateBrandingFavicon(value string) error {
 		return errors.New("app logo is too large")
 	}
 	if isUploadReference(value) {
-		if !strings.HasSuffix(value, ".png") {
-			return errors.New("app logo uploads must be PNG images")
+		if !strings.HasSuffix(value, ".png") && !strings.HasSuffix(value, ".svg") {
+			return errors.New("app logo uploads must be PNG or SVG images")
 		}
 		return nil
 	}
 	if !strings.HasPrefix(value, brandFaviconPrefix) {
-		return errors.New("app logo must be an empty string, a PNG data URL, or an Atlas PNG upload")
+		return errors.New("app logo must be an empty string, a PNG data URL, or an Atlas PNG or SVG upload")
 	}
 	encoded := strings.TrimPrefix(value, brandFaviconPrefix)
 	if len(encoded)%4 != 0 {

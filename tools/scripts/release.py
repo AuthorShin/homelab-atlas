@@ -21,6 +21,10 @@ FILES = (
     "app/branding.go",
     "app/file_store.go",
     "app/uploads.go",
+    "app/vectorize.go",
+    "vectorizer/package.json",
+    "vectorizer/server.mjs",
+    "vectorizer/Dockerfile",
     "deploy/Dockerfile",
     "compose.yaml",
     ".dockerignore",
@@ -41,16 +45,19 @@ def version_for(root: Path, tag: str) -> str:
     package_version = json.loads((root / "package.json").read_text())["version"]
     if version != package_version:
         raise ValueError(f"tag {tag} does not match package.json version {package_version}")
-    expected_image = f"ghcr.io/authorshin/homelab-atlas:${{ATLAS_VERSION:-{version}}}"
+    expected_images = [
+        f"ghcr.io/authorshin/homelab-atlas:${{ATLAS_VERSION:-{version}}}",
+        f"ghcr.io/authorshin/homelab-atlas-vectorizer:${{ATLAS_VERSION:-{version}}}",
+    ]
     compose = (root / "deploy/compose.release.yaml").read_text()
     images = re.findall(r"^\s*image:\s*(\S+)\s*$", compose, re.MULTILINE)
-    if images != [expected_image]:
-        raise ValueError(f"compose.release.yaml image must be {expected_image}")
+    if images != expected_images:
+        raise ValueError(f"compose.release.yaml images must be {expected_images}")
     return version
 
 
 def release_files(root: Path) -> list[Path]:
-    for name in ("app", "deploy", "docs", ".github"):
+    for name in ("app", "deploy", "docs", ".github", "vectorizer"):
         directory = root / name
         if directory.is_symlink():
             raise ValueError(f"release input must not be a symlink: {directory}")

@@ -10,6 +10,22 @@ services:
       - /tmp:size=16m,mode=1777
     volumes:
       - atlas-data:/data
+    environment:
+      - ATLAS_VECTORIZER_URL=http://vectorizer:8081
+    depends_on:
+      - vectorizer
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+  vectorizer:
+    build:
+      context: .
+      dockerfile: vectorizer/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
     security_opt:
       - no-new-privileges:true
     cap_drop:

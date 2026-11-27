@@ -25,6 +25,7 @@ type atlasServer struct {
 	defaults    *defaultProjectStore
 	branding    *jsonFileStore
 	uploads     *uploadStore
+	vectorizer  *vectorizeClient
 }
 
 type staticAsset struct {
@@ -38,7 +39,7 @@ type staticRepresentation struct {
 	etag string
 }
 
-func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore) (*atlasServer, error) {
+func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore, vectorizer *vectorizeClient) (*atlasServer, error) {
 	assets, assetPrefix, err := loadStaticAssets(public)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,10 @@ func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonF
 	if uploads == nil {
 		uploads = &uploadStore{}
 	}
-	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding, uploads: uploads}, nil
+	if vectorizer == nil {
+		vectorizer = newVectorizeClient("")
+	}
+	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding, uploads: uploads, vectorizer: vectorizer}, nil
 }
 
 func loadStaticAssets(public fs.FS) (map[string]staticAsset, string, error) {
@@ -180,6 +184,10 @@ func (server *atlasServer) ServeHTTP(writer http.ResponseWriter, request *http.R
 		server.serveUploads(writer, request)
 		return
 	}
+	if request.URL.Path == "/api/vectorize" {
+		server.serveVectorize(writer, request)
+		return
+	}
 	server.serveStatic(writer, request)
 }
 
@@ -289,8 +297,8 @@ func writeBody(writer http.ResponseWriter, request *http.Request, status int, co
 	}
 }
 
-func serve(address string, public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore) error {
-	handler, err := newAtlasServer(public, defaults, branding, uploads)
+func serve(address string, public fs.FS, defaults *defaultProjectStore, branding *jsonFileStore, uploads *uploadStore, vectorizer *vectorizeClient) error {
+	handler, err := newAtlasServer(public, defaults, branding, uploads, vectorizer)
 	if err != nil {
 		return err
 	}

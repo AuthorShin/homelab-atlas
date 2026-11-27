@@ -62,9 +62,10 @@ function parsePng(dataUrl) {
   return { width, height, bytes: length };
 }
 
-export function validateFaviconDataUrl(dataUrl) {
+export function validateFaviconDataUrl(dataUrl, { allowSVG = false } = {}) {
   if (dataUrl === '') return true;
   if (isUploadReference(dataUrl, '.png')) return true;
+  if (allowSVG && isUploadReference(dataUrl, '.svg')) return true;
   parsePng(dataUrl);
   return true;
 }

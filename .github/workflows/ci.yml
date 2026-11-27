@@ -21,9 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f deploy/Dockerfile -t homelab-atlas:test .
+      - run: docker build -f vectorizer/Dockerfile -t homelab-atlas-vectorizer:test .
+      - run: docker run -d --name vectorizer --read-only --tmpfs /tmp:size=64m,mode=1777 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8081:8081 homelab-atlas-vectorizer:test
       - run: docker run -d --name atlas --read-only --tmpfs /tmp --tmpfs /data:size=16m,mode=1777 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 homelab-atlas:test
       - run: |
           set -euo pipefail
+          curl --fail --silent --show-error http://127.0.0.1:8081/healthz
           for i in {1..20}; do
             if curl --fail http://127.0.0.1:8080/healthz; then
               curl --fail --silent --show-error http://127.0.0.1:8080/dashboard >/dev/null

@@ -12,4 +12,6 @@ Homelab Atlas bundles 114 reviewed upstream SVG brand assets for offline display
 
 Exact filenames, pinned source URLs, and byte sizes are recorded in `app/public/licenses/logo-sources.json`. Restic has no bundled upstream mark and intentionally uses Homelab Atlas's original generic backup glyph. Generic device, service, network, and utility glyphs are original MIT-licensed Homelab Atlas artwork.
 
+The optional `vectorizer` container uses [OpenVector](https://github.com/Microck/openvector) v0.1.7 under the MIT License for raster-to-SVG tracing. OpenVector includes third-party code and Qt-derived stroke code with separate license terms; its package notices and editable source are included in the published image and release ZIP.
+
 Licenses grant copyright permissions; they do not grant trademark rights. Product names and marks remain the property of their respective owners and are used here only to identify services users may diagram. All bundled artwork is local; the app and exported diagrams do not fetch these assets from upstream sources.

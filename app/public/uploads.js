@@ -1,6 +1,7 @@
 export const UPLOAD_ENDPOINT = '/api/uploads';
 export const UPLOAD_WRITE_HEADER = 'X-Atlas-Upload';
 export const UPLOAD_KIND_HEADER = 'X-Atlas-Upload-Kind';
+export const VECTORIZE_ENDPOINT = '/api/vectorize';
 export const UPLOAD_LIMITS = Object.freeze({
   bytes: 2_000_000,
   backgroundBytes: 10_000_000,
@@ -94,6 +95,34 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { maxBytes 
   const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
   const blob = new Blob([bytes], { type: mime });
   return uploadBlob(blob, { mime, maxBytes, kind, fetcher });
+}
+
+async function requestVectorization(payload, fetcher) {
+  if (typeof fetcher !== 'function') throw new Error('Image vectorization is unavailable.');
+  const response = await fetcher(VECTORIZE_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      [UPLOAD_WRITE_HEADER]: '1',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await responseDetail(response);
+  if (!response.ok) throw new Error(text || `Image vectorization failed (HTTP ${response.status}).`);
+  let result;
+  try { result = JSON.parse(text); } catch { throw new Error('Image vectorization response was not valid JSON.'); }
+  if (!isUploadReference(result?.url, '.svg')) throw new Error('Image vectorization did not return a valid Atlas upload URL.');
+  return result.url;
+}
+
+export async function vectorizeUploadReference(reference, { fetcher = globalThis.fetch } = {}) {
+  if (!isUploadReference(reference) || reference.endsWith('.svg')) return reference;
+  return requestVectorization({ url: reference }, fetcher);
+}
+
+export async function vectorizeDataUrl(dataUrl, { fetcher = globalThis.fetch } = {}) {
+  if (!IMAGE_DATA_RE.test(dataUrl) || dataUrl.startsWith('data:image/svg+xml')) return dataUrl;
+  return requestVectorization({ data: dataUrl }, fetcher);
 }
 
 function readBlobAsDataUrl(blob) {
