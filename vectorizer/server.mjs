@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { CoreSession } from 'openvector';
+import { CoreSession, defaultAdvancedProfile } from 'openvector';
 
 const PORT = Number(process.env.PORT || 8081);
 const MAX_BYTES = 2_000_000;
@@ -29,6 +29,23 @@ function normalizeSvg(svg) {
   });
 }
 
+function fixedProfile() {
+  const profile = defaultAdvancedProfile();
+  profile.settings.advanced = true;
+  profile.settings.paletteMode = 1;
+  profile.colorCount = 12;
+  profile.settings.complexity = 4;
+  profile.settings.minimumPixels = 8;
+  profile.settings.artifactRejection = 1;
+  profile.settings.smoothness = 7;
+  profile.settings.curveComplexity = 6;
+  profile.settings.detectCorners = true;
+  profile.settings.antiAlias = true;
+  profile.settings.smoothingAntiAlias = true;
+  profile.settings.clusterColors = false;
+  return profile;
+}
+
 function vectorize(bytes, mediaType) {
   const extension = MIME_EXTENSION[mediaType];
   if (!extension) throw new Error('unsupported source format');
@@ -36,15 +53,18 @@ function vectorize(bytes, mediaType) {
   const document = session.createDocument();
   document.setSource(Buffer.from(bytes), filename);
   document.shrinkSource();
-  const result = document.runAutomatic({ extension });
-  if (result?.fitting?.status !== 0) throw new Error('tracing failed');
+  const result = document.runAdvancedProfile(fixedProfile(), { backup: [], customized: false });
+  if (!result) throw new Error('image produced no vector regions');
+  if (result.state?.status !== 0 || !result.didWork?.fitting || !document.snapshot({}).fittingComplete) {
+    throw new Error('tracing produced no fitted geometry');
+  }
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-vector-'));
   try {
     const output = path.join(directory, 'trace.svg');
     const saved = document.saveVector(output, { layout: 'cutouts' });
-    if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || 'export failed');
+    if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || `export failed with status ${saved.status}`);
     const svg = fs.readFileSync(output, 'utf8').trim();
-    if (!/^\s*<svg[\s>]/i.test(svg)) throw new Error('export produced no SVG');
+    if (!/^\s*<svg[\s>]/i.test(svg)) throw new Error(`export produced no SVG (status ${saved.status})`);
     if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
     return normalizeSvg(svg);
   } finally {

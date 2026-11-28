@@ -2,11 +2,18 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
+## [0.19.3] - 2026-11-29
+
+### Changed
+
+- Logo tracing now uses a fixed 12-color advanced profile instead of automatic classification and palette search. Uploads are much faster and produce simpler paths; smooth gradients are approximated with color bands.
+- The vectorizer returns a descriptive error when an image produces no fitted geometry, and Atlas includes export status details in tracing failures.
+- The vectorizer HTTP client timeout is now 100 seconds, and Nginx Proxy Manager settings for long traces and large uploads are documented.
 
 ### Fixed
 
 - The service inspector's **Icon size** and **Show name** controls now span the full row beside the logo instead of falling into the narrow logo column and wrapping awkwardly.
+- **File → Convert existing images to vectors** now skips images that cannot be traced, converts the rest, and reports how many were skipped instead of aborting the whole action.
 
 ## [0.19.2] - 2026-11-28
 
@@ -342,3 +349,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.0
 [0.19.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.1
 [0.19.2]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.2
+[0.19.3]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.3

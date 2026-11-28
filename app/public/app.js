@@ -1429,13 +1429,22 @@ $('#vectorize-existing').addEventListener('click', async () => {
   toast(`Converting ${references.size} image${references.size === 1 ? '' : 's'}…`, true);
   try {
     const replacements = new Map();
+    const failures = [];
     for (const reference of references) {
-      const url = isUploadReference(reference)
-        ? await vectorizeUploadReference(reference)
-        : await vectorizeDataUrl(reference);
-      if (url !== reference) replacements.set(reference, url);
+      try {
+        const url = isUploadReference(reference)
+          ? await vectorizeUploadReference(reference)
+          : await vectorizeDataUrl(reference);
+        if (url !== reference) replacements.set(reference, url);
+      } catch (error) {
+        failures.push(error.message);
+      }
     }
-    if (!replacements.size) return toast('All images are already vectors.');
+    if (!replacements.size) {
+      return toast(failures.length
+        ? `Conversion failed for ${failures.length} image${failures.length === 1 ? '' : 's'}: ${failures[0]}`
+        : 'All images are already vectors.', true);
+    }
     if (project !== current) throw new Error('The project changed while converting. Try again.');
     if (change(candidate => {
       for (const logo of candidate.customLogos || []) if (replacements.has(logo.dataUrl)) logo.dataUrl = replacements.get(logo.dataUrl);
@@ -1443,7 +1452,10 @@ $('#vectorize-existing').addEventListener('click', async () => {
         for (const group of device.groups || []) if (replacements.has(group.logo)) group.logo = replacements.get(group.logo);
       }
       if (candidate.branding && replacements.has(candidate.branding.favicon)) candidate.branding.favicon = replacements.get(candidate.branding.favicon);
-    })) toast(`Converted ${replacements.size} image${replacements.size === 1 ? '' : 's'} to SVG.`);
+    })) {
+      const skipped = failures.length ? ` Skipped ${failures.length}: ${failures[0]}` : '';
+      toast(`Converted ${replacements.size} image${replacements.size === 1 ? '' : 's'} to SVG.${skipped}`, Boolean(failures.length));
+    }
   } catch (error) {
     toast(`Conversion failed: ${error.message}`, true);
   }

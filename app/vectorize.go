@@ -33,7 +33,7 @@ func newVectorizeClient(rawURL string) *vectorizeClient {
 	}
 	return &vectorizeClient{
 		url:    strings.TrimRight(url, "/"),
-		client: &http.Client{Timeout: 30 * time.Second},
+		client: &http.Client{Timeout: 100 * time.Second},
 	}
 }
 
