@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Changed
+
+- Commented out the `--line` and `--line-soft` CSS variable declarations. Their border colors are now inlined directly where they are used, so the framed look is unchanged.
+
 ## [0.19.1] - 2026-11-27
 
 ### Changed
