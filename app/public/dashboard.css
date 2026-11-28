@@ -30,7 +30,7 @@ button, a.button {
   justify-content: center;
   gap: 7px;
   padding: 0 11px;
-  border: 1px solid #30394a;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--raised);
   cursor: pointer;
@@ -64,7 +64,7 @@ button:focus-visible, a.button:focus-visible { outline: 2px solid var(--accent);
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  border-bottom: 1px solid #252d3c;
+  border-bottom: 1px solid var(--line-soft);
   background: #141923;
 }
 
@@ -97,7 +97,7 @@ button:focus-visible, a.button:focus-visible { outline: 2px solid var(--accent);
 
 .topbar-mode {
   padding: 2px 7px;
-  border: 1px solid #30394a;
+  border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
   font-size: 10px;
