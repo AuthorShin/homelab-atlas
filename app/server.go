@@ -26,6 +26,7 @@ type atlasServer struct {
 	branding    *jsonFileStore
 	uploads     *uploadStore
 	vectorizer  *vectorizeClient
+	vectorizeJobs *vectorizeJobStore
 }
 
 type staticAsset struct {
@@ -56,7 +57,7 @@ func newAtlasServer(public fs.FS, defaults *defaultProjectStore, branding *jsonF
 	if vectorizer == nil {
 		vectorizer = newVectorizeClient("")
 	}
-	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding, uploads: uploads, vectorizer: vectorizer}, nil
+	return &atlasServer{assets: assets, assetPrefix: assetPrefix, defaults: defaults, branding: branding, uploads: uploads, vectorizer: vectorizer, vectorizeJobs: newVectorizeJobStore()}, nil
 }
 
 func loadStaticAssets(public fs.FS) (map[string]staticAsset, string, error) {
@@ -182,6 +183,14 @@ func (server *atlasServer) ServeHTTP(writer http.ResponseWriter, request *http.R
 	}
 	if request.URL.Path == "/api/uploads" || strings.HasPrefix(request.URL.Path, "/api/uploads/") {
 		server.serveUploads(writer, request)
+		return
+	}
+	if request.URL.Path == "/api/vectorize/jobs" {
+		server.serveVectorizeJobCreate(writer, request)
+		return
+	}
+	if strings.HasPrefix(request.URL.Path, "/api/vectorize/jobs/") {
+		server.serveVectorizeJobStatus(writer, request)
 		return
 	}
 	if request.URL.Path == "/api/vectorize" {

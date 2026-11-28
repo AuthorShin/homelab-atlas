@@ -2,6 +2,7 @@ export const UPLOAD_ENDPOINT = '/api/uploads';
 export const UPLOAD_WRITE_HEADER = 'X-Atlas-Upload';
 export const UPLOAD_KIND_HEADER = 'X-Atlas-Upload-Kind';
 export const VECTORIZE_ENDPOINT = '/api/vectorize';
+export const VECTORIZE_JOBS_ENDPOINT = '/api/vectorize/jobs';
 export const UPLOAD_LIMITS = Object.freeze({
   bytes: 2_000_000,
   backgroundBytes: 10_000_000,
@@ -95,6 +96,48 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { maxBytes 
   const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
   const blob = new Blob([bytes], { type: mime });
   return uploadBlob(blob, { mime, maxBytes, kind, fetcher });
+}
+
+export async function createVectorizeJob(payload, { fetcher = globalThis.fetch } = {}) {
+  if (typeof fetcher !== 'function') throw new Error('Image vectorization is unavailable.');
+  const response = await fetcher(VECTORIZE_JOBS_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      [UPLOAD_WRITE_HEADER]: '1',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await responseDetail(response);
+  if (!response.ok) throw new Error(text || `Image vectorization failed (HTTP ${response.status}).`);
+  let result;
+  try { result = JSON.parse(text); } catch { throw new Error('Image vectorization response was not valid JSON.'); }
+  if (typeof result?.id !== 'string' || !result.id) throw new Error('Image vectorization did not return a job ID.');
+  return result.id;
+}
+
+export async function getVectorizeJob(id, { fetcher = globalThis.fetch } = {}) {
+  const response = await fetcher(`${VECTORIZE_JOBS_ENDPOINT}/${encodeURIComponent(id)}`, {
+    headers: { [UPLOAD_WRITE_HEADER]: '1' },
+  });
+  const text = await responseDetail(response);
+  if (!response.ok) throw new Error(text || `Vectorization status failed (HTTP ${response.status}).`);
+  return JSON.parse(text);
+}
+
+export async function waitForVectorizeJob(id, { onStatus = () => {}, interval = 500, timeout = 180000, fetcher = globalThis.fetch } = {}) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const job = await getVectorizeJob(id, { fetcher });
+    onStatus(job);
+    if (job.status === 'done') {
+      if (!isUploadReference(job.url, '.svg')) throw new Error('Image vectorization did not return a valid Atlas upload URL.');
+      return job.url;
+    }
+    if (job.status === 'failed') throw new Error(job.error || 'Image vectorization failed.');
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+  throw new Error('Image vectorization timed out.');
 }
 
 async function requestVectorization(payload, fetcher) {

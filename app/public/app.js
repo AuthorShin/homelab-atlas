@@ -9,8 +9,8 @@ import { CUSTOM_LOGO_LIMITS, svgTextHasUnsafeContent, validateCustomLogo, verify
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
 import {
-  UPLOAD_LIMITS, inlineUploadReferences, isUploadReference, uploadBlob, uploadDataUrl, uploadImageFile,
-  vectorizeDataUrl, vectorizeUploadReference,
+  UPLOAD_LIMITS, createVectorizeJob, inlineUploadReferences, isUploadReference, uploadBlob, uploadDataUrl, uploadImageFile,
+  waitForVectorizeJob,
 } from './uploads.js';
 import { createProjectArchive, importProjectFile } from './project-zip.js';
 import {
@@ -124,7 +124,27 @@ async function rasterizeToPng(file) {
   return blob;
 }
 
-async function uploadVectorLogo(file, kind) {
+function openVectorizeProgress(text) {
+  $('#vectorize-progress-bar').value = 0;
+  $('#vectorize-progress-text').textContent = text || 'Starting…';
+  if (!$('#vectorize-progress').open) $('#vectorize-progress').showModal();
+}
+
+function updateVectorizeProgress(done, total) {
+  $('#vectorize-progress-bar').value = total ? Math.round(done / total * 100) : 100;
+  $('#vectorize-progress-text').textContent = `${done} of ${total} complete`;
+}
+
+function closeVectorizeProgress() {
+  if ($('#vectorize-progress').open) $('#vectorize-progress').close();
+}
+
+async function vectorizeUploadReferenceAsync(reference, { onStatus = () => {} } = {}) {
+  const id = await createVectorizeJob({ url: reference });
+  return waitForVectorizeJob(id, { onStatus });
+}
+
+async function uploadVectorLogo(file) {
   if (!(file instanceof File) || !file.size) throw new Error('Choose an image file.');
   if (file.size > CUSTOM_LOGO_LIMITS.uploadBytes) throw new Error('Images must be 2 MB or smaller.');
   const name = file.name.toLowerCase();
@@ -133,9 +153,17 @@ async function uploadVectorLogo(file, kind) {
     if (svgTextHasUnsafeContent(text)) throw new Error('This SVG contains unsupported or unsafe content.');
     return uploadBlob(file, { mime: 'image/svg+xml' });
   }
-  if (file.type === 'image/png' || file.type === 'image/jpeg') return uploadBlob(file, { mime: file.type, kind });
-  const blob = await rasterizeToPng(file);
-  return uploadBlob(blob, { mime: 'image/png', kind });
+  const raster = file.type === 'image/png' || file.type === 'image/jpeg' ? file : await rasterizeToPng(file);
+  const mime = file.type === 'image/png' || file.type === 'image/jpeg' ? file.type : 'image/png';
+  const rasterUrl = await uploadBlob(raster, { mime });
+  openVectorizeProgress('Upload complete. Tracing to SVG…');
+  try {
+    return await vectorizeUploadReferenceAsync(rasterUrl, {
+      onStatus: job => { if (job.status === 'processing') $('#vectorize-progress-text').textContent = 'Tracing image to SVG…'; },
+    });
+  } finally {
+    closeVectorizeProgress();
+  }
 }
 
 async function uploadCustomLogo(file, details) {
@@ -1427,19 +1455,48 @@ $('#vectorize-existing').addEventListener('click', async () => {
   }
   add(current.branding?.favicon);
   if (!references.size) return toast('There are no raster logos to convert.');
-  toast(`Converting ${references.size} image${references.size === 1 ? '' : 's'}…`, true);
+  openVectorizeProgress(`Queued ${references.size} image${references.size === 1 ? '' : 's'}…`);
   try {
-    const replacements = new Map();
+    const jobs = [];
     const failures = [];
     for (const reference of references) {
       try {
-        const url = isUploadReference(reference)
-          ? await vectorizeUploadReference(reference)
-          : await vectorizeDataUrl(reference);
-        if (url !== reference) replacements.set(reference, url);
+        const id = await createVectorizeJob(isUploadReference(reference) ? { url: reference } : { data: reference });
+        jobs.push({ reference, id });
       } catch (error) {
         failures.push(error.message);
       }
+    }
+    if (!jobs.length) {
+      closeVectorizeProgress();
+      return toast(failures.length
+        ? `Conversion failed for ${failures.length} image${failures.length === 1 ? '' : 's'}: ${failures[0]}`
+        : 'All images are already vectors.', true);
+    }
+    const finished = new Set();
+    const total = jobs.length + failures.length;
+    const results = await Promise.all(jobs.map(async job => {
+      const note = () => {
+        if (!finished.has(job.id)) {
+          finished.add(job.id);
+          updateVectorizeProgress(finished.size, total);
+        }
+      };
+      try {
+        const url = await waitForVectorizeJob(job.id, {
+          onStatus: status => { if (status.status === 'done' || status.status === 'failed') note(); },
+        });
+        return { reference: job.reference, url };
+      } catch (error) {
+        note();
+        return { reference: job.reference, error: error.message };
+      }
+    }));
+    closeVectorizeProgress();
+    const replacements = new Map();
+    for (const result of results) {
+      if (result.error) failures.push(result.error);
+      else if (result.url !== result.reference) replacements.set(result.reference, result.url);
     }
     if (!replacements.size) {
       return toast(failures.length
@@ -1458,6 +1515,7 @@ $('#vectorize-existing').addEventListener('click', async () => {
       toast(`Converted ${replacements.size} image${replacements.size === 1 ? '' : 's'} to SVG.${skipped}`, Boolean(failures.length));
     }
   } catch (error) {
+    closeVectorizeProgress();
     toast(`Conversion failed: ${error.message}`, true);
   }
 });

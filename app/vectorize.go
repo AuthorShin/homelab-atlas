@@ -115,6 +115,25 @@ func decodeVectorizeDataURL(value string) ([]byte, string, error) {
 	return data, mediaType, nil
 }
 
+func (server *atlasServer) decodeVectorizeInput(request *http.Request) ([]byte, string, error) {
+	var payload struct {
+		URL  string `json:"url"`
+		Data string `json:"data"`
+	}
+	decoder := json.NewDecoder(io.LimitReader(request.Body, 2*maxUploadBytes))
+	if err := decoder.Decode(&payload); err != nil {
+		return nil, "", errors.New("vectorization request must be JSON")
+	}
+	switch {
+	case payload.URL != "" && payload.Data == "":
+		return server.readUploadReference(payload.URL)
+	case payload.Data != "" && payload.URL == "":
+		return decodeVectorizeDataURL(payload.Data)
+	default:
+		return nil, "", errors.New("provide either an upload URL or image data")
+	}
+}
+
 func (server *atlasServer) serveVectorize(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Cache-Control", "no-store")
 	if request.Method != http.MethodPost {
@@ -133,26 +152,7 @@ func (server *atlasServer) serveVectorize(writer http.ResponseWriter, request *h
 		writeAPIError(writer, request, http.StatusServiceUnavailable, errVectorizerUnavailable.Error())
 		return
 	}
-	var payload struct {
-		URL  string `json:"url"`
-		Data string `json:"data"`
-	}
-	decoder := json.NewDecoder(io.LimitReader(request.Body, 2*maxUploadBytes))
-	if err := decoder.Decode(&payload); err != nil {
-		writeAPIError(writer, request, http.StatusBadRequest, "vectorization request must be JSON")
-		return
-	}
-	var data []byte
-	var mediaType string
-	var err error
-	switch {
-	case payload.URL != "" && payload.Data == "":
-		data, mediaType, err = server.readUploadReference(payload.URL)
-	case payload.Data != "" && payload.URL == "":
-		data, mediaType, err = decodeVectorizeDataURL(payload.Data)
-	default:
-		err = errors.New("provide either an upload URL or image data")
-	}
+	data, mediaType, err := server.decodeVectorizeInput(request)
 	if err != nil {
 		writeAPIError(writer, request, http.StatusBadRequest, err.Error())
 		return

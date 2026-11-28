@@ -2,6 +2,13 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.5] - 2026-11-29
+
+### Added
+
+- Logo vectorization now runs as a background job with a progress bar. New uploads and **File → Convert existing images to vectors** return immediately, then poll for completion, so slow traces no longer produce a proxy `502`.
+- Vectorization errors now include the exported file's length and first characters for diagnosis. The vectorizer also strips BOMs, XML declarations, comments, and doctypes before validating the SVG.
+
 ## [0.19.4] - 2026-11-29
 
 ### Fixed
@@ -360,3 +367,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.2]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.2
 [0.19.3]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.3
 [0.19.4]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.4
+[0.19.5]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.5
