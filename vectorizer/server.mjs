@@ -49,11 +49,12 @@ function fixedProfile() {
 function exportSvg(document, output) {
   const saved = document.saveVector(output, { layout: 'cutouts' });
   if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || `export failed with status ${saved.status}`);
-  let svg = fs.readFileSync(output, 'utf8').trim();
-  svg = svg.replace(/^\uFEFF/, '').replace(/^\s*(?:<\?xml[^>]*\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)\s*/gi, '');
-  if (!/^\s*<svg[\s>]/i.test(svg)) {
-    throw new Error(`export produced no SVG (status ${saved.status}, ${svg.length} chars: ${svg.slice(0, 160)})`);
+  const raw = fs.readFileSync(output, 'utf8').trim();
+  const svgStart = raw.search(/<svg[\s>]/i);
+  if (svgStart === -1) {
+    throw new Error(`export produced no SVG (status ${saved.status}, ${raw.length} chars: ${raw.slice(0, 160)})`);
   }
+  let svg = raw.slice(svgStart);
   if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
   return normalizeSvg(svg);
 }

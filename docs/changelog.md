@@ -2,11 +2,15 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
+## [0.19.6] - 2026-11-29
 
 ### Changed
 
 - All editor checkboxes now use accent-colored boxes with rounded corners and a clear white check when selected.
+
+### Fixed
+
+- The vectorizer now locates the `<svg>` root anywhere in the export instead of relying on prefix stripping. This fixes traced uploads rejected with `export produced no SVG` when OpenVector writes a `DOCTYPE` declaration before the root element.
 
 ## [0.19.5] - 2026-11-29
 
@@ -374,3 +378,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.3]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.3
 [0.19.4]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.4
 [0.19.5]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.5
+[0.19.6]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.6

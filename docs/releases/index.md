@@ -1,6 +1,6 @@
 # Releases and packages
 
-**v0.19.5** is the latest release. You can read the [release notes](/releases/v0.19.5) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.5). The [v0.19.4 release notes](/releases/v0.19.4) and [v0.19.3 release notes](/releases/v0.19.3) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
+**v0.19.6** is the latest release. You can read the [release notes](/releases/v0.19.6) or get the files from the [GitHub release](https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.6). The [v0.19.5 release notes](/releases/v0.19.5) and [v0.19.4 release notes](/releases/v0.19.4) remain available. A release is published only after its tests, docs, image, and downloads pass the release workflow.
 
 Release notes for earlier versions are kept for reference. They describe the upstream releases they were written for, and not every feature mentioned there is part of the current build.
 
@@ -8,9 +8,9 @@ Release notes for earlier versions are kept for reference. They describe the ups
 
 | Asset | Platforms | Purpose |
 |---|---|---|
-| `ghcr.io/authorshin/homelab-atlas:0.19.5` | Linux AMD64, ARM64 | Published editor and dashboard image |
-| `ghcr.io/authorshin/homelab-atlas-vectorizer:0.19.5` | Linux AMD64, ARM64 | Raster-to-SVG tracing service |
-| `homelab-atlas-0.19.5.zip` | Go 1.26+, Node 22.19+ and a current browser | App source, vectorizer source, deployment files, README, and notices |
+| `ghcr.io/authorshin/homelab-atlas:0.19.6` | Linux AMD64, ARM64 | Published editor and dashboard image |
+| `ghcr.io/authorshin/homelab-atlas-vectorizer:0.19.6` | Linux AMD64, ARM64 | Raster-to-SVG tracing service |
+| `homelab-atlas-0.19.6.zip` | Go 1.26+, Node 22.19+ and a current browser | App source, vectorizer source, deployment files, README, and notices |
 | `compose.release.yaml` | Docker Compose v2 | Runs the released image with the standard safety settings |
 | `SHA256SUMS` | Linux/macOS | Integrity checks for the ZIP and Compose file |
 
@@ -38,8 +38,8 @@ Both covered files must report `OK`.
 
 | Tag | Behavior |
 |---|---|
-| `0.19.5` | Exact stable release |
-| `v0.19.5` | Exact stable release, matching the Git tag |
+| `0.19.6` | Exact stable release |
+| `v0.19.6` | Exact stable release, matching the Git tag |
 | `0.19` | Newest stable patch in the 0.19 line |
 | `latest` | Newest stable release |
 
