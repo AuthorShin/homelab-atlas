@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Fixed
+
+- Group headers with a logo now use the same height as headers without one by removing the extra padding around the icon, so side-by-side groups stay the same size.
+
 ## [0.19.10] - 2026-11-29
 
 ### Changed
