@@ -9,7 +9,7 @@ import { CUSTOM_LOGO_LIMITS, svgTextHasUnsafeContent, validateCustomLogo, verify
 import { normalizeFaviconUpload } from './favicon.js';
 import { applyProjectAppearance } from './appearance.js';
 import {
-  UPLOAD_LIMITS, createVectorizeJob, inlineUploadReferences, isUploadReference, uploadBlob, uploadDataUrl, uploadImageFile,
+  UPLOAD_LIMITS, createVectorizeJob, deleteUpload, inlineUploadReferences, isUploadReference, uploadBlob, uploadDataUrl, uploadImageFile,
   waitForVectorizeJob,
 } from './uploads.js';
 import { createProjectArchive, importProjectFile } from './project-zip.js';
@@ -176,21 +176,27 @@ async function uploadCustomLogo(file, details) {
   return logo;
 }
 
-async function uploadGroupLogo(file) {
-  return uploadVectorLogo(file, 'logo');
+function uploadedLogoLabel(file) {
+  return String(file.name || '').replace(/\.[^.]+$/, '').trim().slice(0, LIMITS.text) || 'Uploaded logo';
 }
 
-async function uploadAppLogo(file) {
-  return uploadVectorLogo(file, 'app-logo');
+async function registerUploadedLogo(file) {
+  const dataUrl = await uploadVectorLogo(file);
+  const logo = { id: uid('custom'), label: uploadedLogoLabel(file), dataUrl, background: 'none' };
+  validateCustomLogo(logo);
+  return logo;
 }
 
 const IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.svg,.ico,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon';
 
 async function applyGroupLogo(file, deviceId, groupId) {
   const current = project;
-  const logo = await uploadGroupLogo(file);
+  const logo = await registerUploadedLogo(file);
   if (project !== current) throw new Error('The project changed while the group logo was uploading. Try again.');
-  if (change(candidate => { candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).logo = logo; })) toast('Group logo updated.');
+  if (change(candidate => {
+    candidate.customLogos.push(logo);
+    candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).logo = logo.id;
+  })) toast('Group logo updated.');
 }
 
 function chooseGroupLogo(deviceId, groupId) {
@@ -602,9 +608,11 @@ function bindProjectForm(root) {
     if (!file) return;
     const current = project;
     try {
-      const favicon = await uploadAppLogo(file);
+      const logo = await registerUploadedLogo(file);
       if (project !== current) throw new Error('The project changed while the logo was uploading. Try again.');
-      queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), favicon }), { successMessage: 'App logo saved in this project.' });
+      if (change(candidate => { candidate.customLogos.push(logo); })) {
+        queueBrandingSave(normalizeBranding({ ...(project.branding || DEFAULT_BRANDING), favicon: logo.dataUrl }), { successMessage: 'App logo saved in this project.' });
+      }
     } catch (error) {
       toast(error.message);
     }
@@ -1026,7 +1034,13 @@ function renderLogos() {
     const emptyLabel = logoDialogState.field === 'icon' ? 'Auto' : 'None';
     const emptyDetail = logoDialogState.field === 'icon' ? 'Use the kind-based logo' : 'No secondary logo';
     const empty = networkMode ? `<button type="button" class="logo-option logo-choice ${selectedLogo === '' ? 'selected' : ''}" data-logo-choice="" aria-pressed="${selectedLogo === ''}"><span class="logo-none" aria-hidden="true">—</span><span>${emptyLabel}<small class="muted">${emptyDetail}</small></span></button>` : '';
-    grid.innerHTML = `${empty}${matches.map(logo => `<button type="button" class="logo-option logo-choice ${selectedLogo === logo.id ? 'selected' : ''}" data-logo-choice="${logo.id}" aria-pressed="${selectedLogo === logo.id}"><img class="${pickerPlateClass(logo)}" alt="" src="${logo.dataUrl || logoSource(logo.id)}"><span>${escapeHtml(logo.label)}<small class="muted">${escapeHtml(logo.category)}</small></span></button>`).join('')}${matches.length ? '' : `<p class="no-results">${emptyMessage}</p>`}`;
+    const uploadedIds = new Set(uploaded.map(logo => logo.id));
+    grid.innerHTML = `${empty}${matches.map(logo => {
+      const choice = `<button type="button" class="logo-choice ${selectedLogo === logo.id ? 'selected' : ''}" data-logo-choice="${logo.id}" aria-pressed="${selectedLogo === logo.id}"><img class="${pickerPlateClass(logo)}" alt="" src="${logo.dataUrl || logoSource(logo.id)}"><span>${escapeHtml(logo.label)}<small class="muted">${escapeHtml(logo.category)}</small></span></button>`;
+      return uploadedIds.has(logo.id)
+        ? `<div class="logo-option uploaded">${choice}<button type="button" class="logo-delete" data-logo-delete="${logo.id}" title="Delete uploaded logo" aria-label="Delete uploaded logo">${icon('close')}</button></div>`
+        : `<div class="logo-option">${choice}</div>`;
+    }).join('')}${matches.length ? '' : `<p class="no-results">${emptyMessage}</p>`}`;
   } else if (!matches.length) {
     grid.innerHTML = `<p class="no-results">${emptyMessage}</p>`;
   } else {
@@ -1043,7 +1057,53 @@ $('#logo-grid').addEventListener('change', event => {
   logoSelection = updateSelection(logoSelection, event.target.value, event.target.checked);
   $('#selection-count').textContent = `${logoSelection.size} selected`;
 });
+function uploadedLogoUsages(projectRef, id) {
+  const uses = [];
+  for (const network of projectRef.networks || []) {
+    if (network.icon === id || network.secondaryIcon === id) uses.push(`network ${network.name}`);
+  }
+  for (const device of projectRef.devices || []) {
+    if (device.icon === id) uses.push(`device ${device.name}`);
+    for (const group of device.groups || []) {
+      if (group.logo === id) uses.push(`group ${group.name}`);
+      for (const service of group.services || []) if (service.logo === id) uses.push(`service ${service.name}`);
+    }
+  }
+  return uses;
+}
+
+async function deleteUploadedLogo(id) {
+  const logo = project.customLogos.find(item => item.id === id);
+  if (!logo) {
+    logoDialogState?.drafts.delete(id);
+    logoSelection.delete(id);
+    renderLogos();
+    return;
+  }
+  const uses = uploadedLogoUsages(project, id);
+  if (uses.length) return toast(`Cannot delete: used by ${uses.slice(0, 3).join(', ')}${uses.length > 3 ? ` and ${uses.length - 3} more` : ''}.`, true);
+  if (!confirm(`Delete uploaded logo "${logo.label}"?`)) return;
+  try {
+    await deleteUpload(logo.dataUrl);
+    if (change(candidate => { candidate.customLogos = candidate.customLogos.filter(item => item.id !== id); })) {
+      logoSelection.delete(id);
+      logoDialogState?.drafts.delete(id);
+      renderLogos();
+      toast('Uploaded logo deleted.');
+    }
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
 $('#logo-grid').addEventListener('click', event => {
+  const remove = event.target.closest('[data-logo-delete]');
+  if (remove) {
+    event.preventDefault();
+    event.stopPropagation();
+    deleteUploadedLogo(remove.dataset.logoDelete);
+    return;
+  }
   const choice = event.target.closest('[data-logo-choice]');
   if (!choice || !logoDialogState || logoDialogState.mode === 'service-add' || !pickerTargetExists()) return;
   const state = logoDialogState;

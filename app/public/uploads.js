@@ -98,6 +98,19 @@ export async function uploadDataUrl(dataUrl, filename = 'image.png', { maxBytes 
   return uploadBlob(blob, { mime, maxBytes, kind, fetcher });
 }
 
+export async function deleteUpload(reference, { fetcher = globalThis.fetch } = {}) {
+  if (!isUploadReference(reference)) return;
+  if (typeof fetcher !== 'function') throw new Error('Uploaded images cannot be deleted.');
+  const response = await fetcher(reference, {
+    method: 'DELETE',
+    headers: { [UPLOAD_WRITE_HEADER]: '1' },
+  });
+  if (!response.ok && response.status !== 404) {
+    const text = await responseDetail(response);
+    throw new Error(text || `Uploaded image could not be deleted (HTTP ${response.status}).`);
+  }
+}
+
 export async function createVectorizeJob(payload, { fetcher = globalThis.fetch } = {}) {
   if (typeof fetcher !== 'function') throw new Error('Image vectorization is unavailable.');
   const response = await fetcher(VECTORIZE_JOBS_ENDPOINT, {

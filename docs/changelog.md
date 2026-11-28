@@ -2,6 +2,17 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.9] - 2026-11-29
+
+### Added
+
+- Uploaded logos can now be deleted from the Logo catalog. Deletion removes the project entry and its stored upload file, but is blocked while the logo is used by a device, service, network, group, or the app logo.
+- Group and app logo uploads are now registered in the Logo catalog as reusable uploaded logos.
+
+### Fixed
+
+- SVGs with the standard SVG 1.1 `DOCTYPE` declaration can now be uploaded. Other DOCTYPE forms, entity declarations, scripts, and external URLs are still rejected.
+
 ## [0.19.8] - 2026-11-29
 
 ### Changed
@@ -398,3 +409,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.6]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.6
 [0.19.7]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.7
 [0.19.8]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.8
+[0.19.9]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.9

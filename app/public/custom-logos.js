@@ -82,7 +82,7 @@ export function svgLogoDataUrlIsSafe(value) {
   if (!match) return false;
   let text;
   try { text = atob(match[1]); } catch { return false; }
-  if (!/^\s*<svg[\s>]/i.test(text) || svgTextHasUnsafeContent(text)) return false;
+  if (!/^\s*<svg[\s>]/i.test(stripSafeSvgDoctype(text)) || svgTextHasUnsafeContent(text)) return false;
   const href = /(?:href|xlink:href)\s*=\s*["']([^"']*)["']/gi;
   let attribute;
   while ((attribute = href.exec(text))) {
@@ -184,7 +184,13 @@ export function hasExternalSvgUrl(value) {
   return /url\s*\(/i.test(remainder);
 }
 
-export const svgTextHasUnsafeContent = text => /<!DOCTYPE|<!ENTITY|<script\b|\son[a-z]+\s*=|<foreignObject\b|<(?:animate|animateMotion|animateTransform|set)\b|<\?xml-stylesheet|@import/i.test(text) || hasExternalSvgUrl(text);
+const SAFE_SVG_DOCTYPE = /^\s*(?:<\?xml[^>]*\?>\s*)?<!DOCTYPE\s+svg\s+PUBLIC\s+"-//W3C//DTD SVG 1\.1//EN"\s+"http:\/\/www\.w3\.org\/Graphics\/SVG\/1\.1\/DTD\/svg11\.dtd"\s*>/i;
+
+export function stripSafeSvgDoctype(text) {
+  return String(text).replace(SAFE_SVG_DOCTYPE, '');
+}
+
+export const svgTextHasUnsafeContent = text => /<!DOCTYPE|<!ENTITY|<script\b|\son[a-z]+\s*=|<foreignObject\b|<(?:animate|animateMotion|animateTransform|set)\b|<\?xml-stylesheet|@import/i.test(stripSafeSvgDoctype(text)) || hasExternalSvgUrl(text);
 
 function svgIsSafe(text) {
   if (svgTextHasUnsafeContent(text)) return false;

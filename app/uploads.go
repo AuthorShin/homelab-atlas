@@ -77,6 +77,20 @@ func newUploadStore(dataDirectory string) *uploadStore {
 	return store
 }
 
+func (store *uploadStore) remove(name string) error {
+	if !store.available() {
+		return errStoreUnavailable
+	}
+	if !uploadNamePattern.MatchString(name) || strings.Contains(name, "/") {
+		return errors.New("invalid upload name")
+	}
+	err := os.Remove(filepath.Join(store.directory, name))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
 func (store *uploadStore) available() bool {
 	return store != nil && store.directory != ""
 }
@@ -143,8 +157,24 @@ func (server *atlasServer) serveUploads(writer http.ResponseWriter, request *htt
 		http.NotFound(writer, request)
 		return
 	}
+	if request.Method == http.MethodDelete {
+		if request.Header.Get(uploadWriteHeader) != "1" {
+			writeAPIError(writer, request, http.StatusForbidden, "image uploads require the Atlas request header")
+			return
+		}
+		if err := server.uploads.remove(name); err != nil {
+			status := http.StatusInternalServerError
+			if errors.Is(err, errStoreUnavailable) {
+				status = http.StatusServiceUnavailable
+			}
+			writeAPIError(writer, request, status, err.Error())
+			return
+		}
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
 	if request.Method != http.MethodGet && request.Method != http.MethodHead {
-		methodNotAllowed(writer, "GET, HEAD")
+		methodNotAllowed(writer, "GET, HEAD, DELETE")
 		return
 	}
 	server.serveUploadFile(writer, request, name)
@@ -302,8 +332,10 @@ func validateUploadedImage(mediaType string, data []byte) error {
 	return nil
 }
 
+var safeSVGDoctype = regexp.MustCompile(`(?i)^\s*(?:<\?xml[^>]*\?>\s*)?<!DOCTYPE\s+svg\s+PUBLIC\s+"-//W3C//DTD SVG 1\.1//EN"\s+"http://www\.w3\.org/Graphics/SVG/1\.1/DTD/svg11\.dtd"\s*>`)
+
 func validateUploadedSVG(data []byte) error {
-	text := string(data)
+	text := safeSVGDoctype.ReplaceAllString(string(data), "")
 	lower := strings.ToLower(text)
 	if !strings.Contains(lower, "<svg") {
 		return errors.New("uploaded SVG is not valid")
