@@ -245,7 +245,9 @@ dialog form { padding: 20px; }
 dialog header, dialog footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 dialog header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
 dialog footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
-dialog header button { width: 34px; padding: 0; }
+dialog header button { display: grid; width: 28px; height: 28px; min-height: 28px; place-items: center; padding: 0; border: 1px solid #252d3c; border-radius: 8px; background: var(--raised); color: var(--muted); }
+dialog header button:hover { border-color: var(--danger); background: #2a1d24; color: var(--danger); }
+dialog header button svg { width: 14px; height: 14px; }
 .template-grid, .logo-grid { display: grid; max-height: 58vh; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 8px; overflow: auto; }
 .template { justify-content: flex-start; min-height: 62px; padding: 9px 11px; text-align: left; }
 .template span { display: grid; }

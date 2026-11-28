@@ -4,6 +4,10 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ## [Unreleased]
 
+### Changed
+
+- Dialog header close buttons, including the Logo catalog X, now use the same bordered rounded button style and danger hover as other close/delete buttons.
+
 ### Fixed
 
 - Group logo uploads store the SVG upload reference instead of the catalog logo ID, fixing `Group logo must be empty or a valid image upload reference`. Existing autosaves with that invalid value are repaired on load.
