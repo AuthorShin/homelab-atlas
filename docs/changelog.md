@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Changed
+
+- The vectorizer now uses maximum-fidelity img2svg settings: 64 colors, native gradients, high coordinate precision, strict curve tolerance, median recoloring, corner/curve optimization, despeckling disabled, and all small details retained.
+
 ## [0.20.0] - 2026-11-29
 
 ### Changed

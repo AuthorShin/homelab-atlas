@@ -44,9 +44,14 @@ async function vectorize(bytes, mediaType) {
       '-o', output,
       '--gradients',
       '--preset', 'logo',
-      '-c', '16',
+      '-c', '64',
       '--optimize-corners',
-      '--precision', '2',
+      '--optimize-curves',
+      '--optimize-tolerance', '1.0',
+      '--curve-tolerance', '1.0',
+      '--quality-preset', 'high',
+      '--recolor-mode', 'median',
+      '--no-despeckle',
     ], { timeout: 90_000, maxBuffer: MAX_BYTES });
     const raw = fs.readFileSync(output, 'utf8').trim();
     const svgStart = raw.search(/<svg[\s>]/i);
