@@ -1057,19 +1057,23 @@ $('#logo-grid').addEventListener('change', event => {
   logoSelection = updateSelection(logoSelection, event.target.value, event.target.checked);
   $('#selection-count').textContent = `${logoSelection.size} selected`;
 });
-function uploadedLogoUsages(projectRef, id) {
-  const uses = [];
-  for (const network of projectRef.networks || []) {
-    if (network.icon === id || network.secondaryIcon === id) uses.push(`network ${network.name}`);
+function findReferencePaths(value, target, path = 'project', found = []) {
+  if (typeof value === 'string') {
+    if (value === target) found.push(path);
+  } else if (Array.isArray(value)) {
+    value.forEach((item, index) => findReferencePaths(item, target, `${path}[${index}]`, found));
+  } else if (value && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value)) findReferencePaths(item, target, `${path}.${key}`, found);
   }
-  for (const device of projectRef.devices || []) {
-    if (device.icon === id) uses.push(`device ${device.name}`);
-    for (const group of device.groups || []) {
-      if (group.logo === id) uses.push(`group ${group.name}`);
-      for (const service of group.services || []) if (service.logo === id) uses.push(`service ${service.name}`);
-    }
-  }
-  return uses;
+  return found;
+}
+
+function uploadedLogoUsages(projectRef, id, url) {
+  const ownPrefix = `project.customLogos[${(projectRef.customLogos || []).findIndex(item => item.id === id)}].`;
+  return [...new Set([
+    ...findReferencePaths(projectRef, id),
+    ...findReferencePaths(projectRef, url),
+  ].filter(path => !path.startsWith(ownPrefix)))];
 }
 
 async function deleteUploadedLogo(id) {
@@ -1080,7 +1084,7 @@ async function deleteUploadedLogo(id) {
     renderLogos();
     return;
   }
-  const uses = uploadedLogoUsages(project, id);
+  const uses = uploadedLogoUsages(project, id, logo.dataUrl);
   if (uses.length) return toast(`Cannot delete: used by ${uses.slice(0, 3).join(', ')}${uses.length > 3 ? ` and ${uses.length - 3} more` : ''}.`, true);
   if (!confirm(`Delete uploaded logo "${logo.label}"?`)) return;
   try {

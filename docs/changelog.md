@@ -4,6 +4,10 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Uploaded-logo deletion now checks for every reference to the logo's ID or upload URL across the project, preventing broken references that made **Save project** fail with HTTP 404.
+
 ### Changed
 
 - The diagram group logo is now 28px instead of 32px.
