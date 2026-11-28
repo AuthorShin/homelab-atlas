@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Fixed
+
+- The **Side by side** checkbox label in the group editor no longer inherits the generic label layout: it stays hidden until the group is selected/focused and then displays as a single row with the checkbox.
+
 ## [0.19.3] - 2026-11-29
 
 ### Changed

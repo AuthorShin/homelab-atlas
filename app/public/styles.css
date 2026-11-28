@@ -189,7 +189,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .group-logo-button.empty { border-style: dashed; border-color: var(--line); color: var(--muted); }
 .group-logo-button img { width: 100%; height: 100%; border-radius: 4px; object-fit: contain; }
 .group-logo-clear { min-height: 28px; padding: 0 7px; }
-.group-side-toggle { grid-column: 2 / 4; grid-row: 2; display: none; align-items: center; gap: 6px; margin: 2px 0 0; color: var(--muted); font-size: 10px; font-weight: 500; }
+.inspector .group-side-toggle { grid-column: 2 / 4; grid-row: 2; display: none; align-items: center; gap: 6px; margin: 2px 0 0; color: var(--muted); font-size: 10px; font-weight: 500; }
 .group.group-active .group-side-toggle, .group:focus-within .group-side-toggle { display: flex; }
 .group-side-toggle input { width: 15px; height: 15px; margin: 0; }
 .group-head > input { grid-column: 2; grid-row: 1; }
