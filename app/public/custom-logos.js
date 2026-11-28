@@ -184,7 +184,7 @@ export function hasExternalSvgUrl(value) {
   return /url\s*\(/i.test(remainder);
 }
 
-const SAFE_SVG_DOCTYPE = /^\s*(?:<\?xml[^>]*\?>\s*)?<!DOCTYPE\s+svg\s+PUBLIC\s+"-//W3C//DTD SVG 1\.1//EN"\s+"http:\/\/www\.w3\.org\/Graphics\/SVG\/1\.1\/DTD\/svg11\.dtd"\s*>/i;
+const SAFE_SVG_DOCTYPE = /^\s*(?:<\?xml[^>]*\?>\s*)?<!DOCTYPE\s+svg\s+PUBLIC\s+"-\/\/W3C\/\/DTD SVG 1\.1\/\/EN"\s+"http:\/\/www\.w3\.org\/Graphics\/SVG\/1\.1\/DTD\/svg11\.dtd"\s*>/i;
 
 export function stripSafeSvgDoctype(text) {
   return String(text).replace(SAFE_SVG_DOCTYPE, '');
