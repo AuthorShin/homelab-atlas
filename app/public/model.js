@@ -495,6 +495,8 @@ function groupGeometry(group, width, compact, secondary, index, { inset = index 
     columns = width < 380 ? group.services.length : 4;
     itemHeight = compact ? 72 : 78;
   }
+  const largestIconSize = group.services.reduce((largest, service) => Math.max(largest, service.iconSize || 0), 0);
+  if (largestIconSize) itemHeight = Math.max(itemHeight, mode === 'rows' ? largestIconSize + 12 : largestIconSize + 42);
   const rows = Math.ceil(group.services.length / columns);
   const gap = compact ? 6 : 8;
   return { mode, columns, itemHeight, rows, inset, padding, gap, nameChars, nameLines, headerHeight, contentWidth, logoSize, logoGap, height: headerHeight + rows * itemHeight + Math.max(0, rows - 1) * gap + padding * 2 + (compact ? 8 : 12) };

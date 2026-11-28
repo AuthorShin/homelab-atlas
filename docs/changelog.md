@@ -6,6 +6,10 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ### Fixed
 
+- A service's **Icon size** is no longer clamped to a fixed tile height. Tiles and rows now grow to fit sizes up to 64 diagram units, so the SVG `<image>` matches the value shown in the inspector.
+
+### Fixed
+
 - The **Side by side** checkbox label in the group editor no longer inherits the generic label layout: it stays hidden until the group is selected/focused and then displays as a single row with the checkbox.
 
 ## [0.19.3] - 2026-11-29
