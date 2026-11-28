@@ -70,6 +70,9 @@ function icon(name) {
     close: '<path d="m5 5 10 10M15 5 5 15"/>',
     up: '<path d="m5 12 5-5 5 5"/>',
     down: '<path d="m5 8 5 5 5-5"/>',
+    check: '<path d="m4 10 4 4 8-9"/>',
+    edit: '<path d="M4 16h4l8-8-4-4-8 8v4zM12 4l4 4"/>',
+    duplicate: '<path d="M7 7h9v9H7zM4 13V4h9"/>',
   };
   return `<svg viewBox="0 0 20 20" aria-hidden="true">${paths[name]}</svg>`;
 }
@@ -552,8 +555,10 @@ function projectForm() {
         <div class="favicon-copy"><strong>Project tab icon</strong><span>Used when no app logo is saved. PNG, JPG, WebP, SVG, or ICO; stored as a PNG up to 128px on this Atlas server.</span><div class="favicon-actions"><button type="button" data-favicon-upload>Upload tab icon</button><button type="button" class="danger" data-favicon-clear hidden>Remove</button></div></div>
       </div>
       <input data-favicon-file type="file" accept="${IMAGE_ACCEPT}" hidden>
-      <button type="button" data-open-themes>Manage themes</button>
-      <p class="help">Each theme carries its own custom CSS and background image. The active theme sets the look of this project; daily random picks a gallery background by date.</p>
+      <div class="favicon-setting">
+        <span class="favicon-preview background-preview"><img data-themes-preview alt="" hidden><span data-themes-empty>None</span></span>
+        <div class="favicon-copy"><strong>Themes</strong><span>Each theme carries its own custom CSS and background image. The active theme sets the look of this project; daily random picks a gallery background by date.</span><div class="favicon-actions"><button type="button" data-open-themes>Manage themes</button></div></div>
+      </div>
     </section>
     <section class="inspector-section"><div class="section-head"><h3>VLANs</h3><button type="button" data-add-vlan>${icon('add')}VLAN</button></div><div id="vlan-list" class="vlan-list"></div></section>
     <section class="inspector-section"><h3>Links</h3><button type="button" data-edit-connections>Edit connections</button></section>
@@ -563,6 +568,12 @@ function projectForm() {
 function bindProjectForm(root) {
   for (const key of ['subtitle', 'theme', 'columns', 'density', 'networkRow', 'vlanRow']) root.querySelector(`[data-project=${key}]`).value = project[key];
   root.querySelector('[data-open-themes]').addEventListener('click', openThemesDialog);
+  const themesPreview = root.querySelector('[data-themes-preview]');
+  const themeBackground = effectiveAppearance(project).background;
+  themesPreview.hidden = !themeBackground;
+  if (themeBackground) themesPreview.src = themeBackground;
+  else themesPreview.removeAttribute('src');
+  root.querySelector('[data-themes-empty]').hidden = Boolean(themeBackground);
   updateBrandingForm(root);
   const nameInput = root.querySelector('[data-branding="name"]');
   const titleInput = root.querySelector('[data-branding="tabTitle"]');
@@ -1128,7 +1139,7 @@ function showThemeGallery() {
   $('#daily-background').checked = Boolean(project.dailyBackground);
   const active = effectiveAppearance(project);
   const today = project.themes.find(theme => theme.background && theme.background === active.background);
-  $('#theme-gallery').innerHTML = `<p class="help">Today's background: ${today ? escapeHtml(today.label) : 'none'}${project.dailyBackground ? ' (daily random is on)' : ''}</p>${project.themes.map(theme => `<article class="theme-card${theme.id === project.activeTheme ? ' active' : ''}" data-theme="${theme.id}"><div class="theme-preview"${theme.background ? ` style="background-image:linear-gradient(#0d1119aa,#0d1119aa),url('${theme.background}')"` : ''}></div><strong>${escapeHtml(theme.label)}</strong><span class="muted">${theme.background ? 'Background set' : 'No background'}${theme.css ? ' · CSS' : ''}</span><div class="theme-card-actions"><button type="button" data-theme-activate${theme.id === project.activeTheme ? ' disabled' : ''}>${theme.id === project.activeTheme ? 'Active' : 'Use'}</button><button type="button" data-theme-edit>Edit</button><button type="button" data-theme-duplicate>Duplicate</button><button type="button" class="danger" data-theme-delete${project.themes.length <= 1 ? ' disabled' : ''}>Delete</button></div></article>`).join('')}`;
+  $('#theme-gallery').innerHTML = `<p class="help">Today's background: ${today ? escapeHtml(today.label) : 'none'}${project.dailyBackground ? ' (daily random is on)' : ''}</p>${project.themes.map(theme => `<article class="theme-card${theme.id === project.activeTheme ? ' active' : ''}" data-theme="${theme.id}"><div class="theme-preview"${theme.background ? ` style="background-image:linear-gradient(#0d1119aa,#0d1119aa),url('${theme.background}')"` : ''}></div><strong>${escapeHtml(theme.label)}</strong><span class="muted">${theme.background ? 'Background set' : 'No background'}${theme.css ? ' · CSS' : ''}</span><div class="theme-card-actions"><button type="button" class="mini" data-theme-activate title="${theme.id === project.activeTheme ? 'Active theme' : 'Use theme'}" aria-label="${theme.id === project.activeTheme ? 'Active theme' : 'Use theme'}"${theme.id === project.activeTheme ? ' disabled' : ''}>${icon('check')}</button><button type="button" class="mini" data-theme-edit title="Edit theme" aria-label="Edit theme">${icon('edit')}</button><button type="button" class="mini" data-theme-duplicate title="Duplicate theme" aria-label="Duplicate theme">${icon('duplicate')}</button><button type="button" class="mini danger" data-theme-delete title="Delete theme" aria-label="Delete theme"${project.themes.length <= 1 ? ' disabled' : ''}>${icon('close')}</button></div></article>`).join('')}`;
 }
 
 function openThemesDialog() {

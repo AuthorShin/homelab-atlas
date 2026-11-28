@@ -35,27 +35,26 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  position: relative;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
   flex: none;
   margin: 0;
+  padding: 0;
   border: 1px solid #59657a;
-  border-radius: 4px;
+  border-radius: 50%;
   background: var(--field);
   cursor: pointer;
 }
-input[type="checkbox"]:checked { border-color: var(--accent); background: var(--accent); }
-input[type="checkbox"]:checked::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 5px;
-  height: 9px;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+.inspector input[type="checkbox"], dialog input[type="checkbox"], .inventory-search input[type="checkbox"] {
+  width: 14px; height: 14px; min-width: 14px; padding: 0; border-radius: 50%;
+}
+input[type="checkbox"]:checked,
+.inspector input[type="checkbox"]:checked,
+dialog input[type="checkbox"]:checked,
+.inventory-search input[type="checkbox"]:checked {
+  border-color: var(--accent);
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
 }
 input[type="checkbox"]:disabled { opacity: .5; cursor: default; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -215,9 +214,8 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: default; }
 .group-logo-button.empty { border-style: dashed; border-color: var(--line); color: var(--muted); }
 .group-logo-button img { width: 100%; height: 100%; border-radius: 4px; object-fit: contain; }
 .group-logo-clear { min-height: 28px; padding: 0 7px; }
-.inspector .group-side-toggle { grid-column: 2 / 4; grid-row: 2; display: none; align-items: center; gap: 6px; margin: 2px 0 0; color: var(--muted); font-size: 10px; font-weight: 500; }
-.group.group-active .group-side-toggle, .group:focus-within .group-side-toggle { display: flex; }
-.group-side-toggle input { width: 15px; height: 15px; margin: 0; }
+.inspector .group-side-toggle { grid-column: 2 / 4; grid-row: 2; display: flex; align-items: center; gap: 6px; margin: 2px 0 0; color: var(--muted); font-size: 10px; font-weight: 500; }
+.group-side-toggle input { width: 14px; height: 14px; min-width: 14px; margin: 0; padding: 0; border-radius: 50%; }
 .group-head > input { grid-column: 2; grid-row: 1; }
 .group-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 3px; }
 .group-actions button { min-height: 28px; padding: 0 7px; font-size: 11px; }
@@ -252,7 +250,7 @@ dialog header button { width: 34px; padding: 0; }
 .template { justify-content: flex-start; min-height: 62px; padding: 9px 11px; text-align: left; }
 .template span { display: grid; }
 .logo-option { display: flex; min-height: 58px; align-items: center; gap: 9px; padding: 9px; border: 1px solid var(--line-soft); border-radius: 8px; background: #161b26; }
-.logo-option input { width: auto; } .logo-option img { flex-shrink: 0; }
+.logo-option input { width: 14px; height: 14px; min-width: 14px; padding: 0; border-radius: 50%; } .logo-option img { flex-shrink: 0; }
 .logo-option > span:not(.logo-none), .logo-option small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .logo-choice { justify-content: flex-start; text-align: left; }
 .logo-choice.selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -276,7 +274,7 @@ dialog header button { width: 34px; padding: 0; }
 .export-privacy, .export-preview-section { padding: 13px; border: 1px solid var(--line-soft); border-radius: 9px; background: #151a25; }
 .export-privacy h3, .export-preview-section h3 { margin: 0; }
 .export-toggle { display: flex; align-items: flex-start; gap: 9px; margin: 10px 0; cursor: pointer; }
-.export-toggle input { width: 16px; height: 16px; flex: none; margin: 2px 0 0; padding: 0; }
+.export-toggle input { width: 14px; height: 14px; min-width: 14px; flex: none; margin: 2px 0 0; padding: 0; border-radius: 50%; }
 .export-toggle span { display: grid; gap: 3px; }
 .export-toggle small, .export-privacy details small, .export-note { color: var(--muted); font-size: 11px; font-weight: 400; line-height: 1.45; }
 .export-privacy details { padding-top: 10px; border-top: 1px solid var(--line-soft); }
@@ -352,8 +350,8 @@ dialog header button { width: 34px; padding: 0; }
 .theme-card { display: grid; gap: 4px; padding: 8px; border-radius: 9px; background: var(--raised); }
 .theme-card.active { box-shadow: 0 0 0 2px var(--accent); }
 .theme-preview { height: 70px; border-radius: 7px; background: #101923 center/cover; }
-.theme-card-actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.theme-card-actions button { min-height: 26px; padding: 0 7px; font-size: 11px; }
+.theme-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.theme-card-actions button { width: 26px; min-width: 26px; height: 26px; min-height: 26px; padding: 0; }
 .theme-editor { display: grid; gap: 10px; }
 .theme-editor textarea { min-height: 180px; font-family: ui-monospace, monospace; }
 .service-row .service-icon-size, .service-row .service-show-name { grid-column: 2 / -1; }
@@ -362,5 +360,5 @@ dialog header button { width: 34px; padding: 0; }
 .inspector .service-icon-size input { width: 64px; height: 26px; padding: 3px 6px; font-size: 11px; }
 .inspector .service-icon-size small { color: #f1c176; font-size: 9px; white-space: nowrap; }
 .inspector .service-show-name { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; color: var(--muted); font-size: 10px; }
-.inspector .service-show-name input { width: 15px; height: 15px; margin: 0; }
+.inspector .service-show-name input { width: 14px; height: 14px; min-width: 14px; margin: 0; padding: 0; border-radius: 50%; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }

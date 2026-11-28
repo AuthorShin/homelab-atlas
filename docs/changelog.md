@@ -2,6 +2,17 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.7] - 2026-11-29
+
+### Changed
+
+- Logo tracing uses a higher-detail fixed profile (24 colors, higher complexity, no minimum-pixel filtering) so detailed artwork keeps its internal shapes.
+- All editor checkboxes are now small, fully round, and use a centered white checkmark when selected.
+- The **Side by side with other marked groups** checkbox is always visible in group editors.
+- The **Manage themes** control is now a full setting block like **Project tab icon**, with its description and a preview of the active background.
+- Theme gallery actions are icon-only buttons with tooltips.
+- The diagram group logo and name are nudged up slightly for more balanced spacing.
+
 ## [0.19.6] - 2026-11-29
 
 ### Changed
@@ -379,3 +390,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.4]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.4
 [0.19.5]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.5
 [0.19.6]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.6
+[0.19.7]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.7

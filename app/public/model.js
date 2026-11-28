@@ -827,13 +827,13 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     const groupWidth = geometry.w - geometry.padding * 2;
     const groupTop = groupsTop + geometry.y;
     const inset = geometry.inset ? `<rect x="${groupLeft}" y="${groupTop}" width="${geometry.w}" height="${geometry.height - (box.compact ? 8 : 12)}" rx="8" fill="${theme.tile}" fill-opacity=".38" stroke="${theme.line}"/>` : '';
-    const logoTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.logoSize) / 2;
+    const logoTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.logoSize) / 2 - 3;
     const logo = geometry.logoSize
       ? `<image href="${escapeXml(group.logo)}" x="${groupX}" y="${logoTop}" width="${geometry.logoSize}" height="${geometry.logoSize}" preserveAspectRatio="xMidYMid meet"/>`
       : '';
     const nameLineHeight = box.compact ? 15 : 17;
     const nameX = groupX + geometry.logoSize + geometry.logoGap;
-    const nameTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.nameLines.length * nameLineHeight) / 2;
+    const nameTop = groupTop + geometry.padding + (geometry.headerHeight - geometry.nameLines.length * nameLineHeight) / 2 - 3;
     const nameY = nameTop + nameLineHeight * 0.8;
     const groupName = textElement(group.name.toUpperCase(), nameX, nameY, { fill: device.accent, size: box.compact ? 10 : 11, weight: 600, maxChars: geometry.nameChars, maxLines: 2, lineHeight: nameLineHeight });
     const servicesTop = groupTop + geometry.padding + geometry.headerHeight;
