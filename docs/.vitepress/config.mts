@@ -55,6 +55,7 @@ export default defineConfig({
           { text: 'Troubleshooting', link: '/troubleshooting' },
           { text: 'Project format', link: '/project-format' },
           { text: 'Releases', link: '/releases/' },
+          { text: 'v0.19.8', link: '/releases/v0.19.8' },
           { text: 'v0.19.7', link: '/releases/v0.19.7' },
           { text: 'v0.19.6', link: '/releases/v0.19.6' },
           { text: 'v0.19.5', link: '/releases/v0.19.5' },

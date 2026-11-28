@@ -31,18 +31,22 @@ function normalizeSvg(svg) {
 
 function fixedProfile() {
   const profile = defaultAdvancedProfile();
+  profile.settings.category = 2;
+  profile.settings.quality = 0;
+  profile.settings.sensitivity = 12;
   profile.settings.advanced = true;
   profile.settings.paletteMode = 1;
   profile.colorCount = 24;
-  profile.settings.complexity = 9;
-  profile.settings.minimumPixels = 1;
+  profile.settings.complexity = 12;
+  profile.settings.minimumPixels = 0;
   profile.settings.artifactRejection = 0;
-  profile.settings.smoothness = 5;
-  profile.settings.curveComplexity = 10;
+  profile.settings.smoothness = 12;
+  profile.settings.curveComplexity = 12;
   profile.settings.detectCorners = true;
   profile.settings.antiAlias = true;
   profile.settings.smoothingAntiAlias = true;
   profile.settings.clusterColors = false;
+  profile.settings.backgroundMode = 0;
   return profile;
 }
 

@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.8] - 2026-11-29
+
+### Changed
+
+- Logo tracing now uses the maximum fixed profile: 24 colors, complexity 12, curve complexity 12, zero minimum-pixel filtering, no artifact rejection, maximum sensitivity, and preserved background. The automatic profile remains the fallback.
+
 ## [0.19.7] - 2026-11-29
 
 ### Changed
@@ -391,3 +397,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.5]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.5
 [0.19.6]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.6
 [0.19.7]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.7
+[0.19.8]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.8
