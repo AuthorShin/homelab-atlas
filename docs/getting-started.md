@@ -16,7 +16,7 @@ Manual diagrams need only Atlas and a browser. There is no scanner, collector, o
 Download the release Compose file, then start the two containers (Atlas and its vectorizer):
 
 ```sh
-curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.19.14/compose.release.yaml
+curl -fsSLO https://github.com/AuthorShin/homelab-atlas/releases/download/v0.20.0/compose.release.yaml
 docker compose -f compose.release.yaml up -d
 ```
 
@@ -34,14 +34,14 @@ proxy_send_timeout 120s;
 client_max_body_size 12m;
 ```
 
-A healthy response is `ok`. By default, the Compose file pulls `ghcr.io/authorshin/homelab-atlas:0.19.14` and `ghcr.io/authorshin/homelab-atlas-vectorizer:0.19.14`. Atlas only listens on the machine running Docker, and both containers are read-only with dropped capabilities. The vectorizer is internal only; Atlas reaches it over the Compose network to convert uploaded logos to SVG. If it is not running, logo and app-logo uploads fail with a clear error while backgrounds and the tab icon still work. The autosaved default project and uploaded images are kept in the `atlas-data` volume.
+A healthy response is `ok`. By default, the Compose file pulls `ghcr.io/authorshin/homelab-atlas:0.20.0` and `ghcr.io/authorshin/homelab-atlas-vectorizer:0.20.0`. Atlas only listens on the machine running Docker, and both containers are read-only with dropped capabilities. The vectorizer is internal only; Atlas reaches it over the Compose network to convert uploaded logos to SVG. If it is not running, logo and app-logo uploads fail with a clear error while backgrounds and the tab icon still work. The autosaved default project and uploaded images are kept in the `atlas-data` volume.
 
 ## Pin and update versions
 
 To pin a version, create `.env` next to `compose.release.yaml`:
 
 ```dotenv
-ATLAS_VERSION=0.19.14
+ATLAS_VERSION=0.20.0
 ```
 
 When you want to update, change `ATLAS_VERSION` in `.env` to a version that has been published. Then pull it and recreate the container without changing the hostname or port:
@@ -51,12 +51,12 @@ docker compose -f compose.release.yaml pull
 docker compose -f compose.release.yaml up -d
 ```
 
-Save an editable project ZIP before you update or downgrade. Your working project is stored by the browser. The autosaved default project and uploaded images are stored in the `atlas-data` volume, which Compose keeps across normal updates. Atlas 0.19.14 uses schema version 12 and imports schema versions 1 through 11. Existing inventory, uploaded logos, connections, layouts, service links, and per-group layout are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. The old project CSS and background become a starting theme, and older projects gain per-service icon size and name visibility fields. Atlas does not migrate projects backward; older releases cannot open schema-12 projects.
+Save an editable project ZIP before you update or downgrade. Your working project is stored by the browser. The autosaved default project and uploaded images are stored in the `atlas-data` volume, which Compose keeps across normal updates. Atlas 0.20.0 uses schema version 12 and imports schema versions 1 through 11. Existing inventory, uploaded logos, connections, layouts, service links, and per-group layout are preserved. Discovery data from older projects is discarded, and older service-link fields are kept or filled with an empty link. The old project CSS and background become a starting theme, and older projects gain per-service icon size and name visibility fields. Atlas does not migrate projects backward; older releases cannot open schema-12 projects.
 
 The image tags work like this:
 
-- `0.19.14` and `v0.19.14` identify this release.
-- `0.19` moves to the newest compatible 0.19 patch.
+- `0.20.0` and `v0.20.0` identify this release.
+- `0.20` moves to the newest compatible 0.20 patch.
 - `latest` moves to the newest stable release.
 - A published image digest never changes; the [release guide](/releases/) explains how to pin one.
 
@@ -100,8 +100,8 @@ go run ./app
 For the portable release, extract the ZIP and move into its top-level directory first:
 
 ```sh
-unzip homelab-atlas-0.19.14.zip
-cd homelab-atlas-0.19.14
+unzip homelab-atlas-0.20.0.zip
+cd homelab-atlas-0.20.0
 go run ./app
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "homelab-atlas-vectorizer",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,7 +9,5 @@
   "scripts": {
     "start": "node server.mjs"
   },
-  "dependencies": {
-    "openvector": "0.1.7"
-  }
+  "dependencies": {}
 }

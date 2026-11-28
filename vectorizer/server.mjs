@@ -2,15 +2,17 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { CoreSession, defaultAdvancedProfile } from 'openvector';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
+const run = promisify(execFile);
 const PORT = Number(process.env.PORT || 8081);
 const MAX_BYTES = 2_000_000;
-const session = new CoreSession();
+const IMG2SVG = process.env.IMG2SVG_BIN || 'img2svg';
 
 const MIME_EXTENSION = {
   'image/png': '.png',
-  'image/jpeg': '.jpeg',
+  'image/jpeg': '.jpg',
   'image/gif': '.gif',
   'image/bmp': '.bmp',
   'image/tiff': '.tiff',
@@ -29,65 +31,34 @@ function normalizeSvg(svg) {
   });
 }
 
-function fixedProfile() {
-  const profile = defaultAdvancedProfile();
-  profile.settings.category = 2;
-  profile.settings.quality = 0;
-  profile.settings.sensitivity = 12;
-  profile.settings.advanced = true;
-  profile.settings.paletteMode = 1;
-  profile.colorCount = 24;
-  profile.settings.complexity = 12;
-  profile.settings.minimumPixels = 0;
-  profile.settings.artifactRejection = 0;
-  profile.settings.smoothness = 12;
-  profile.settings.curveComplexity = 12;
-  profile.settings.detectCorners = true;
-  profile.settings.antiAlias = true;
-  profile.settings.smoothingAntiAlias = true;
-  profile.settings.clusterColors = false;
-  profile.settings.backgroundMode = 0;
-  return profile;
-}
-
-function exportSvg(document, output) {
-  const saved = document.saveVector(output, { layout: 'cutouts' });
-  if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || `export failed with status ${saved.status}`);
-  const raw = fs.readFileSync(output, 'utf8').trim();
-  const svgStart = raw.search(/<svg[\s>]/i);
-  if (svgStart === -1) {
-    throw new Error(`export produced no SVG (status ${saved.status}, ${raw.length} chars: ${raw.slice(0, 160)})`);
-  }
-  let svg = raw.slice(svgStart);
-  if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
-  return normalizeSvg(svg);
-}
-
-function vectorize(bytes, mediaType) {
+async function vectorize(bytes, mediaType) {
   const extension = MIME_EXTENSION[mediaType];
   if (!extension) throw new Error('unsupported source format');
-  const filename = `upload${extension}`;
-  const document = session.createDocument();
-  document.setSource(Buffer.from(bytes), filename);
-  document.shrinkSource();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-vector-'));
+  const input = path.join(directory, `upload${extension}`);
   const output = path.join(directory, 'trace.svg');
   try {
-    try {
-      const result = document.runAdvancedProfile(fixedProfile(), { backup: [], customized: false });
-      if (!result || result.state?.status !== 0 || !result.didWork?.fitting || !document.snapshot({}).fittingComplete) {
-        throw new Error('tracing produced no fitted geometry');
-      }
-      return exportSvg(document, output);
-    } catch (error) {
-      fs.rmSync(output, { force: true });
-      document.reset();
-      document.setSource(Buffer.from(bytes), filename);
-      document.shrinkSource();
-      const retry = document.runAutomatic({ extension });
-      if (retry?.fitting?.status !== 0) throw new Error(`automatic retry failed: ${error.message}`);
-      return exportSvg(document, output);
+    fs.writeFileSync(input, bytes);
+    await run(IMG2SVG, [
+      '-i', input,
+      '-o', output,
+      '--gradients',
+      '--preset', 'logo',
+      '-c', '16',
+      '--optimize-corners',
+      '--precision', '2',
+    ], { timeout: 90_000, maxBuffer: MAX_BYTES });
+    const raw = fs.readFileSync(output, 'utf8').trim();
+    const svgStart = raw.search(/<svg[\s>]/i);
+    if (svgStart === -1) {
+      throw new Error(`export produced no SVG (${raw.length} chars: ${raw.slice(0, 160)})`);
     }
+    const svg = raw.slice(svgStart);
+    if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
+    return normalizeSvg(svg);
+  } catch (error) {
+    const detail = typeof error?.stderr === 'string' ? error.stderr.trim().slice(0, 200) : '';
+    throw new Error(detail ? `vectorization failed: ${detail}` : error.message || 'vectorization failed');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
@@ -124,7 +95,7 @@ const server = http.createServer(async (request, response) => {
     }
     const bytes = await readBody(request);
     if (!bytes.length) throw new Error('empty image');
-    const svg = vectorize(bytes, contentType);
+    const svg = await vectorize(bytes, contentType);
     response.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' });
     response.end(svg);
   } catch (error) {

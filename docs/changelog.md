@@ -2,6 +2,13 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.20.0] - 2026-11-29
+
+### Changed
+
+- Replaced OpenVector with **img2svg** as the tracing engine. It emits native SVG `linearGradient` and `radialGradient` fills for smooth regions, so gradient-heavy logos look much closer to their source.
+- The vectorizer container now builds img2svg from Rust and no longer depends on OpenVector's native binaries or Qt-licensed components.
+
 ## [0.19.14] - 2026-11-29
 
 ### Added
@@ -449,3 +456,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.12]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.12
 [0.19.13]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.13
 [0.19.14]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.14
+[0.20.0]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.20.0
