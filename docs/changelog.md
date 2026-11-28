@@ -2,14 +2,13 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
+## [0.19.4] - 2026-11-29
 
 ### Fixed
 
+- The vectorizer now accepts SVG exports that begin with an XML declaration. This fixes the `export produced no SVG (status 0)` error on every upload.
+- When the fast fixed-color profile cannot trace an image, the vectorizer retries once with the automatic profile before reporting failure.
 - A service's **Icon size** is now rendered exactly as requested, up to 64 diagram units, without changing tile heights. Icons above 40 units automatically hide the visible label (the full name stays in the tooltip), and the inspector shows a "Label hidden" hint.
-
-### Fixed
-
 - The **Side by side** checkbox label in the group editor no longer inherits the generic label layout: it stays hidden until the group is selected/focused and then displays as a single row with the checkbox.
 
 ## [0.19.3] - 2026-11-29
@@ -360,3 +359,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.1]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.1
 [0.19.2]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.2
 [0.19.3]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.3
+[0.19.4]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.4

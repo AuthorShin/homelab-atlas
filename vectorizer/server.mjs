@@ -46,6 +46,16 @@ function fixedProfile() {
   return profile;
 }
 
+function exportSvg(document, output) {
+  const saved = document.saveVector(output, { layout: 'cutouts' });
+  if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || `export failed with status ${saved.status}`);
+  let svg = fs.readFileSync(output, 'utf8').trim();
+  svg = svg.replace(/^\s*<\?xml[^>]*\?>\s*/i, '');
+  if (!/^\s*<svg[\s>]/i.test(svg)) throw new Error(`export produced no SVG (status ${saved.status})`);
+  if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
+  return normalizeSvg(svg);
+}
+
 function vectorize(bytes, mediaType) {
   const extension = MIME_EXTENSION[mediaType];
   if (!extension) throw new Error('unsupported source format');
@@ -53,20 +63,24 @@ function vectorize(bytes, mediaType) {
   const document = session.createDocument();
   document.setSource(Buffer.from(bytes), filename);
   document.shrinkSource();
-  const result = document.runAdvancedProfile(fixedProfile(), { backup: [], customized: false });
-  if (!result) throw new Error('image produced no vector regions');
-  if (result.state?.status !== 0 || !result.didWork?.fitting || !document.snapshot({}).fittingComplete) {
-    throw new Error('tracing produced no fitted geometry');
-  }
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-vector-'));
+  const output = path.join(directory, 'trace.svg');
   try {
-    const output = path.join(directory, 'trace.svg');
-    const saved = document.saveVector(output, { layout: 'cutouts' });
-    if (saved.status !== 0 || saved.error) throw new Error(saved.error?.message || `export failed with status ${saved.status}`);
-    const svg = fs.readFileSync(output, 'utf8').trim();
-    if (!/^\s*<svg[\s>]/i.test(svg)) throw new Error(`export produced no SVG (status ${saved.status})`);
-    if (/<script\b|\son[a-z]+\s*=|<foreignObject\b/i.test(svg)) throw new Error('export contains unsafe content');
-    return normalizeSvg(svg);
+    try {
+      const result = document.runAdvancedProfile(fixedProfile(), { backup: [], customized: false });
+      if (!result || result.state?.status !== 0 || !result.didWork?.fitting || !document.snapshot({}).fittingComplete) {
+        throw new Error('tracing produced no fitted geometry');
+      }
+      return exportSvg(document, output);
+    } catch (error) {
+      fs.rmSync(output, { force: true });
+      document.reset();
+      document.setSource(Buffer.from(bytes), filename);
+      document.shrinkSource();
+      const retry = document.runAutomatic({ extension });
+      if (retry?.fitting?.status !== 0) throw new Error(`automatic retry failed: ${error.message}`);
+      return exportSvg(document, output);
+    }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
