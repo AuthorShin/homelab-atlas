@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [0.19.13] - 2026-11-29
+
+### Changed
+
+- The uploaded-logo delete X in the Logo catalog now uses the same bordered rounded button style as the dialog close buttons, with a danger hover state.
+
 ## [0.19.12] - 2026-11-29
 
 ### Changed
@@ -435,3 +441,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.10]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.10
 [0.19.11]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.11
 [0.19.12]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.12
+[0.19.13]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.13
