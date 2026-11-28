@@ -195,7 +195,7 @@ async function applyGroupLogo(file, deviceId, groupId) {
   if (project !== current) throw new Error('The project changed while the group logo was uploading. Try again.');
   if (change(candidate => {
     candidate.customLogos.push(logo);
-    candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).logo = logo.id;
+    candidate.devices.find(item => item.id === deviceId).groups.find(group => group.id === groupId).logo = logo.dataUrl;
   })) toast('Group logo updated.');
 }
 

@@ -6,6 +6,7 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ### Fixed
 
+- Group logo uploads store the SVG upload reference instead of the catalog logo ID, fixing `Group logo must be empty or a valid image upload reference`. Existing autosaves with that invalid value are repaired on load.
 - Group headers with a logo now use the same height as headers without one by removing the extra padding around the icon, so side-by-side groups stay the same size.
 
 ## [0.19.10] - 2026-11-29
@@ -428,3 +429,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.8]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.8
 [0.19.9]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.9
 [0.19.10]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.10
+[0.19.11]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.11

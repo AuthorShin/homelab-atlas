@@ -229,12 +229,14 @@ export function parseProject(text) {
 // Fill only those two missing fields so existing autosaves keep opening.
 function repairCurrentProject(data) {
   const clone = structuredClone(data);
+  const customById = new Map((Array.isArray(clone?.customLogos) ? clone.customLogos : []).map(logo => [logo.id, logo.dataUrl]));
   if (Array.isArray(clone?.devices)) {
     for (const device of clone.devices) {
       if (!Array.isArray(device?.groups)) continue;
       for (const group of device.groups) {
         if (!group || typeof group !== 'object' || Array.isArray(group)) continue;
         if (!Object.prototype.hasOwnProperty.call(group, 'logo')) group.logo = '';
+        if (typeof group.logo === 'string' && customById.has(group.logo)) group.logo = customById.get(group.logo);
         if (!Object.prototype.hasOwnProperty.call(group, 'sideBySide')) group.sideBySide = false;
       }
     }
