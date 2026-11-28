@@ -1,6 +1,6 @@
 FROM node:22.19.0-bookworm-slim AS node
 
-FROM rust:1.85-bookworm AS img2svg
+FROM rust:1.90-bookworm AS img2svg
 RUN cargo install img2svg --version 0.1.15 --locked
 
 FROM debian:bookworm-slim
