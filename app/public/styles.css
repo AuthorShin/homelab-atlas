@@ -327,8 +327,10 @@ dialog header button { width: 34px; padding: 0; }
 .theme-card-actions button { min-height: 26px; padding: 0 7px; font-size: 11px; }
 .theme-editor { display: grid; gap: 10px; }
 .theme-editor textarea { min-height: 180px; font-family: ui-monospace, monospace; }
-.service-icon-size { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 6px; }
-.service-icon-size input { width: 100%; }
-.service-show-name { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+.service-row .service-icon-size, .service-row .service-show-name { grid-column: 2 / -1; }
+.service-icon-size { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 600; }
+.service-icon-size span { white-space: nowrap; letter-spacing: .06em; text-transform: uppercase; }
+.service-icon-size input { width: 64px; height: 26px; padding: 3px 6px; font-size: 11px; }
+.service-show-name { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; color: var(--muted); font-size: 10px; }
 .service-show-name input { width: 15px; height: 15px; margin: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }

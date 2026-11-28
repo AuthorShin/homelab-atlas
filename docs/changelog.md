@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Fixed
+
+- The service inspector's **Icon size** and **Show name** controls now span the full row beside the logo instead of falling into the narrow logo column and wrapping awkwardly.
+
 ## [0.19.2] - 2026-11-28
 
 ### Changed
