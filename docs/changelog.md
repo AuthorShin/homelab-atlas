@@ -2,7 +2,7 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
+## [0.19.12] - 2026-11-29
 
 ### Changed
 
@@ -434,3 +434,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.9]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.9
 [0.19.10]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.10
 [0.19.11]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.11
+[0.19.12]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.12
