@@ -1301,6 +1301,57 @@ $('#daily-background').addEventListener('change', event => {
   }
 });
 
+function uploadReferencesInProject(projectRef) {
+  const references = new Set();
+  const walk = (value, path) => {
+    if (typeof value === 'string') {
+      if (isUploadReference(value) && !/^project\.themes\[\d+\]\.background$/.test(path)) references.add(value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => walk(item, `${path}[${index}]`));
+    } else if (value && typeof value === 'object') {
+      for (const [key, item] of Object.entries(value)) walk(item, `${path}.${key}`);
+    }
+  };
+  walk(projectRef, 'project');
+  return references;
+}
+
+function clearUploadReferences(value, references, path = 'project') {
+  if (typeof value === 'string') return references.has(value) ? '' : value;
+  if (Array.isArray(value)) return value.map((item, index) => clearUploadReferences(item, references, `${path}[${index}]`));
+  if (value && typeof value === 'object') {
+    const result = {};
+    for (const [key, item] of Object.entries(value)) {
+      result[key] = path === 'project' && key === 'themes' ? item : clearUploadReferences(item, references, `${path}.${key}`);
+    }
+    return result;
+  }
+  return value;
+}
+
+$('#delete-all-logos').addEventListener('click', async () => {
+  const references = uploadReferencesInProject(project);
+  if (!references.size) return toast('There are no uploaded images to delete.');
+  if (!confirm(`Delete all ${references.size} uploaded image${references.size === 1 ? '' : 's'} and clear their references? Theme backgrounds are kept.`)) return;
+  try {
+    for (const reference of references) await deleteUpload(reference);
+    if (change(candidate => {
+      const cleared = clearUploadReferences(candidate, references);
+      cleared.customLogos = [];
+      Object.assign(candidate, cleared);
+    })) {
+      logoSelection.clear();
+      logoDialogState?.drafts.clear();
+      renderLogos();
+      toast(`Deleted ${references.size} uploaded image${references.size === 1 ? '' : 's'}.`);
+    }
+  } catch (error) {
+    toast(`Delete failed: ${error.message}`, true);
+  }
+});
+
 $('#back-to-logos').addEventListener('click', () => {
   if (!logoDialogState) return;
   logoDialogState.upload = null;

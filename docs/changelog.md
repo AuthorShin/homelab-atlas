@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Added
+
+- Added **Delete all uploaded** in the Logo catalog. It removes every uploaded image file and clears custom upload references throughout the project, while leaving theme backgrounds untouched.
+
 ## [0.19.13] - 2026-11-29
 
 ### Changed
