@@ -28,7 +28,7 @@ The duplicate button copies a device and gives the copy new internal IDs. Use th
 
 Open the device inspector's **Apps** tab and add a service group. The group-level **Apps** button opens the Add services flow, where you can search the logo catalog and select more than one service. Selections stay checked across searches. Click the logo beside an existing service to replace it without changing its name, count, ID, or position.
 
-Each group can have an optional logo and a name. In the diagram the group name appears to the right of its 32px logo, vertically centered, so the label stays readable. Click a group in the inspector to reveal the **Side by side** checkbox; groups marked this way share a row up to the **Columns** setting in **Diagram appearance**. Side-by-side groups hide the app labels inside their tiles and show only the app logos, so narrow rows stay readable; hover a tile to see its app name. The checkbox is hidden again when you click elsewhere, which keeps the group editor compact.
+Each group can have an optional logo and a name. In the diagram the group name appears to the right of its 28px logo, vertically centered, so the label stays readable. Click a group in the inspector to reveal the **Side by side** checkbox; groups marked this way share a row up to the **Columns** setting in **Diagram appearance**. Side-by-side groups hide the app labels inside their tiles and show only the app logos, so narrow rows stay readable; hover a tile to see its app name. The checkbox is hidden again when you click elsewhere, which keeps the group editor compact.
 
 <GuideFigure name="service-logos" />
 

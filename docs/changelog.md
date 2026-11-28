@@ -4,6 +4,10 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ## [Unreleased]
 
+### Changed
+
+- The diagram group logo is now 28px instead of 32px.
+
 ### Fixed
 
 - The uploaded-logo delete button now has a proper circular button shape and a cleaner danger-colored hover state.

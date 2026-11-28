@@ -481,7 +481,7 @@ function hardwareGeometry(device, fact, index, width, compact) {
 function groupGeometry(group, width, compact, secondary, index, { inset = index > 0 } = {}) {
   const padding = inset ? 10 : 0;
   const contentWidth = width - padding * 2;
-  const logoSize = group.logo ? 32 : 0;
+  const logoSize = group.logo ? 28 : 0;
   const logoGap = logoSize ? 8 : 0;
   const nameChars = Math.max(8, Math.floor((contentWidth - logoSize - logoGap) / 7));
   const nameLines = wrapText(group.name.toUpperCase(), nameChars, 2);
