@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Fixed
+
+- The uploaded-logo delete button now has a proper circular button shape and a cleaner danger-colored hover state.
+
 ## [0.19.9] - 2026-11-29
 
 ### Added
