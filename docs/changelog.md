@@ -2,6 +2,12 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
+## [Unreleased]
+
+### Changed
+
+- All editor checkboxes now use accent-colored boxes with rounded corners and a clear white check when selected.
+
 ## [0.19.5] - 2026-11-29
 
 ### Added
