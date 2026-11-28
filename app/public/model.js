@@ -28,6 +28,7 @@ export const LIMITS = {
 };
 const LEGACY_SCHEMA_VERSIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const LEGACY_BINDING_LIMIT = 1600;
+const LARGE_ICON_LABEL_LIMIT = 40;
 
 const ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const THEME_ID_RE = /^theme-[a-zA-Z0-9][a-zA-Z0-9_-]{0,55}$/;
@@ -495,8 +496,6 @@ function groupGeometry(group, width, compact, secondary, index, { inset = index 
     columns = width < 380 ? group.services.length : 4;
     itemHeight = compact ? 72 : 78;
   }
-  const largestIconSize = group.services.reduce((largest, service) => Math.max(largest, service.iconSize || 0), 0);
-  if (largestIconSize) itemHeight = Math.max(itemHeight, mode === 'rows' ? largestIconSize + 12 : largestIconSize + 42);
   const rows = Math.ceil(group.services.length / columns);
   const gap = compact ? 6 : 8;
   return { mode, columns, itemHeight, rows, inset, padding, gap, nameChars, nameLines, headerHeight, contentWidth, logoSize, logoGap, height: headerHeight + rows * itemHeight + Math.max(0, rows - 1) * gap + padding * 2 + (compact ? 8 : 12) };
@@ -545,7 +544,7 @@ export function serviceTileGeometry(name, width, height, secondary = false, icon
   const maxChars = Math.max(5, Math.floor(width / (fontSize * .55)));
   const lines = [ellipsize(name, maxChars)];
   const fallbackLogoSize = compact ? 24 : (width < 90 ? 24 : 28);
-  const logoSize = Math.max(16, Math.min(iconSize || fallbackLogoSize, Math.max(16, height - 42)));
+  const logoSize = iconSize || fallbackLogoSize;
   const plateSize = logoSize + 6;
   const plateY = 10;
   const logoY = 10 + (plateSize - logoSize) / 2 + 3;
@@ -556,7 +555,7 @@ export function serviceTileGeometry(name, width, height, secondary = false, icon
 
 export function serviceRowGeometry(name, width, height, compact = false, hasCount = false, iconSize = 0) {
   const fallbackLogoSize = compact ? 28 : 32;
-  const logoSize = Math.max(16, Math.min(iconSize || fallbackLogoSize, Math.max(16, height - 10)));
+  const logoSize = iconSize || fallbackLogoSize;
   const plateSize = logoSize + 6;
   const textX = plateSize + 14;
   const countWidth = hasCount ? 32 : 0;
@@ -841,7 +840,7 @@ function renderCard(device, box, theme, themeName, customLogos, interactive) {
     const tileGap = geometry.gap;
     const tileWidth = (groupWidth - tileGap * (geometry.columns - 1)) / geometry.columns;
     const services = group.services.map((service, index) => {
-      const showName = !group.sideBySide && service.showName !== false;
+      const showName = !group.sideBySide && service.showName !== false && !(service.iconSize > LARGE_ICON_LABEL_LIMIT);
       const x = groupX + (index % geometry.columns) * (tileWidth + tileGap);
       const serviceY = servicesTop + Math.floor(index / geometry.columns) * (geometry.itemHeight + tileGap);
       return geometry.mode === 'rows'

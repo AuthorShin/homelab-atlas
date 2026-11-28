@@ -6,7 +6,7 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ### Fixed
 
-- A service's **Icon size** is no longer clamped to a fixed tile height. Tiles and rows now grow to fit sizes up to 64 diagram units, so the SVG `<image>` matches the value shown in the inspector.
+- A service's **Icon size** is now rendered exactly as requested, up to 64 diagram units, without changing tile heights. Icons above 40 units automatically hide the visible label (the full name stays in the tooltip), and the inspector shows a "Label hidden" hint.
 
 ### Fixed
 
