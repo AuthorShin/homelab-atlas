@@ -2,11 +2,7 @@
 
 This file lists the notable changes in each Homelab Atlas release.
 
-## [Unreleased]
-
-### Fixed
-
-- Uploaded-logo deletion now checks for every reference to the logo's ID or upload URL across the project, preventing broken references that made **Save project** fail with HTTP 404.
+## [0.19.10] - 2026-11-29
 
 ### Changed
 
@@ -14,6 +10,7 @@ This file lists the notable changes in each Homelab Atlas release.
 
 ### Fixed
 
+- Uploaded-logo deletion now checks for every reference to the logo's ID or upload URL across the project, preventing broken references that made **Save project** fail with HTTP 404.
 - The uploaded-logo delete button now has a proper circular button shape and a cleaner danger-colored hover state.
 
 ## [0.19.9] - 2026-11-29
@@ -424,3 +421,4 @@ This file lists the notable changes in each Homelab Atlas release.
 [0.19.7]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.7
 [0.19.8]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.8
 [0.19.9]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.9
+[0.19.10]: https://github.com/AuthorShin/homelab-atlas/releases/tag/v0.19.10
